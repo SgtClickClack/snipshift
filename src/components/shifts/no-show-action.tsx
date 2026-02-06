@@ -97,7 +97,7 @@ export function NoShowAction({
       });
       
       // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ['shop-schedule-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['venue-schedule-shifts'] });
       queryClient.invalidateQueries({ queryKey: ['shifts'] });
       queryClient.invalidateQueries({ queryKey: ['shift', shiftId] });
       
@@ -215,4 +215,3 @@ export function NoShowAction({
   );
 }
 
-export default NoShowAction;

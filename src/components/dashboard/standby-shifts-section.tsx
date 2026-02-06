@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
-import { getWaitlistedShifts } from '@/lib/api';
+import { getWaitlistedShifts } from '@/lib/api/professional';
 import { Clock, MapPin, DollarSign, Users, ArrowRight, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';

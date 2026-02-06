@@ -159,5 +159,3 @@ export function useXeroSyncLogs(limit: number = 3) {
     isLoading,
   };
 }
-
-export default useXeroStatus;

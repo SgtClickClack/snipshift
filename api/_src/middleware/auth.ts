@@ -6,6 +6,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import { safeEnvForLog } from '../lib/sanitize-env.js';
 
 /** In-memory rate limit store: key = client id (IP), value = { count, resetAt } */
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
@@ -248,8 +249,8 @@ export function authenticateUser(
         message: initError?.message,
       });
       logAuthError('Check environment variables: FIREBASE_SERVICE_ACCOUNT or FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
-      logAuthError('Project ID from env:', process.env.FIREBASE_PROJECT_ID);
-      console.log('[AUTH DEBUG] Backend Project ID:', process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID);
+      logAuthError('FIREBASE_PROJECT_ID:', safeEnvForLog('FIREBASE_PROJECT_ID', process.env.FIREBASE_PROJECT_ID));
+      logAuthError('VITE_FIREBASE_PROJECT_ID:', safeEnvForLog('VITE_FIREBASE_PROJECT_ID', process.env.VITE_FIREBASE_PROJECT_ID));
       res.status(503).json({ 
         message: 'Authentication service unavailable',
         error: 'Firebase Admin not initialized',
@@ -258,13 +259,12 @@ export function authenticateUser(
       return;
     }
 
-    // Log Firebase Admin initialization status for /api/me debugging
+    // Log Firebase Admin initialization status for /api/me debugging (sanitized - no env values)
     if (isMeEndpoint) {
       console.log('[AUTH DEBUG] Firebase Admin initialized successfully', {
-        projectId: process.env.FIREBASE_PROJECT_ID,
+        firebaseProjectId: safeEnvForLog('FIREBASE_PROJECT_ID', process.env.FIREBASE_PROJECT_ID),
         hasAuthInstance: !!firebaseAuth,
       });
-      console.log('[AUTH DEBUG] Backend Project ID:', process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID);
     }
 
     let token: string | undefined;
@@ -299,9 +299,10 @@ export function authenticateUser(
       token = req.query.token.trim();
     }
 
-    // Bypass for E2E Testing - active whenever NODE_ENV=test (Playwright webServer sets this)
-    // Prevents production exploitation; E2E tests use Bearer mock-test-* with hospogo_test DB
-    if (token && token.startsWith('mock-test-') && process.env.NODE_ENV === 'test') {
+    // Bypass for E2E Testing - requires both NODE_ENV=test AND E2E_BYPASS_ENABLED=1
+    // Double-gated to prevent accidental activation if NODE_ENV is misconfigured
+    const isE2EEnabled = process.env.NODE_ENV === 'test' && process.env.E2E_BYPASS_ENABLED === '1';
+    if (token && token.startsWith('mock-test-') && isE2EEnabled) {
       // Return specific mock user object for E2E tests
       // This bypasses Firebase token verification
       req.user = {
@@ -315,9 +316,9 @@ export function authenticateUser(
       return;
     }
 
-    // Bypass for E2E Testing - Only allow in test environment for security
+    // Bypass for E2E Testing - Only allow when double-gated (NODE_ENV=test + E2E_BYPASS_ENABLED=1)
     // Allow specific E2E test users to be auto-authenticated
-    if (token && token.startsWith('mock-token-e2e_test_') && process.env.NODE_ENV === 'test') {
+    if (token && token.startsWith('mock-token-e2e_test_') && isE2EEnabled) {
         const email = token.replace('mock-token-', '');
         console.debug('[AUTH E2E] Attempting auth for email:', email);
         

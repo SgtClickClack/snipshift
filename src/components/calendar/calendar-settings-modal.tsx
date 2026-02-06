@@ -25,7 +25,7 @@ import { Separator } from "@/components/ui/separator";
 import { Clock, Save, Sun, Sunset, Moon, Calendar, Trash2, Plus, Users } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { clearAllShifts } from "@/lib/api";
+import { clearAllShifts } from "@/lib/api/venue";
 import { getCalendarInvalidationKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";

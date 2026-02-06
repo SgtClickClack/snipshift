@@ -1,7 +1,7 @@
 import { test, expect } from '../fixtures/hospogo-fixtures';
 import { Browser, BrowserContext, Page } from '@playwright/test';
 import {
-  TEST_SHOP_OWNER,
+  TEST_VENUE_OWNER,
   TEST_PROFESSIONAL,
   createTestShifts,
   setupUserContext,
@@ -49,7 +49,7 @@ test.describe('Calendar Lifecycle E2E Tests', () => {
     });
 
     // Setup user authentication for each context
-    await setupUserContext(shopContext, TEST_SHOP_OWNER);
+    await setupUserContext(shopContext, TEST_VENUE_OWNER);
     await setupUserContext(barberContext, TEST_PROFESSIONAL);
 
     // Create pages for each context
@@ -65,7 +65,7 @@ test.describe('Calendar Lifecycle E2E Tests', () => {
     await barberPage.route('https://r.stripe.com/**', (route) => route.abort());
 
     // Create fresh test shift data
-    testShifts = createTestShifts(TEST_SHOP_OWNER.id);
+    testShifts = createTestShifts(TEST_VENUE_OWNER.id);
 
     // Enable console logging for debugging
     shopPage.on('console', (msg) => {
@@ -796,7 +796,7 @@ test.describe('Calendar Lifecycle - Setup Verification', () => {
     const shopCtx = await browser.newContext({ baseURL: 'http://localhost:3000' });
     const barberCtx = await browser.newContext({ baseURL: 'http://localhost:3000' });
 
-    await setupUserContext(shopCtx, TEST_SHOP_OWNER);
+    await setupUserContext(shopCtx, TEST_VENUE_OWNER);
     await setupUserContext(barberCtx, TEST_PROFESSIONAL);
 
     const shopPg = await shopCtx.newPage();

@@ -698,7 +698,7 @@ router.get('/metrics', asyncHandler(async (req: AuthenticatedRequest, res) => {
     commissionThisMonth,
     totalUsers,
     shopUsers,
-    barberUsers,
+    professionalUsers,
     completedShifts
   ] = await Promise.all([
     shiftsRepo.getTotalCommission(),
@@ -717,7 +717,7 @@ router.get('/metrics', asyncHandler(async (req: AuthenticatedRequest, res) => {
     users: {
       total: totalUsers,
       shops: shopUsers,
-      barbers: barberUsers,
+      professionals: professionalUsers,
     },
     shifts: {
       completed: completedShifts,

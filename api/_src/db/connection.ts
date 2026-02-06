@@ -34,12 +34,17 @@ const getConnectionConfig = (databaseUrl: string) => {
   // Always enable SSL for Neon, production, or cloud databases
   const requiresSSL = isNeon || isProduction || isCloudDatabase;
 
+  // SECURITY: Validate SSL certificates in production to prevent MITM attacks.
+  // Cloud providers (Neon, Supabase, Railway) use trusted CAs so rejectUnauthorized: true works.
+  // Only fall back to rejectUnauthorized: false for local dev with self-signed certs.
+  const isLocalDev = !isProduction && !isCloudDatabase;
+
   return {
-    max: 20,
-    min: 2, // Reduced from 5 to avoid blocking startup
+    max: parseInt(process.env.DB_POOL_MAX || '20', 10),
+    min: parseInt(process.env.DB_POOL_MIN || '2', 10),
     idleTimeoutMillis: 20000,
     connectionTimeoutMillis: 3000, // Fast fail: 3 seconds instead of 10
-    ssl: requiresSSL ? { rejectUnauthorized: false } : false,
+    ssl: requiresSSL ? { rejectUnauthorized: !isLocalDev } : false,
   };
 };
 

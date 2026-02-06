@@ -50,7 +50,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { mapRoleToApiRole, getDashboardRoute, AppRole } from '@/lib/roles';
-import { getCalendarSyncUrl } from '@/lib/api';
+import { getCalendarSyncUrl } from '@/lib/api/analytics/professional';
 
 type SettingsCategory = 'account' | 'security' | 'notifications' | 'verification' | 'integrations' | 'a-team';
 

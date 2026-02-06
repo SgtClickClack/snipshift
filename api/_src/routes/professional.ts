@@ -124,7 +124,7 @@ function formatLocation(address: string | null, city: string | null, state: stri
  * - maxPayRate: Maximum pay rate (number)
  * - startDate: Start date for date range filter (YYYY-MM-DD)
  * - endDate: End date for date range filter (YYYY-MM-DD)
- * - jobType: Filter by job role ('barber' | 'hairdresser' | 'stylist' | 'other')
+ * - jobType: Filter by job role (legacy DB enum: 'barber' | 'hairdresser' | 'stylist' | 'other')
  * - limit: Number of results to return (default: 50)
  * - offset: Number of results to skip (default: 0)
  */
@@ -135,7 +135,7 @@ router.get('/jobs', asyncHandler(async (req, res) => {
   const maxPayRate = req.query.maxPayRate ? parseFloat(req.query.maxPayRate as string) : undefined;
   const startDate = req.query.startDate as string | undefined;
   const endDate = req.query.endDate as string | undefined;
-  const jobType = req.query.jobType as 'barber' | 'hairdresser' | 'stylist' | 'other' | undefined;
+  const jobType = req.query.jobType as 'barber' | 'hairdresser' | 'stylist' | 'other' | undefined; // DB enum values
   const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
   const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
 

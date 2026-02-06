@@ -1,6 +1,7 @@
 import admin from 'firebase-admin';
 import * as dotenv from 'dotenv';
 import path from 'path';
+import { safeEnvForLog } from '../lib/sanitize-env.js';
 
 // Load env vars (only once, at module load)
 dotenv.config();
@@ -31,8 +32,9 @@ function initializeFirebase(): admin.auth.Auth | null {
     
     // Use a named app instance to avoid stale default app issues in Vercel warm containers
     const appName = process.env.FIREBASE_ADMIN_APP_NAME || 'hospogo-worker-v2';
-    // SECURITY: Strict project ID enforcement - only allow 'snipshift-75b04'
-    const REQUIRED_PROJECT_ID = 'snipshift-75b04';
+    // SECURITY: Strict project ID enforcement - read from env or fallback to legacy project ID
+    // NOTE: Firebase project is still 'snipshift-75b04' (cannot rename without migration)
+    const REQUIRED_PROJECT_ID = process.env.FIREBASE_REQUIRED_PROJECT_ID || 'snipshift-75b04';
     let targetProjectId = process.env.FIREBASE_PROJECT_ID?.trim() || undefined;
     
     // Enforce project ID validation
@@ -85,7 +87,7 @@ function initializeFirebase(): admin.auth.Auth | null {
         } catch (e: any) {
             console.error('[FIREBASE] Init Failed (individual vars):', e?.message || e);
             console.error('[FIREBASE] Stack:', e?.stack);
-            console.error('[AUTH DEBUG] Backend Project ID (failed):', process.env.FIREBASE_PROJECT_ID);
+            console.error('[AUTH DEBUG] FIREBASE_PROJECT_ID (failed):', safeEnvForLog('FIREBASE_PROJECT_ID', process.env.FIREBASE_PROJECT_ID));
             initError = e;
         }
       } 
@@ -101,8 +103,8 @@ function initializeFirebase(): admin.auth.Auth | null {
           }
 
           console.log('--- DEBUG FIREBASE INIT ---');
-          console.log('Env Var Project ID:', process.env.FIREBASE_PROJECT_ID);
-          console.log('Service Account Project ID:', serviceAccount?.project_id);
+          console.log('FIREBASE_PROJECT_ID:', safeEnvForLog('FIREBASE_PROJECT_ID', process.env.FIREBASE_PROJECT_ID));
+          console.log('Service Account project_id:', serviceAccount?.project_id ? '[SET]' : '[NOT SET]');
           console.log('Target Project ID:', targetProjectId || '(derived from service account)');
           console.log('---------------------------');
 
@@ -138,9 +140,7 @@ function initializeFirebase(): admin.auth.Auth | null {
           );
           console.log('[FIREBASE] Admin initialized successfully via FIREBASE_SERVICE_ACCOUNT', {
             projectId: enforcedProjectId,
-            serviceAccountProjectId: serviceAccount?.project_id,
-            envProjectId: process.env.FIREBASE_PROJECT_ID,
-            enforcedProjectId: enforcedProjectId,
+            envProjectId: safeEnvForLog('FIREBASE_PROJECT_ID', process.env.FIREBASE_PROJECT_ID),
           });
           console.log('[AUTH DEBUG] Backend Project ID:', enforcedProjectId);
         } catch (e: any) {
@@ -192,7 +192,7 @@ function initializeFirebase(): admin.auth.Auth | null {
         } catch (e: any) {
           console.error('[FIREBASE] Init Failed (application default):', e?.message || e);
           console.error('[FIREBASE] Stack:', e?.stack);
-          console.error('[AUTH DEBUG] Backend Project ID (failed):', process.env.FIREBASE_PROJECT_ID);
+          console.error('[AUTH DEBUG] FIREBASE_PROJECT_ID (failed):', safeEnvForLog('FIREBASE_PROJECT_ID', process.env.FIREBASE_PROJECT_ID));
           console.warn('[FIREBASE] Auth features will be disabled. Check environment variables:');
           console.warn('[FIREBASE] - FIREBASE_SERVICE_ACCOUNT (JSON string)');
           console.warn('[FIREBASE] - OR FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');

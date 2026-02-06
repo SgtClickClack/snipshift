@@ -8,6 +8,29 @@ import { getCorrelationId } from './correlation-id.js';
  * Logs full error details server-side but returns generic messages to clients
  */
 
+/** Fields to redact from request body before logging to prevent PII/secret leakage */
+const SENSITIVE_BODY_FIELDS = new Set([
+  'password', 'token', 'secret', 'apiKey', 'api_key',
+  'accessToken', 'access_token', 'refreshToken', 'refresh_token',
+  'creditCard', 'credit_card', 'cardNumber', 'card_number',
+  'cvv', 'cvc', 'ssn', 'privateKey', 'private_key',
+]);
+
+function sanitizeBody(body: any): any {
+  if (!body || typeof body !== 'object') return body;
+  const sanitized: Record<string, any> = {};
+  for (const [key, value] of Object.entries(body)) {
+    if (SENSITIVE_BODY_FIELDS.has(key)) {
+      sanitized[key] = '[REDACTED]';
+    } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      sanitized[key] = sanitizeBody(value);
+    } else {
+      sanitized[key] = value;
+    }
+  }
+  return sanitized;
+}
+
 /**
  * Helper function to extract PostgreSQL error details from Drizzle errors
  * Drizzle often wraps database errors, so we need to check multiple levels
@@ -114,7 +137,7 @@ export const errorHandler = async (
     path: req.path,
     method: req.method,
     timestamp: new Date().toISOString(),
-    body: req.body,
+    body: sanitizeBody(req.body),
     query: req.query,
   };
 

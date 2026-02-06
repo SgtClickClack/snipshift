@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Loader2, CreditCard, Plus } from "lucide-react";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { useSearchParams } from "react-router-dom";
-import getStripe from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 
 // Initialize Stripe
 const stripePromise = getStripe();

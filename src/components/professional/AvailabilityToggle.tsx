@@ -517,4 +517,3 @@ export function AvailabilityToggle({ className, onAvailabilityChange }: Availabi
   );
 }
 
-export default AvailabilityToggle;

@@ -13,7 +13,8 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="color-scheme" content="light dark" />
-    <meta name="description" content="Automated Compliance, Rostering, and Payroll Logistics for the $168M Neighborhood Economy." />
+    <meta name="app-version" content="2.0.0" />
+    <meta name="description" content="Brisbane's fastest way to find qualified hospitality professionals. Verified RSA bartenders and waitstaff ready to fill your shifts." />
     <title>HospoGo | The Logistics Engine for Hospitality</title>
     
     <!-- Google Tag Manager (GTM) - Initialized in React app for environment variable support -->
@@ -30,16 +31,16 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://hospogo.com/" />
     <meta property="og:title" content="HospoGo | The Logistics Engine for Hospitality" />
-    <meta property="og:description" content="Automated Compliance, Rostering, and Payroll Logistics for the $168M Neighborhood Economy." />
-    <meta property="og:image" content="https://hospogo.com/brand-icon.png" />
+    <meta property="og:description" content="Brisbane's fastest way to find qualified hospitality professionals. Verified RSA bartenders and waitstaff ready to fill your shifts." />
+    <meta property="og:image" content="https://hospogo.com/og-image.jpg" />
     <meta property="og:site_name" content="HospoGo" />
     
     <!-- Twitter Card - Prestige Grade for Investor Sharing -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://hospogo.com/" />
     <meta name="twitter:title" content="HospoGo | The Logistics Engine for Hospitality" />
-    <meta name="twitter:description" content="Automated Compliance, Rostering, and Payroll Logistics for the $168M Neighborhood Economy." />
-    <meta name="twitter:image" content="https://hospogo.com/brand-icon.png" />
+    <meta name="twitter:description" content="Brisbane's fastest way to find qualified hospitality professionals. Verified RSA bartenders and waitstaff ready to fill your shifts." />
+    <meta name="twitter:image" content="https://hospogo.com/og-image.jpg" />
 
     <link rel="manifest" href="/manifest.json" />
     
@@ -226,8 +227,9 @@
       // do a ONE-TIME unregister + cache cleanup before loading the app bundle.
       (function () {
         try {
-          // Bump the key if we need to re-run recovery
-          var KEY = 'hospogo_sw_recovery_v2';
+          // Use APP_VERSION to run recovery once per deployment (not once ever)
+          var APP_VERSION = document.querySelector('meta[name="app-version"]')?.getAttribute('content') || 'v1';
+          var KEY = 'hospogo_sw_recovery_' + APP_VERSION;
           if (localStorage.getItem(KEY) === '1') return;
           if (!('serviceWorker' in navigator) || !('caches' in window)) return;
 

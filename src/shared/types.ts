@@ -34,9 +34,11 @@ export interface Shift {
   isRecurring?: boolean; // Flag to indicate if this shift is part of a recurring series
   recurringIndex?: number; // Index in the recurring series (0-based)
   
-  // Shop branding fields
-  shopName?: string | null; // Shop's business name
-  shopAvatarUrl?: string | null; // Shop's profile picture URL
+  // Venue branding fields (legacy API property names preserved for backward compat)
+  /** @deprecated Use venueName when available */
+  shopName?: string | null;
+  /** @deprecated Use venueAvatarUrl when available */
+  shopAvatarUrl?: string | null;
   
   // Location coordinates for distance filtering (legacy support)
   // Prefer using structured location object when available

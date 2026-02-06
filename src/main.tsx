@@ -70,7 +70,15 @@ window.addEventListener('error', (e) => {
     /Importing a module script failed/.test(e.message);
 
   if (isChunkError) {
-    console.error('Chunk load error detected, attempting reload:', e.message);
+    // Telemetry: Log chunk load error details for monitoring
+    console.error('[PWA] Chunk load failed', {
+      message: e.message,
+      filename: e.filename || 'unknown',
+      timestamp: Date.now(),
+      url: window.location.href,
+      userAgent: navigator.userAgent,
+      connectionType: (navigator as any).connection?.effectiveType || 'unknown',
+    });
     
     // Prevent infinite reload loop
     const storageKey = 'chunk_load_error_reload';
@@ -81,6 +89,8 @@ window.addEventListener('error', (e) => {
     if (!lastReload || now - parseInt(lastReload) > 10000) {
       sessionStorage.setItem(storageKey, now.toString());
       window.location.reload();
+    } else {
+      console.error('[PWA] Chunk load error recovery skipped (cooldown active)');
     }
   }
 });

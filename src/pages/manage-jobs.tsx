@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { fetchMyJobs, fetchJobApplications, updateApplicationStatus, updateJobStatus, MyJob, JobApplication } from '@/lib/api';
+import { fetchMyJobs, updateApplicationStatus, type MyJob } from '@/lib/api/venue';
+import { fetchJobApplications, updateJobStatus, type JobApplication } from '@/lib/api/shared';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

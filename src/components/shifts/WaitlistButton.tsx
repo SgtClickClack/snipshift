@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/useToast';
-import { joinWaitlist, leaveWaitlist, getWaitlistStatus } from '@/lib/api';
+import { joinWaitlist, leaveWaitlist, getWaitlistStatus } from '@/lib/api/professional';
 import { Loader2, UserPlus, UserMinus, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -41,7 +41,7 @@ export function WaitlistButton({ shiftId, shiftStatus, className }: WaitlistButt
   const { data: waitlistedShifts } = useQuery({
     queryKey: ['waitlisted-shifts'],
     queryFn: async () => {
-      const { getWaitlistedShifts } = await import('@/lib/api');
+      const { getWaitlistedShifts } = await import('@/lib/api/professional');
       return getWaitlistedShifts();
     },
     enabled: !!user,

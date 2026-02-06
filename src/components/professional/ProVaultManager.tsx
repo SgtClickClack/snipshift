@@ -924,5 +924,3 @@ export function ProVaultManager({ className }: ProVaultManagerProps) {
     </Card>
   );
 }
-
-export default ProVaultManager;

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { fetchShifts } from '@/lib/api';
+import { fetchShifts } from '@/lib/api/shared';
 import { Shift, Job } from '@shared/firebase-schema';
 import { Button } from '@/components/ui/button';
 import { JobCardSkeleton } from '@/components/loading/skeleton-loaders';

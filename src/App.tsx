@@ -1,8 +1,9 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/react';
+// PERFORMANCE: Lazy-load analytics to reduce initial bundle size
+const Analytics = lazy(() => import('@vercel/analytics/react').then(m => ({ default: m.Analytics })));
+const SpeedInsights = lazy(() => import('@vercel/speed-insights/react').then(m => ({ default: m.SpeedInsights })));
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/queryClient';
 import { Toaster } from '@/components/ui/toaster';
@@ -17,7 +18,7 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { TutorialOverlay } from '@/components/onboarding/tutorial-overlay';
-import OfflineNotification from '@/components/common/OfflineNotification';
+import { OfflineNotification } from '@/components/common/OfflineNotification';
 
 // PERFORMANCE: Lazy-load Support Bot to improve FCP/LCP (Target: < 0.8s)
 // These widgets load AFTER primary UI is interactive
@@ -83,7 +84,6 @@ const VenueProfilePage = lazy(() => import('@/pages/venue-profile'));
 const VenueApplicationsPage = lazy(() => import('@/pages/venue-applications'));
 const StaffPage = lazy(() => import('@/pages/Staff'));
 const WorkerEarningsView = lazy(() => import('@/pages/worker-earnings'));
-const ShopDashboard = lazy(() => import('@/pages/shop-dashboard'));
 const ShopSchedulePage = lazy(() => import('@/pages/shop/schedule'));
 const ProfessionalDashboard = lazy(() => import('@/pages/professional-dashboard'));
 // PURGED: BrandDashboard and TrainerDashboard removed per Investor Briefing Lockdown
@@ -101,6 +101,7 @@ const AdminLeadsPage = lazy(() => import('@/pages/admin/Leads'));
 const AdminHealthPage = lazy(() => import('@/pages/admin/health'));
 const LeadTracker = lazy(() => import('@/pages/admin/LeadTracker'));
 const CTODashboard = lazy(() => import('@/pages/admin/CTODashboard'));
+const RevenueForecast = lazy(() => import('@/pages/admin/RevenueForecast'));
 
 const NotificationDemo = lazy(() => import('@/components/notifications/notification-demo'));
 const DesignSystemShowcase = lazy(() => import('@/components/demo/design-system-showcase').then(module => ({ default: module.DesignSystemShowcase })));
@@ -437,24 +438,12 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
           </ProtectedRoute>
         } />
 
-        {/* Legacy/compat route: billing + venue dashboard surfaces */}
-        <Route path="/shop-dashboard" element={
-          <ProtectedRoute allowedRoles={['hub', 'business', 'venue']}>
-            <Suspense fallback={<PageLoadingFallback />}>
-              <ShopDashboard />
-            </Suspense>
-          </ProtectedRoute>
-        } />
+        {/* Legacy route redirects → new branded paths */}
+        <Route path="/shop-dashboard" element={<Navigate to="/venue/dashboard" replace />} />
+        <Route path="/shop/schedule" element={<Navigate to="/venue/schedule" replace />} />
+        <Route path="/salon/create-job" element={<Navigate to="/venue/create-shift" replace />} />
 
-        <Route path="/shop/schedule" element={
-          <ProtectedRoute allowedRoles={['hub', 'business', 'venue']}>
-            <Suspense fallback={<PageLoadingFallback />}>
-              <ShopSchedulePage />
-            </Suspense>
-          </ProtectedRoute>
-        } />
-
-        {/* Branded alias for schedule (preferred) */}
+        {/* Venue routes (primary branded paths) */}
         <Route path="/venue/schedule" element={
           <ProtectedRoute allowedRoles={['hub', 'business', 'venue']}>
             <Suspense fallback={<PageLoadingFallback />}>
@@ -463,7 +452,7 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
           </ProtectedRoute>
         } />
 
-        <Route path="/salon/create-job" element={
+        <Route path="/venue/create-shift" element={
           <ProtectedRoute allowedRoles={['hub', 'business', 'venue']}>
             <Suspense fallback={<PageLoadingFallback />}>
               <SalonCreateJobPage />
@@ -586,6 +575,14 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
           <ProtectedRoute allowedRoles={['admin']}>
             <Suspense fallback={<PageLoadingFallback />}>
               <CTODashboard />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/admin/revenue-forecast" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <RevenueForecast />
             </Suspense>
           </ProtectedRoute>
         } />
@@ -863,8 +860,8 @@ function App() {
                           <OfflineNotification />
                           <InstallPrompt />
                           <PwaUpdateHandler />
-                          <Analytics />
-                          <SpeedInsights />
+                          <Suspense fallback={null}><Analytics /></Suspense>
+                          <Suspense fallback={null}><SpeedInsights /></Suspense>
                         </NotificationProvider>
                       </PusherProvider>
                     </AuthGate>

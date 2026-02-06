@@ -15,7 +15,7 @@ export interface JobFilters {
   offset?: number;
   city?: string;
   date?: string;
-  role?: 'barber' | 'hairdresser' | 'stylist' | 'other'; // Job role filter
+  role?: 'barber' | 'hairdresser' | 'stylist' | 'other'; // Job role filter (DB enum values)
   // Advanced filters
   search?: string; // Fuzzy match on title/description
   minRate?: number;
@@ -196,7 +196,7 @@ export async function createJob(
     startTime: string;
     endTime: string;
     status?: 'open' | 'filled' | 'closed' | 'completed';
-    role?: 'barber' | 'hairdresser' | 'stylist' | 'other';
+    role?: 'barber' | 'hairdresser' | 'stylist' | 'other'; // DB enum values
     shopName?: string;
     address?: string;
     city?: string;
@@ -221,7 +221,7 @@ export async function createJob(
       startTime: jobData.startTime,
       endTime: jobData.endTime,
       status: jobData.status || 'open',
-      role: jobData.role || 'barber',
+      role: jobData.role || 'barber', // DB enum default
       shopName: jobData.shopName,
       address: jobData.address,
       city: jobData.city,
@@ -247,7 +247,7 @@ export async function updateJob(
     startTime?: string;
     endTime?: string;
     status?: 'open' | 'filled' | 'closed' | 'completed';
-    role?: 'barber' | 'hairdresser' | 'stylist' | 'other';
+    role?: 'barber' | 'hairdresser' | 'stylist' | 'other'; // DB enum values
     shopName?: string;
     address?: string;
     city?: string;

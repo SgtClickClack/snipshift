@@ -252,4 +252,3 @@ function VenueCard({ venue }: { venue: Venue }) {
   );
 }
 
-export default VenueListContainer;

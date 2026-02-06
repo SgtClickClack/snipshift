@@ -17,9 +17,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { HOSPITALITY_ROLES } from '@/utils/hospitality';
 
-import { copyPreviousWeekShifts, createShift, fetchEmployerShifts, fetchProfessionals, publishAllDraftShifts, updateShiftTimes } from '@/lib/api';
+import { copyPreviousWeekShifts, fetchEmployerShifts, publishAllDraftShifts } from '@/lib/api/venue';
+import { fetchProfessionals } from '@/lib/api/professional';
+import { createShift, updateShiftTimes, type ShiftDetails } from '@/lib/api/shared';
 import { apiRequest } from '@/lib/queryClient';
-import type { ShiftDetails } from '@/lib/api';
 import { AssignStaffModal, Professional } from '@/components/calendar/assign-staff-modal';
 import { NoShowAction, canReportNoShow } from '@/components/shifts/no-show-action';
 import { ScheduleCalendarSkeleton } from '@/components/ui/skeletons';
@@ -250,7 +251,7 @@ export default function ShopSchedulePage() {
   }, [view]);
 
   const { data: shifts = [], isLoading } = useQuery<ShiftDetails[]>({
-    queryKey: ['shop-schedule-shifts', currentRange.start.toISOString(), currentRange.end.toISOString()],
+    queryKey: ['venue-schedule-shifts', currentRange.start.toISOString(), currentRange.end.toISOString()],
     queryFn: async () => fetchEmployerShifts({ start: currentRange.start.toISOString(), end: currentRange.end.toISOString() }),
     enabled: !!user?.id,
   });
@@ -319,9 +320,9 @@ export default function ShopSchedulePage() {
       setCreateOpen(false);
       setSelectedSlot(null);
       setDraftForm({ role: 'Bartender', title: '', hourlyRate: '45', description: '' });
-      queryClient.invalidateQueries({ queryKey: ['shop-schedule-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['venue-schedule-shifts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['venue-shifts'] });
       toast({ title: 'Draft created', description: 'Shift saved as DRAFT. Publish when ready.' });
     },
     onError: () => {
@@ -342,9 +343,9 @@ export default function ShopSchedulePage() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shop-schedule-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['venue-schedule-shifts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['venue-shifts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/applications'] });
     },
     onError: (error: any) => {
@@ -361,9 +362,9 @@ export default function ShopSchedulePage() {
       return await copyPreviousWeekShifts({ start: weekStart.toISOString(), end: weekEnd.toISOString() });
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['shop-schedule-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['venue-schedule-shifts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['venue-shifts'] });
       toast({
         title: 'Copied',
         description: data.count === 0 ? 'No shifts found last week.' : `Created ${data.count} DRAFT shift(s) for this week.`,
@@ -383,9 +384,9 @@ export default function ShopSchedulePage() {
       return await publishAllDraftShifts({ start: weekStart.toISOString(), end: weekEnd.toISOString() });
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['shop-schedule-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['venue-schedule-shifts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['venue-shifts'] });
       toast({
         title: 'Published',
         description: data.count === 0 ? 'No DRAFT shifts to publish.' : `Published ${data.count} shift(s) to OPEN.`,
@@ -414,9 +415,9 @@ export default function ShopSchedulePage() {
       setEditModalOpen(false);
       setSelectedOpenShift(null);
       setEditForm({ title: '', hourlyRate: '', description: '' });
-      queryClient.invalidateQueries({ queryKey: ['shop-schedule-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['venue-schedule-shifts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['venue-shifts'] });
       toast({
         title: 'Shift updated',
         description: 'Shift details have been saved.',
@@ -440,9 +441,9 @@ export default function ShopSchedulePage() {
     onSuccess: () => {
       setAssignModalOpen(false);
       setSelectedDraftShift(null);
-      queryClient.invalidateQueries({ queryKey: ['shop-schedule-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['venue-schedule-shifts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['venue-shifts'] });
       toast({
         title: 'Invite sent!',
         description: 'The professional will be notified and can accept or decline the shift.',
@@ -466,9 +467,9 @@ export default function ShopSchedulePage() {
     onSuccess: (_data, variables) => {
       setAssignModalOpen(false);
       setSelectedDraftShift(null);
-      queryClient.invalidateQueries({ queryKey: ['shop-schedule-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['venue-schedule-shifts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['venue-shifts'] });
       const count = variables.professionalIds.length;
       toast({
         title: `${count} professional${count > 1 ? 's' : ''} invited!`,

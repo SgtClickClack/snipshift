@@ -1,6 +1,6 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { createReview, CreateReviewData } from '@/lib/api';
+import { createReview, CreateReviewData } from '@/lib/api/shared';
 import { StarRating } from './star-rating';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';

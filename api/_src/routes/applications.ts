@@ -330,7 +330,7 @@ router.post('/:id/decide', authenticateUser, asyncHandler(async (req: Authentica
       // Fetch updated application
       const updatedApplication = await applicationsRepo.getApplicationById(applicationId);
 
-      // Notify the barber
+      // Notify the professional
       if (application.userId) {
         try {
           await notificationService.notifyApplicationApproved(
@@ -364,7 +364,7 @@ router.post('/:id/decide', authenticateUser, asyncHandler(async (req: Authentica
       return;
     }
 
-    // Notify the barber
+    // Notify the professional
     if (application.userId) {
       try {
         await notificationService.notifyApplicationDeclined(

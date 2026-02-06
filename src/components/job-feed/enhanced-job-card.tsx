@@ -92,8 +92,8 @@ export function EnhancedJobCard({
     return `${job.distance.toFixed(1)} km away`;
   };
 
-  // Get salon initials for avatar fallback
-  const getSalonInitials = () => {
+  // Get venue initials for avatar fallback
+  const getVenueInitials = () => {
     if (job.salonName) {
       return job.salonName
         .split(' ')
@@ -102,20 +102,20 @@ export function EnhancedJobCard({
         .toUpperCase()
         .slice(0, 2);
     }
-    return 'S';
+    return 'V';
   };
 
   return (
     <Card className="hover:shadow-lg transition-all duration-200 border-border">
       <CardContent className="p-5">
-        {/* Header with Salon Info */}
+        {/* Header with Venue Info */}
         <div className="flex items-start gap-3 mb-4">
           <Avatar className="h-12 w-12 border-2 border-border">
             {job.salonLogo ? (
-              <AvatarImage src={job.salonLogo} alt={job.salonName || 'Salon'} />
+              <AvatarImage src={job.salonLogo} alt={job.salonName || 'Venue'} />
             ) : null}
             <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-              {getSalonInitials()}
+              {getVenueInitials()}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">

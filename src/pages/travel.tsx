@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { fetchShifts } from '@/lib/api';
+import { fetchShifts } from '@/lib/api/shared';
 import { Shift, Job } from '@shared/firebase-schema';
 import { Button } from '@/components/ui/button';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';

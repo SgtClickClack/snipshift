@@ -13,7 +13,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { SEO } from '@/components/seo/SEO';
 import { Building2, CreditCard, CheckCircle, Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import getStripe from '@/lib/stripe';
+import { getStripe } from '@/lib/stripe';
 import { safeGetItem, safeRemoveItem } from '@/lib/safe-storage';
 
 // Initialize Stripe

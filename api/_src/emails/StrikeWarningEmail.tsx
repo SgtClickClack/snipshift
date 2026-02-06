@@ -397,5 +397,3 @@ const link = {
   color: '#0369a1',
   textDecoration: 'underline',
 };
-
-export default StrikeWarningEmail;

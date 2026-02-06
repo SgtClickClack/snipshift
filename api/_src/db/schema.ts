@@ -87,6 +87,8 @@ export const jobStatusEnum = pgEnum('job_status', ['open', 'filled', 'closed', '
  * This enum is maintained for backward compatibility with the legacy `jobs` table.
  * New shift-based functionality uses `hospitalityRoleEnum` from schema/users.ts
  * which includes: Bartender, Waitstaff, Barista, Barback, Kitchen Hand, Duty Manager
+ * 
+ * NOTE: String values below are DB enum identifiers (cannot be renamed without migration)
  */
 export const jobRoleEnum = pgEnum('job_role', ['barber', 'hairdresser', 'stylist', 'other']);
 
@@ -147,7 +149,7 @@ export const jobs = pgTable('jobs', {
   startTime: time('start_time').notNull(),
   endTime: time('end_time').notNull(),
   status: jobStatusEnum('status').notNull().default('open'),
-  role: jobRoleEnum('role').notNull().default('barber'),
+  role: jobRoleEnum('role').notNull().default('barber'), // DB enum default
   shopName: varchar('shop_name', { length: 255 }),
   address: varchar('address', { length: 512 }),
   city: varchar('city', { length: 100 }),

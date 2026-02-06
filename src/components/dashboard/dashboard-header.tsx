@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { ImageCropper } from "@/components/ui/image-cropper";
 import { useImageUpload } from "@/hooks/useImageUpload";
 // INVESTOR BRIEFING FIX: Removed updateUserProfile import - brand/trainer dashboards removed
-import { updateBusinessProfile } from "@/lib/api";
+import { updateBusinessProfile } from "@/lib/api/venue";
 import { useAuth } from "@/contexts/AuthContext";
 import type { User } from "@/contexts/AuthContext";
 import { logger } from "@/lib/logger";

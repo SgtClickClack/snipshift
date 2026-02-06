@@ -226,5 +226,3 @@ const footer = {
   fontSize: '14px',
   lineHeight: '1.5',
 };
-
-export default EnterpriseLeadNotification;

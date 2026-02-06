@@ -24,9 +24,9 @@ export const JobSchema = z.object({
   date: z.string().min(1, 'Date is required'),
   startTime: z.string().min(1, 'Start time is required'),
   endTime: z.string().min(1, 'End time is required'),
-  // Backwards compatible: allow legacy barber roles + HospoGo hospitality roles
+  // Backwards compatible: allow legacy salon roles (DB enums) + HospoGo hospitality roles
   role: z.enum([
-    'barber',
+    'barber', // DB enum values (legacy - cannot rename without migration)
     'hairdresser',
     'stylist',
     'other',

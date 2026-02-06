@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { View } from "react-big-calendar";
-import { fetchRosterTotals } from "@/lib/api";
+import { fetchRosterTotals } from "@/lib/api/analytics/venue";
 import { apiRequest } from "@/lib/queryClient";
 import { QUERY_KEYS, QUERY_STALE_TIMES } from "@/lib/query-keys";
 import { useAuth } from "@/contexts/AuthContext";

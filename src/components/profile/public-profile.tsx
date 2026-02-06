@@ -278,7 +278,7 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
             {profile.role !== 'professional' && profile.businessDescription && (
               <Card>
                 <CardHeader>
-                  <CardTitle>About Our {profile.role === 'hub' ? 'Salon' : 'Business'}</CardTitle>
+                  <CardTitle>About Our {profile.role === 'hub' ? 'Venue' : 'Business'}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground break-words overflow-hidden">{profile.businessDescription}</p>

@@ -110,5 +110,4 @@ export function ErrorFallback({
   );
 }
 
-export default ErrorFallback;
 

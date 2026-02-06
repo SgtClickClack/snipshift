@@ -28,7 +28,7 @@ import AdvancedJobFilters, { JobFilterOptions } from "@/components/job-feed/adva
 import JobApplicationModal from "@/components/job-feed/job-application-modal";
 import { SEO } from "@/components/seo/SEO";
 import DashboardHeader from "@/components/dashboard/dashboard-header";
-import { fetchShifts } from "@/lib/api";
+import { fetchShifts } from "@/lib/api/shared";
 import { QuickNav } from "@/components/navigation/QuickNav";
 import { VerificationPendingBanner } from "@/components/profile/VerificationPendingBanner";
 
@@ -40,12 +40,16 @@ const ApplicationsView = lazy(() => import("./professional-dashboard/Application
 const JobBoard = lazy(() => import("@/components/job-board/JobBoard"));
 const PayoutSettings = lazy(() => import("@/components/payments/payout-settings"));
 const EarningsDashboard = lazy(() => import("@/components/payments/earnings-dashboard"));
-const BulkInvitationReview = lazy(() => import("@/components/dashboard/BulkInvitationReview"));
+const BulkInvitationReview = lazy(() =>
+  import("@/components/dashboard/BulkInvitationReview").then((m) => ({ default: m.BulkInvitationReview }))
+);
 const OfferInbox = lazy(() => import("@/components/shifts/offer-inbox").then(m => ({ default: m.OfferInbox })));
 const PendingReviewNotification = lazy(() => import("@/components/shifts/pending-review-notification"));
 const GoogleMapView = lazy(() => import("@/components/job-feed/google-map-view"));
 const LocationSearch = lazy(() => import("@/components/job-feed/location-search"));
-const ProReliabilityTracker = lazy(() => import("@/components/dashboard/ProReliabilityTracker"));
+const ProReliabilityTracker = lazy(() =>
+  import("@/components/dashboard/ProReliabilityTracker").then((m) => ({ default: m.ProReliabilityTracker }))
+);
 
 // Loading fallback component
 const ViewLoader = () => (

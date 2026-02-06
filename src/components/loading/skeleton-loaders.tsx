@@ -171,7 +171,7 @@ export function JobCardSkeleton({ count = 6 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <Card key={i} className="border border-border">
           <CardContent className="p-5">
-            {/* Header with Salon Info */}
+            {/* Header with Venue Info */}
             <div className="flex items-start gap-3 mb-4">
               <SkeletonLoader className="h-12 w-12 rounded-full flex-shrink-0" />
               <div className="flex-1 space-y-2">

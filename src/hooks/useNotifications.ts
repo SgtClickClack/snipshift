@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { fetchNotifications, markNotificationAsRead, markAllNotificationsAsRead, Notification as APINotification } from "@/lib/api";
+import { fetchNotifications, markNotificationAsRead, markAllNotificationsAsRead, Notification as APINotification } from "@/lib/api/notifications";
 import { logger } from "@/lib/logger";
 
 // Transform API notification to component notification format

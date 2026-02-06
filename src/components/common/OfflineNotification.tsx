@@ -136,4 +136,3 @@ export function useOfflineStatus() {
   return { isOnline };
 }
 
-export default OfflineNotification;

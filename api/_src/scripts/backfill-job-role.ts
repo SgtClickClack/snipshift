@@ -2,7 +2,7 @@
  * Backfill Job Role Script
  * 
  * Backfills the role column for existing jobs in the database.
- * Sets all existing jobs to 'barber' as the default.
+ * Sets all existing jobs to 'barber' as the default (DB enum value).
  * 
  * Usage:
  *   ts-node api/_src/scripts/backfill-job-role.ts
@@ -61,9 +61,9 @@ async function backfillJobRole() {
       process.exit(0);
     }
 
-    console.log(`📊 Found ${nullCount} jobs without a role. Backfilling with 'barber'...\n`);
+    console.log(`📊 Found ${nullCount} jobs without a role. Backfilling with default DB enum value...\n`);
 
-    // Update all jobs with NULL role to 'barber'
+    // Update all jobs with NULL role to 'barber' (DB enum default value)
     const updateQuery = `
       UPDATE jobs 
       SET role = 'barber'::job_role, updated_at = NOW()
@@ -71,7 +71,7 @@ async function backfillJobRole() {
     `;
     
     const updateResult = await pool.query(updateQuery);
-    console.log(`✅ Successfully updated ${updateResult.rowCount} jobs with role 'barber'.\n`);
+    console.log(`✅ Successfully updated ${updateResult.rowCount} jobs with default role.\n`);
 
     // Verify the update
     const verifyQuery = `

@@ -50,7 +50,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
 import { apiRequest } from "@/lib/queryClient";
-import { QUERY_KEYS, getShiftInvalidationKeys } from "@/lib/query-keys";
+import { QUERY_KEYS, getVenueShiftInvalidationKeys } from "@/lib/query-keys";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNotification } from "@/contexts/NotificationContext";
 import StartChatButton from "@/components/messaging/start-chat-button";
@@ -70,7 +70,8 @@ import {
 } from "@/utils/shift-slot-generator";
 import { groupEventsIntoBuckets, type BucketEvent } from "@/utils/shift-bucketing";
 import { AutoSlotAssignmentModal } from "./auto-slot-assignment-modal";
-import { fetchProfessionals, ProfessionalListItem, generateFromTemplates, previewGenerateFromTemplates, inviteATeam } from "@/lib/api";
+import { fetchProfessionals, ProfessionalListItem } from "@/lib/api/professional";
+import { generateFromTemplates, previewGenerateFromTemplates, inviteATeam } from "@/lib/api/venue";
 import { ShiftAssignmentModal } from "./shift-assignment-modal";
 import { CalendarToolbar } from "./CalendarToolbar";
 import { isBusinessRole } from "@/lib/roles";
@@ -1569,7 +1570,7 @@ function ProfessionalCalendarContent({
             : result.message || "Your A-Team has been notified.",
         });
         // Refresh calendar data to show Amber (#F59E0B) status on buckets
-        queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
+        queryClient.invalidateQueries({ queryKey: ['venue-shifts'] });
         queryClient.invalidateQueries({ queryKey: ['my-jobs'] });
         queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SHOP_SHIFTS] });
       } else {
@@ -1841,9 +1842,9 @@ function ProfessionalCalendarContent({
       setOptimisticShifts(prev => [...prev, optimisticEvent]);
       
       // Invalidate both applications and shifts queries to refresh calendar (background refetch)
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.APPLICATIONS] });
-      getShiftInvalidationKeys().forEach(key => 
-        queryClient.invalidateQueries({ queryKey: [key] })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.VENUE_APPLICATIONS });
+      getVenueShiftInvalidationKeys().forEach(key => 
+        queryClient.invalidateQueries({ queryKey: key })
       );
       
       toast({
@@ -1895,8 +1896,8 @@ function ProfessionalCalendarContent({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.APPLICATIONS] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SHIFTS] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.VENUE_APPLICATIONS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.VENUE_SHIFTS });
       toast({
         title: "Event updated",
         description: "Shift has been rescheduled successfully",
@@ -1921,8 +1922,8 @@ function ProfessionalCalendarContent({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SHIFTS] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.APPLICATIONS] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.VENUE_SHIFTS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.VENUE_APPLICATIONS });
       toast({
         title: "Staff invited",
         description: "An invitation has been sent to the selected professional",
@@ -1948,8 +1949,8 @@ function ProfessionalCalendarContent({
       return response.json();
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SHIFTS] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.APPLICATIONS] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.VENUE_SHIFTS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.VENUE_APPLICATIONS });
       const count = variables.professionals.length;
       toast({
         title: `${count} professional${count > 1 ? 's' : ''} invited`,

@@ -277,6 +277,7 @@ export function MedicalCertificateUpload({
                   src={previewUrl} 
                   alt="Certificate preview" 
                   className="w-20 h-20 object-cover rounded-lg"
+                  loading="lazy"
                 />
               ) : (
                 <div className="w-20 h-20 bg-muted rounded-lg flex items-center justify-center">
@@ -320,6 +321,7 @@ export function MedicalCertificateUpload({
           <Label htmlFor="notes">Additional Notes (Optional)</Label>
           <Textarea
             id="notes"
+            aria-label="Additional notes about your medical situation (optional)"
             placeholder="Add any relevant information about your medical situation..."
             value={additionalNotes}
             onChange={(e) => setAdditionalNotes(e.target.value)}
@@ -371,4 +373,3 @@ export function MedicalCertificateUpload({
   );
 }
 
-export default MedicalCertificateUpload;

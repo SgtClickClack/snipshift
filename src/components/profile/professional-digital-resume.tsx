@@ -1027,16 +1027,16 @@ export default function ProfessionalDigitalResume({
                 )}
                 {isEditing && (
                   <Button variant="outline" className="mt-4 w-full" onClick={() => {
-                    const salonName = prompt('Salon Name:');
+                    const venueName = prompt('Venue Name:');
                     const position = prompt('Position:');
-                    if (salonName && position) {
+                    if (venueName && position) {
                       setProfile(prev => ({
                         ...prev,
                         workHistory: [
                           ...prev.workHistory,
                           {
                             id: `work-${Date.now()}`,
-                            salonName,
+                            salonName: venueName,
                             position,
                             startDate: new Date().toISOString(),
                           },

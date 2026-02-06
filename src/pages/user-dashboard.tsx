@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StarRating } from "@/components/reviews/star-rating";
 import { ReviewList } from "@/components/reviews/review-list";
-import { fetchUserReviews } from "@/lib/api";
+import { fetchUserReviews } from "@/lib/api/shared";
 import { PageLoadingFallback } from "@/components/loading/loading-spinner";
 
 export default function UserDashboard() {

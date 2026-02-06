@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { fetchNotifications, markNotificationAsRead, markAllNotificationsAsRead, Notification } from '@/lib/api';
+import { fetchNotifications, markNotificationAsRead, markAllNotificationsAsRead, Notification } from '@/lib/api/notifications';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

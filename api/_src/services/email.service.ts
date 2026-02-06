@@ -7,13 +7,13 @@
 
 import { render } from '@react-email/render';
 import { resend, isEmailServiceAvailable } from '../lib/resend.js';
-import WelcomeEmail from '../emails/WelcomeEmail.js';
-import ApplicationStatusEmail from '../emails/ApplicationStatusEmail.js';
-import NewMessageEmail from '../emails/NewMessageEmail.js';
-import JobAlertEmail from '../emails/JobAlertEmail.js';
-import SuspensionAlertEmail from '../emails/SuspensionAlertEmail.js';
-import StrikeWarningEmail from '../emails/StrikeWarningEmail.js';
-import AccountRestoredEmail from '../emails/AccountRestoredEmail.js';
+import { WelcomeEmail } from '../emails/WelcomeEmail.js';
+import { ApplicationStatusEmail } from '../emails/ApplicationStatusEmail.js';
+import { NewMessageEmail } from '../emails/NewMessageEmail.js';
+import { JobAlertEmail } from '../emails/JobAlertEmail.js';
+import { SuspensionAlertEmail } from '../emails/SuspensionAlertEmail.js';
+import { StrikeWarningEmail } from '../emails/StrikeWarningEmail.js';
+import { AccountRestoredEmail } from '../emails/AccountRestoredEmail.js';
 import * as emailTemplates from './email-templates.js';
 import { getDb } from '../db/index.js';
 import { failedEmails } from '../db/schema/failed-emails.js';

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -19,7 +19,7 @@ import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { useAuth } from '@/contexts/AuthContext';
 import { CreditCard, Wallet, TrendingUp, CheckCircle2, XCircle, Clock, DollarSign } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
-import { createCheckoutSession, cancelSubscription } from '@/lib/api';
+import { createCheckoutSession, cancelSubscription } from '@/lib/api/shared';
 import { logger } from '@/lib/logger';
 
 interface SubscriptionPlan {

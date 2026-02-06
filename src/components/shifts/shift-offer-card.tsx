@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Clock, Building2 } from "lucide-react";
 import { format } from "date-fns";
-import { ShiftOffer } from "@/lib/api";
+import { ShiftOffer } from "@/lib/api/professional";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface ShiftOfferCardProps {

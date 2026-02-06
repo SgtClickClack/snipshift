@@ -280,7 +280,7 @@ export async function createPaymentIntent(
 }
 
 /**
- * Capture a PaymentIntent (release funds to barber)
+ * Capture a PaymentIntent (release funds to professional)
  */
 export async function capturePaymentIntent(paymentIntentId: string): Promise<boolean> {
   if (!stripe) {

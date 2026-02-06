@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Star } from "lucide-react";
-import { fetchShiftsPendingReview } from "@/lib/api";
+import { fetchShiftsPendingReview } from "@/lib/api/professional";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import ShiftReviewModal from "./shift-review-modal";

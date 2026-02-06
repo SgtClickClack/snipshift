@@ -1,7 +1,8 @@
 import { useMemo, useState, type MouseEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { fetchMyApplications, createConversation, type Application as ApiApplication } from '@/lib/api';
+import { fetchMyApplications, type Application as ApiApplication } from '@/lib/api/professional';
+import { createConversation } from '@/lib/api/shared';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -88,7 +89,7 @@ function getStatusBadge(status: ApplicationStatus) {
     case 'shortlisted':
       return (
         <Badge className="bg-blue-50 text-blue-700 border-blue-200">
-          Salon is interested
+          Venue is interested
         </Badge>
       );
     case 'interviewing':
@@ -193,12 +194,12 @@ export default function MyApplicationsPage() {
     withdrawMutation.mutate(applicationId);
   };
 
-  const handleMessageSalon = async (application: Application, e: MouseEvent) => {
+  const handleMessageVenue = async (application: Application, e: MouseEvent) => {
     e.stopPropagation();
     if (!application.businessId) {
       toast({
         title: 'Error',
-        description: 'Unable to message salon. Business information not available.',
+        description: 'Unable to message venue. Business information not available.',
         variant: 'destructive',
       });
       return;
@@ -289,7 +290,7 @@ export default function MyApplicationsPage() {
                     key={application.id}
                     application={application}
                     onViewDetails={handleViewDetails}
-                    onMessageSalon={handleMessageSalon}
+                    onMessageVenue={handleMessageVenue}
                     onWithdraw={handleWithdraw}
                   />
                 ))}
@@ -319,7 +320,7 @@ export default function MyApplicationsPage() {
                     key={application.id}
                     application={application}
                     onViewDetails={handleViewDetails}
-                    onMessageSalon={handleMessageSalon}
+                    onMessageVenue={handleMessageVenue}
                     onWithdraw={handleWithdraw}
                   />
                 ))}
@@ -335,11 +336,11 @@ export default function MyApplicationsPage() {
 interface ApplicationCardProps {
   application: Application;
   onViewDetails: (jobId: string, e: MouseEvent) => void;
-  onMessageSalon: (application: Application, e: MouseEvent) => void;
+  onMessageVenue: (application: Application, e: MouseEvent) => void;
   onWithdraw: (applicationId: string, e: MouseEvent) => void;
 }
 
-function ApplicationCard({ application, onViewDetails, onMessageSalon, onWithdraw }: ApplicationCardProps) {
+function ApplicationCard({ application, onViewDetails, onMessageVenue, onWithdraw }: ApplicationCardProps) {
   const canWithdraw = application.status === 'pending';
   const canMessage = application.status === 'shortlisted' || application.status === 'interviewing';
 
@@ -347,7 +348,7 @@ function ApplicationCard({ application, onViewDetails, onMessageSalon, onWithdra
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-6">
         <div className="flex flex-col md:flex-row gap-4">
-          {/* Salon Avatar */}
+          {/* Venue Avatar */}
           <div className="flex-shrink-0">
             <Avatar className="h-16 w-16">
               <AvatarImage src={application.shopAvatar} alt={application.shopName} />
@@ -410,10 +411,10 @@ function ApplicationCard({ application, onViewDetails, onMessageSalon, onWithdra
                 <Button
                   variant="default"
                   size="sm"
-                  onClick={(e) => onMessageSalon(application, e)}
+                  onClick={(e) => onMessageVenue(application, e)}
                 >
                   <MessageSquare className="h-4 w-4 mr-2" />
-                  Message Salon
+                  Message Venue
                 </Button>
               )}
               {canWithdraw && (

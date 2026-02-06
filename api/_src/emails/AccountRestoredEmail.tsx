@@ -337,5 +337,3 @@ const footer = {
   margin: '32px 0 0 0',
   textAlign: 'center' as const,
 };
-
-export default AccountRestoredEmail;

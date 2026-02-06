@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -38,8 +38,52 @@ import {
   ArrowUpRight,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { SEO } from '@/components/seo/SEO';
+
+// Lazy-load recharts to reduce initial bundle (~300 kB) for users who never visit earnings
+const EarningsChart = lazy(() =>
+  import('recharts').then((m) => ({
+    default: ({
+      data,
+      formatCurrency,
+    }: {
+      data: MonthlyEarnings[];
+      formatCurrency: (n: number) => string;
+    }) => (
+      <m.ResponsiveContainer width="100%" height="100%">
+        <m.BarChart data={data}>
+          <m.CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+          <m.XAxis
+            dataKey="month"
+            className="text-xs"
+            tick={{ fill: 'currentColor' }}
+          />
+          <m.YAxis
+            className="text-xs"
+            tick={{ fill: 'currentColor' }}
+            tickFormatter={(value) => `$${value}`}
+          />
+          <m.Tooltip
+            contentStyle={{
+              backgroundColor: 'hsl(var(--card))',
+              border: '1px solid hsl(var(--border))',
+              borderRadius: '8px',
+            }}
+            formatter={(value) =>
+              formatCurrency(typeof value === 'number' ? value : Number(value) || 0)
+            }
+            labelFormatter={(label) => `Month: ${label}`}
+          />
+          <m.Bar
+            dataKey="earnings"
+            fill="hsl(var(--primary))"
+            radius={[8, 8, 0, 0]}
+          />
+        </m.BarChart>
+      </m.ResponsiveContainer>
+    ),
+  }))
+);
 
 export interface Transaction {
   id: string;
@@ -371,37 +415,13 @@ export default function EarningsPage() {
           </CardHeader>
           <CardContent>
             <div className="h-80 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.monthlyEarnings}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis 
-                    dataKey="month" 
-                    className="text-xs"
-                    tick={{ fill: 'currentColor' }}
-                  />
-                  <YAxis 
-                    className="text-xs"
-                    tick={{ fill: 'currentColor' }}
-                    tickFormatter={(value) => `$${value}`}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                    }}
-                    formatter={(value) =>
-                      formatCurrency(typeof value === "number" ? value : Number(value) || 0)
-                    }
-                    labelFormatter={(label) => `Month: ${label}`}
-                  />
-                  <Bar 
-                    dataKey="earnings" 
-                    fill="hsl(var(--primary))"
-                    radius={[8, 8, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              <Suspense
+                fallback={
+                  <div className="h-full w-full animate-pulse rounded bg-muted" aria-hidden="true" />
+                }
+              >
+                <EarningsChart data={data.monthlyEarnings} formatCurrency={formatCurrency} />
+              </Suspense>
             </div>
           </CardContent>
         </Card>

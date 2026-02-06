@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { OpeningHours } from '@/components/calendar/calendar-settings-modal';
 import ShiftStructurePreview, { ShiftSplitType } from './shift-structure-preview';
 import { apiRequest } from '@/lib/queryClient';
-import { generateRoster, GenerateRosterPayload } from '@/lib/api';
+import { generateRoster, GenerateRosterPayload } from '@/lib/api/venue';
 import { Clock, Save } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { addMonths, startOfToday, endOfDay } from 'date-fns';

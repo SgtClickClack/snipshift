@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Zap, Clock } from 'lucide-react';
-import { fetchPriorityBoostStatus } from '@/lib/api';
+import { fetchPriorityBoostStatus } from '@/lib/api/analytics/professional';
 import { formatDistanceToNow } from 'date-fns';
 import { motion } from 'framer-motion';
 

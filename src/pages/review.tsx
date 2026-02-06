@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { fetchJobDetails, fetchJobApplications } from '@/lib/api';
+import { fetchJobDetails, fetchJobApplications } from '@/lib/api/shared';
 import { ReviewForm } from '@/components/reviews/review-form';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Card, CardContent } from '@/components/ui/card';

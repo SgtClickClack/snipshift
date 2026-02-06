@@ -229,4 +229,3 @@ export function VenueStatusCard() {
   );
 }
 
-export default VenueStatusCard;

@@ -92,10 +92,10 @@ type LegacyJobRole = 'barber' | 'hairdresser' | 'stylist' | 'other';
  * validation backwards-compatible but coerce hospitality roles to `other` for storage.
  */
 function toLegacyJobRole(role: unknown): LegacyJobRole {
-  if (!role) return 'barber';
+  if (!role) return 'barber'; // DB default enum value
 
   switch (role) {
-    case 'barber':
+    case 'barber': // DB enum values (legacy)
     case 'hairdresser':
     case 'stylist':
     case 'other':
@@ -172,10 +172,16 @@ const corsOptions = {
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      // In production, log but allow (for now) to avoid breaking existing integrations
-      // TODO: Tighten this in production after verifying all domains
-      console.warn(`[CORS] Request from unauthorized origin: ${origin}`);
-      callback(null, true);
+      const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+      if (isProduction) {
+        // SECURITY: Reject unauthorized origins in production
+        console.warn(`[CORS] Blocked request from unauthorized origin: ${origin}`);
+        callback(new Error('Not allowed by CORS'));
+      } else {
+        // Allow in development for convenience
+        console.warn(`[CORS] Dev-mode allowing unauthorized origin: ${origin}`);
+        callback(null, true);
+      }
     }
   },
   credentials: true,
@@ -189,8 +195,9 @@ app.use(cors(corsOptions));
 // to receive raw body for signature verification
 app.use('/api/webhooks', webhooksRouter);
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// SECURITY: Limit payload size to prevent DoS via large request bodies
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // Correlation ID middleware - MUST be before request logging
 app.use(correlationIdMiddleware);
@@ -671,7 +678,7 @@ app.get('/api/jobs', asyncHandler(async (req, res) => {
   
   // Advanced filters
   const search = req.query.search as string | undefined;
-  const role = req.query.role as 'barber' | 'hairdresser' | 'stylist' | 'other' | undefined;
+  const role = req.query.role as 'barber' | 'hairdresser' | 'stylist' | 'other' | undefined; // DB enum values
   const minRate = req.query.minRate ? parseFloat(req.query.minRate as string) : undefined;
   const maxRate = req.query.maxRate ? parseFloat(req.query.maxRate as string) : undefined;
   const startDate = req.query.startDate as string | undefined;

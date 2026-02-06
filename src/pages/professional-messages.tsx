@@ -11,7 +11,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 
 export interface ChatMessage {
   id: string;
-  type: 'user' | 'salon' | 'system';
+  type: 'user' | 'venue' | 'system';
   content: string;
   timestamp: string;
   senderId?: string;
@@ -20,9 +20,9 @@ export interface ChatMessage {
 
 export interface Conversation {
   id: string;
-  salonId: string;
-  salonName: string;
-  salonAvatar?: string;
+  venueId: string;
+  venueName: string;
+  venueAvatar?: string;
   isOnline: boolean;
   jobId?: string;
   jobTitle?: string;
@@ -48,7 +48,7 @@ export default function ProfessionalMessagesPage() {
 
   // Filter conversations based on search
   const filteredConversations = (conversations || []).filter(conv =>
-    conv.salonName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    conv.venueName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -208,9 +208,9 @@ export default function ProfessionalMessagesPage() {
                     <div className="flex items-start gap-3">
                       <div className="relative">
                         <Avatar className="h-12 w-12 flex-shrink-0">
-                          <AvatarImage src={conversation.salonAvatar} />
+                          <AvatarImage src={conversation.venueAvatar} />
                           <AvatarFallback className="bg-primary text-primary-foreground">
-                            {getInitials(conversation.salonName)}
+                            {getInitials(conversation.venueName)}
                           </AvatarFallback>
                         </Avatar>
                         {conversation.isOnline && (
@@ -219,7 +219,7 @@ export default function ProfessionalMessagesPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <p className="font-semibold truncate">{conversation.salonName}</p>
+                          <p className="font-semibold truncate">{conversation.venueName}</p>
                           <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                             {conversation.unreadCount > 0 && (
                               <div className="h-2 w-2 rounded-full bg-primary" />
@@ -271,14 +271,14 @@ export default function ProfessionalMessagesPage() {
                   </Button>
 
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={selectedConversation.salonAvatar} />
+                    <AvatarImage src={selectedConversation.venueAvatar} />
                     <AvatarFallback className="bg-primary text-primary-foreground">
-                      {getInitials(selectedConversation.salonName)}
+                      {getInitials(selectedConversation.venueName)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="font-semibold truncate">{selectedConversation.salonName}</p>
+                      <p className="font-semibold truncate">{selectedConversation.venueName}</p>
                       <div className="flex items-center gap-1">
                         <Circle
                           className={`h-2 w-2 ${

@@ -317,11 +317,6 @@ export function EarningsOverview({ className, onViewAll }: EarningsOverviewProps
             height={80} 
             color="#10b981"
           />
-          <div className="pointer-events-none absolute left-[55%] top-1 flex items-center gap-2 text-[10px] text-zinc-400 earnings-annotation">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#10b981]" />
-            Pivot: SnipShift → HospoGo
-          </div>
-          <div className="pointer-events-none absolute left-[55%] top-5 h-12 w-px bg-[#10b981]/60" />
         </div>
         
         {/* Recent payouts count */}
@@ -345,4 +340,3 @@ export function EarningsOverview({ className, onViewAll }: EarningsOverviewProps
   );
 }
 
-export default EarningsOverview;

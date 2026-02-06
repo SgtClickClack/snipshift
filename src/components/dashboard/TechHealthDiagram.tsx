@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useState } from 'react';
-import mermaid from 'mermaid';
 
+// Dynamic import: Mermaid (~400kB) only loads when Tech Health diagram is viewed
 const MERMAID_THEME = {
   background: '#1e293b',
   primaryColor: '#0f172a',
@@ -46,16 +46,24 @@ export function TechHealthDiagram() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    mermaid.initialize({
-      startOnLoad: false,
-      theme: 'base',
-      themeVariables: MERMAID_THEME,
-      flowchart: { curve: 'basis' },
-    });
+    let cancelled = false;
 
-    mermaid
-      .render(`tech-health-${diagramId}`, diagram)
-      .then(({ svg: renderedSvg }) => {
+    import('mermaid')
+      .then(({ default: mermaid }) => {
+        if (cancelled) return;
+
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: 'base',
+          themeVariables: MERMAID_THEME,
+          flowchart: { curve: 'basis' },
+        });
+
+        return mermaid.render(`tech-health-${diagramId}`, diagram);
+      })
+      .then((result) => {
+        if (cancelled || !result) return;
+        const { svg: renderedSvg } = result;
         const parser = new DOMParser();
         const doc = parser.parseFromString(renderedSvg, 'image/svg+xml');
         const svgEl = doc.querySelector('svg');
@@ -79,7 +87,13 @@ export function TechHealthDiagram() {
         const serialized = new XMLSerializer().serializeToString(doc.documentElement);
         setSvg(serialized);
       })
-      .catch(() => setSvg(''));
+      .catch(() => {
+        if (!cancelled) setSvg('');
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [diagram, diagramId]);
 
   return (

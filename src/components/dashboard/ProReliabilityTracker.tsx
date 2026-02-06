@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Shield, AlertTriangle, Ban, Trophy, Star, Clock, TrendingUp, FileCheck, Zap, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MedicalCertificateUpload } from '@/components/appeals/MedicalCertificateUpload';
-import { fetchPriorityBoostStatus } from '@/lib/api';
+import { fetchPriorityBoostStatus } from '@/lib/api/analytics/professional';
 
 interface ReputationStats {
   strikes: number;
@@ -433,4 +433,3 @@ export function ProReliabilityTracker() {
   );
 }
 
-export default ProReliabilityTracker;

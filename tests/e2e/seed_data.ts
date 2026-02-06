@@ -1,4 +1,4 @@
-﻿import { Page, BrowserContext } from '@playwright/test';
+import { Page, BrowserContext } from '@playwright/test';
 
 /**
  * Seed Data Helper for Calendar Lifecycle E2E Tests
@@ -25,9 +25,6 @@ export const TEST_VENUE_OWNER: TestUser = {
   currentRole: 'business',
   isOnboarded: true,
 };
-
-// Legacy alias for backward compatibility
-export const TEST_SHOP_OWNER = TEST_VENUE_OWNER;
 
 // Stable UUID constants for use across all specs
 export const TEST_VENUE_ID = TEST_VENUE_OWNER.id;
@@ -219,7 +216,7 @@ export async function setupShiftMocks(
       hourlyRate: Number(body.hourlyRate) || 45,
       status: body.status || 'draft',
       location: body.location,
-      employerId: body.employerId || TEST_SHOP_OWNER.id,
+      employerId: body.employerId || TEST_VENUE_OWNER.id,
       assigneeId: body.assigneeId || null,
     };
     shifts.push(newShift);
@@ -481,7 +478,7 @@ export async function setupShiftMocks(
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ id: TEST_SHOP_OWNER.id, role: 'business' }),
+      body: JSON.stringify({ id: TEST_VENUE_OWNER.id, role: 'business' }),
     });
   });
 

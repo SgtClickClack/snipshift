@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { fetchShiftOffers, acceptShiftOffer, declineShiftOffer, ShiftOffer } from "@/lib/api";
+import { fetchShiftOffers, acceptShiftOffer, declineShiftOffer, ShiftOffer } from "@/lib/api/professional";
 import { ShiftOfferCard } from "./shift-offer-card";
 import { useToast } from "@/hooks/useToast";
 import { Inbox, Loader2, BellRing } from "lucide-react";

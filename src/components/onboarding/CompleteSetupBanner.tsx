@@ -139,4 +139,3 @@ export function CompleteSetupBanner({ className = '' }: CompleteSetupBannerProps
   );
 }
 
-export default CompleteSetupBanner;

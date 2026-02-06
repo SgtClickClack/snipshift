@@ -210,5 +210,3 @@ const footer = {
   margin: '16px 0',
 };
 
-export default ApplicationStatusEmail;
-

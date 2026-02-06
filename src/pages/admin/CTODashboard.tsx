@@ -14,7 +14,7 @@
  * the next 100 venues."
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -53,7 +53,8 @@ import { useToast, TOAST_DURATION } from '@/hooks/useToast';
 import { formatDateSafe } from '@/utils/date-formatter';
 import OmniChat from '@/components/admin/OmniChat';
 import BriefingOverlay from '@/components/admin/BriefingOverlay';
-import { TechHealthDiagram } from '@/components/dashboard/TechHealthDiagram';
+// Lazy-load TechHealthDiagram (mermaid ~400kB) - only when CTO Dashboard is viewed
+const TechHealthDiagram = lazy(() => import('@/components/dashboard/TechHealthDiagram').then(m => ({ default: m.TechHealthDiagram })));
 import {
   Brain,
   Activity,
@@ -1095,7 +1096,9 @@ function CTODashboardInner() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    <TechHealthDiagram />
+                    <Suspense fallback={<div className="text-xs text-zinc-500">Loading architecture diagram...</div>}>
+                      <TechHealthDiagram />
+                    </Suspense>
                     <p className="text-[10px] text-zinc-500">
                       Mermaid-rendered topology stays in sync with the live platform stack.
                     </p>

@@ -187,7 +187,7 @@ export async function haveBothPartiesReviewed(shiftId: string): Promise<boolean>
     return false;
   }
 
-  // Check if shop has reviewed barber
+  // Check if venue has reviewed professional
   const shopReview = await db
     .select()
     .from(shiftReviews)
@@ -200,8 +200,8 @@ export async function haveBothPartiesReviewed(shiftId: string): Promise<boolean>
     )
     .limit(1);
 
-  // Check if barber has reviewed shop
-  const barberReview = await db
+  // Check if professional has reviewed venue
+  const professionalReview = await db
     .select()
     .from(shiftReviews)
     .where(
@@ -213,7 +213,7 @@ export async function haveBothPartiesReviewed(shiftId: string): Promise<boolean>
     )
     .limit(1);
 
-  return shopReview.length > 0 && barberReview.length > 0;
+  return shopReview.length > 0 && professionalReview.length > 0;
 }
 
 /**

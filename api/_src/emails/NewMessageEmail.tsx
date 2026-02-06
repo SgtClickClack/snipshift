@@ -165,6 +165,3 @@ const footer = {
   lineHeight: '24px',
   margin: '16px 0',
 };
-
-export default NewMessageEmail;
-

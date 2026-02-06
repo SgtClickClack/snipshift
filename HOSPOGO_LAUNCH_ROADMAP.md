@@ -8,6 +8,77 @@
 
 ---
 
+### Update: 2026-02-06 - Phase 1 Debt Cleanup (Knip)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Removed unused dependencies and devDependencies flagged by Knip.
+- Consolidated duplicate default/named exports to named-only and aligned imports.
+- Removed legacy job API helpers (`fetchJobs`, `createJob`, `deleteJob`) in favor of shift-first flows.
+- Hardened markdown lint suppression for the tracking log file.
+
+**Impact:**
+- Dependency graph is leaner and Knip noise is reduced for ongoing cleanup.
+
+---
+
+### Update: 2026-02-06 - Onboarding Refactor (Step Components)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Extracted onboarding step UI into dedicated components for readability and smaller file size.
+- Centralized onboarding persistence into a shared storage utility with TTL safeguards.
+- Moved onboarding data types into a shared type module.
+- Isolated completion and loading screens into reusable onboarding components.
+
+**Impact:**
+- Onboarding flow is easier to maintain while preserving current behavior.
+
+---
+
+### Update: 2026-02-06 - Knip Baseline Configuration
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added a root `knip.json` with explicit frontend/API/test/script entry points.
+- Ignored legacy and static asset folders that are not imported by TS/ESM.
+
+**Impact:**
+- `npx knip` reports a more accurate unused surface for incremental cleanup.
+
+---
+
+### Update: 2026-02-06 - Knip Cleanup (Script + E2E Alias)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added `sharp` as a dev dependency for the logo crop script.
+- Ignored `docker-compose` binary warnings in Knip.
+- Removed duplicate E2E test export alias and standardized on `TEST_VENUE_OWNER`.
+
+**Impact:**
+- Knip noise reduced for script dependencies and duplicate export warnings.
+
+---
+
+### Update: 2026-02-06 - Knip Dependency Cleanup (API)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Updated Knip workspace entries to include all TS/TSX sources for accurate dependency detection.
+- Removed unused API dependencies (`jwt-decode`, `react-router`, `react-router-dom`) and dev dependency (`esbuild`).
+- Added `qs` to API dependencies and removed the redundant override entry.
+
+**Impact:**
+- Knip now reports a clean dependency surface for API and workspace config.
+
+---
+
 ### Update: 2026-02-06 - Shift Apply + Waitlist Type Safety
 
 **Status:** ✅ **UPDATED**

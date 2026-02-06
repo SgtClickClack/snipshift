@@ -552,10 +552,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (apiResponse.user === null && firebaseUser.uid) {
         isOnboardingModeRef.current = true;
         setIsRegistered(false);
-        releaseNavigationLock();
         setIsTransitioning(false);
         setIsVenueLoaded(true); // No venue needed for new users
         setIsSystemReady(true); // Auth complete (needs onboarding)
+        releaseNavigationLock(); // SECURITY: unlock AFTER system is marked ready
         setUser(null);
         
         // INVESTOR BRIEFING FIX: New users MUST go to /onboarding - the modern gateway
@@ -601,9 +601,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // PERFORMANCE FIX: Release navigation lock IMMEDIATELY after user profile resolves
       // This drops TTI from ~6s to <1s by not blocking on /api/venues/me
       // Venue data streams in as a non-blocking background update
-      releaseNavigationLock();
       setIsTransitioning(false);
       setIsSystemReady(true); // User profile is enough to mark system ready
+      releaseNavigationLock(); // SECURITY: unlock AFTER system is marked ready
       
       // INVESTOR BRIEFING FIX: Mark session as having valid authentication
       // This prevents ghost redirects during background token refresh cycles
@@ -822,7 +822,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Primary async function to handle the complete auth handshake
     const initializeAuth = async () => {
       // E2E Bypass: Check for test user in sessionStorage (or localStorage when restored from Playwright storageState)
-      if (typeof window !== 'undefined') {
+      // SECURITY: Only allow in E2E test mode to prevent sessionStorage injection attacks in production
+      if (typeof window !== 'undefined' && import.meta.env.VITE_E2E === '1') {
         const e2eUserStr = safeGetItem('hospogo_test_user', true) || safeGetItem('hospogo_test_user', false);
         if (e2eUserStr) {
           try {
@@ -839,6 +840,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setToken('mock-e2e-token'); // So pages that check token (e.g. role-selection) don't stay on loader
             setIsRegistered(true);
             setIsLoading(false);
+            setIsSystemReady(true);
             releaseNavigationLock();
             return; // Skip Firebase listener in E2E mode if test user is forced
           } catch (e) {
@@ -916,8 +918,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(null);
         setToken(null);
         setIsLoading(false);
-        releaseNavigationLock();
         setIsSystemReady(true); // Error state - system ready for error handling
+        releaseNavigationLock(); // SECURITY: unlock AFTER system is marked ready
       }
     };
 

@@ -53,6 +53,7 @@ function renderAnswer(text: string) {
 function FAQItem({ question, answer, isOpen, onClick, icon, id }: FAQItemProps) {
   const buttonId = `${id}-button`;
   const panelId = `${id}-panel`;
+  const ariaExpanded = isOpen ? 'true' : 'false';
   const buttonContent = (
     <>
       <span className={`text-lg font-bold flex items-center gap-2 ${isOpen ? 'text-[#BAFF39]' : 'text-white'} group-hover:text-[#BAFF39]`}>
@@ -74,7 +75,7 @@ function FAQItem({ question, answer, isOpen, onClick, icon, id }: FAQItemProps) 
         onClick={onClick}
         id={buttonId}
         className="w-full py-6 flex justify-between items-center text-left hover:text-[#BAFF39] transition-colors group"
-        aria-expanded={isOpen}
+        aria-expanded={ariaExpanded}
         aria-controls={panelId}
         aria-label={question}
         title={question}

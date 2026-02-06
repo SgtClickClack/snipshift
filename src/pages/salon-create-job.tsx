@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
-import { createShift } from '@/lib/api';
+import { createShift } from '@/lib/api/shared';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -225,9 +225,9 @@ export default function SalonCreateJobPage() {
     try {
       await createShift(payload);
       // Ensure "My Listings" and feeds refresh immediately after posting.
-      queryClient.invalidateQueries({ queryKey: ['shop-shifts', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['shop-schedule-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['venue-shifts', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['venue-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['venue-schedule-shifts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/jobs'] });
       toast({
@@ -259,7 +259,7 @@ export default function SalonCreateJobPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
-          <p className="text-muted-foreground">This page is only available for salon owners.</p>
+          <p className="text-muted-foreground">This page is only available for venue owners.</p>
         </div>
       </div>
     );
@@ -267,7 +267,7 @@ export default function SalonCreateJobPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <SEO title="Create Job Post - Salon Dashboard" />
+      <SEO title="Create Job Post - Venue Dashboard" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-6">

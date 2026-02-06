@@ -658,4 +658,3 @@ export function BulkInvitationReview() {
   );
 }
 
-export default BulkInvitationReview;

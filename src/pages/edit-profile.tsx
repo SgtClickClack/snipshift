@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { LocationInput } from '@/components/ui/location-input';
 import { useToast } from '@/hooks/useToast';
-import { updateUserProfile } from '@/lib/api';
+import { updateUserProfile } from '@/lib/api/core';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { AlertTriangle } from 'lucide-react';
 

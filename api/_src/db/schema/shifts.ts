@@ -50,7 +50,7 @@ export const shifts = pgTable('shifts', {
   paymentIntentId: varchar('payment_intent_id', { length: 255 }),
   stripeChargeId: varchar('stripe_charge_id', { length: 255 }),
   applicationFeeAmount: integer('application_fee_amount'), // HospoGo commission in cents
-  transferAmount: integer('transfer_amount'), // Amount sent to barber in cents
+  transferAmount: integer('transfer_amount'), // Amount sent to professional in cents
   location: varchar('location', { length: 512 }),
   lat: decimal('lat', { precision: 10, scale: 7 }), // Latitude for distance filtering
   lng: decimal('lng', { precision: 10, scale: 7 }), // Longitude for distance filtering

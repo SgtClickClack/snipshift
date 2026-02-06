@@ -1,0 +1,37 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "workspaces": {
+    ".": {
+      "project": ["tsconfig.json"],
+      "paths": {
+        "@/*": ["src/*"],
+        "@shared/*": ["src/shared/*"]
+      },
+      "entry": [
+        "src/**/*.{ts,tsx}",
+        "start-servers.js",
+        "playwright.frontend.config.ts",
+        "tests/**/*.ts",
+        "e2e/**/*.ts",
+        "frontend/e2e/**/*.ts",
+        "scripts/**/*.{ts,js,cjs,mjs}"
+      ],
+      "ignore": ["_legacy_snipshift/**", "public/**", "docs/**"]
+    },
+    "api": {
+      "project": ["tsconfig.json"],
+      "paths": {
+        "@/*": ["_src/*"]
+      },
+      "entry": [
+        "_src/**/*.{ts,tsx}",
+        "index.ts",
+        "start-dev.js",
+        "vitest.config.auth-check.ts",
+        "scripts/**/*.{ts,sql,md}"
+      ],
+      "ignore": ["api/drizzle/**", "api/docker/**"],
+      "ignoreBinaries": ["docker-compose"]
+    }
+  }
+}

@@ -472,11 +472,11 @@ router.get('/pending-review', authenticateUser, asyncHandler(async (req: Authent
   const isAdmin = roleSet.has('admin');
 
   // Find shifts that need review:
-  // 1. For shops: shifts with status 'pending_completion' or 'completed' where shop hasn't reviewed barber
-  // 2. For barbers: shifts with status 'pending_completion' or 'completed' where barber hasn't reviewed shop
+  // 1. For venues: shifts with status 'pending_completion' or 'completed' where venue hasn't reviewed professional
+  // 2. For professionals: shifts with status 'pending_completion' or 'completed' where professional hasn't reviewed venue
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
-  // Get shifts where user is employer (shop) and needs to review barber
+  // Get shifts where user is employer (venue) and needs to review professional
   const shopShifts = (isBusiness || isAdmin)
     ? await shiftsRepo.getShifts({
       employerId: userId,
@@ -485,8 +485,8 @@ router.get('/pending-review', authenticateUser, asyncHandler(async (req: Authent
     })
     : null;
 
-  // Get shifts where user is assignee (barber) and needs to review shop
-  const barberShifts = (isProfessional || isAdmin)
+  // Get shifts where user is assignee (professional) and needs to review venue
+  const professionalShifts = (isProfessional || isAdmin)
     ? await shiftsRepo.getShifts({
       assigneeId: userId,
       status: 'pending_completion',
@@ -497,7 +497,7 @@ router.get('/pending-review', authenticateUser, asyncHandler(async (req: Authent
   // Filter to only include shifts where review hasn't been submitted
   const pendingReviews = [];
 
-  for (const shift of [...(shopShifts?.data || []), ...(barberShifts?.data || [])]) {
+  for (const shift of [...(shopShifts?.data || []), ...(professionalShifts?.data || [])]) {
     if (!shift.assigneeId) continue; // Skip shifts without assignee
 
     const isShop = shift.employerId === userId;
@@ -1724,14 +1724,14 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
     return;
   }
 
-  // Verify barber has completed Stripe Connect onboarding
-  const barber = await usersRepo.getUserById(userId);
-  if (!barber || !barber.stripeAccountId) {
+  // Verify professional has completed Stripe Connect onboarding
+  const professional = await usersRepo.getUserById(userId);
+  if (!professional || !professional.stripeAccountId) {
     res.status(400).json({ message: 'You must complete payout setup before accepting shifts' });
     return;
   }
 
-  const canAcceptShifts = await stripeConnectService.isAccountReady(barber.stripeAccountId);
+  const canAcceptShifts = await stripeConnectService.isAccountReady(professional.stripeAccountId);
   if (!canAcceptShifts) {
     res.status(400).json({ message: 'Your payout account is not fully set up. Please complete onboarding.' });
     return;
@@ -1805,7 +1805,7 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
   // Round commission to 2 decimal places in dollars, then convert to cents
   const commissionAmountDollars = Math.round((shiftAmountDollars * commissionRate) * 100) / 100;
   const commissionAmount = Math.round(commissionAmountDollars * 100);
-  const barberAmount = shiftAmount - commissionAmount;
+  const professionalAmount = shiftAmount - commissionAmount;
 
   // ATOMIC TRANSACTION: Lock shift, verify availability, create payment, update shift
   // If any step fails, rollback transaction and cancel PaymentIntent
@@ -1855,12 +1855,12 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
           paymentMethodId,
           commissionAmount,
           {
-            destination: barber.stripeAccountId || '',
+            destination: professional?.stripeAccountId || '',
           },
           {
             shiftId: shift.id,
-            barberId: userId,
-            shopId: shift.employerId,
+            professionalId: userId,
+            venueId: shift.employerId,
             type: 'shift_payment',
           }
         );
@@ -1887,7 +1887,7 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
           paymentStatus: 'AUTHORIZED',
           paymentIntentId: paymentIntentId,
           applicationFeeAmount: commissionAmount,
-          transferAmount: barberAmount,
+          transferAmount: professionalAmount,
           substitutionRequestedBy: null,
           updatedAt: new Date(),
         })
@@ -2089,14 +2089,14 @@ router.post('/bulk-accept', authenticateUser, asyncHandler(async (req: Authentic
 
   const { shiftIds } = validationResult.data;
 
-  // Verify barber has completed Stripe Connect onboarding
-  const barber = await usersRepo.getUserById(userId);
-  if (!barber || !barber.stripeAccountId) {
+  // Verify professional has completed Stripe Connect onboarding
+  const professional = await usersRepo.getUserById(userId);
+  if (!professional || !professional.stripeAccountId) {
     res.status(400).json({ message: 'You must complete payout setup before accepting shifts' });
     return;
   }
 
-  const canAcceptShifts = await stripeConnectService.isAccountReady(barber.stripeAccountId);
+  const canAcceptShifts = await stripeConnectService.isAccountReady(professional.stripeAccountId);
   if (!canAcceptShifts) {
     res.status(400).json({ message: 'Your payout account is not fully set up. Please complete onboarding.' });
     return;
@@ -2221,7 +2221,7 @@ router.post('/bulk-accept', authenticateUser, asyncHandler(async (req: Authentic
           console.log(`[SHIFTS] Booking fee waived for employer ${shift.employerId} (${plan?.name} tier: ${plan?.tier})`);
         } else {
           // Other subscription (shouldn't happen with current plans): apply standard commission
-          const commissionRate = parseFloat(process.env.HOSPOGO_COMMISSION_RATE || process.env.SNIPSHIFT_COMMISSION_RATE || '0.10');
+          const commissionRate = parseFloat(process.env.HOSPOGO_COMMISSION_RATE || '0.10');
           commissionAmount = Math.round(shiftAmount * commissionRate);
         }
       } else {
@@ -2231,7 +2231,7 @@ router.post('/bulk-accept', authenticateUser, asyncHandler(async (req: Authentic
         console.log(`[SHIFTS] Applying $${PAYMENT_CONFIG.BOOKING_FEE_CENTS / 100} booking fee for employer ${shift.employerId} (no subscription)`);
       }
       
-      const barberAmount = shiftAmount - commissionAmount;
+      const professionalAmount = shiftAmount - commissionAmount;
 
       // ATOMIC TRANSACTION: Lock shift, verify availability, create payment, update shift
       let paymentIntentId: string | null = null;
@@ -2272,8 +2272,8 @@ router.post('/bulk-accept', authenticateUser, asyncHandler(async (req: Authentic
               customerId,
               paymentMethodId,
               commissionAmount,
-              { destination: barber.stripeAccountId || '' },
-              { shiftId: shift.id, barberId: userId, shopId: shift.employerId, type: 'shift_payment' }
+              { destination: professional.stripeAccountId || '' },
+              { shiftId: shift.id, professionalId: userId, venueId: shift.employerId, type: 'shift_payment' }
             );
           } catch (stripeError: any) {
             console.error(`[BULK_ACCEPT] Error creating PaymentIntent for shift ${shiftId}:`, stripeError);
@@ -2293,7 +2293,7 @@ router.post('/bulk-accept', authenticateUser, asyncHandler(async (req: Authentic
               paymentStatus: 'AUTHORIZED',
               paymentIntentId: paymentIntentId,
               applicationFeeAmount: commissionAmount,
-              transferAmount: barberAmount,
+              transferAmount: professionalAmount,
               updatedAt: new Date(),
             })
             .where(eq(shifts.id, shiftId))
@@ -2344,7 +2344,7 @@ router.post('/bulk-accept', authenticateUser, asyncHandler(async (req: Authentic
 
       // Send notification to business
       try {
-        const professionalName = barber.name || 'Professional';
+        const professionalName = professional.name || 'Professional';
         await notificationsService.notifyBusinessOfAcceptance(
           shift.employerId,
           professionalName,
@@ -2528,7 +2528,7 @@ router.post('/copy-previous-week', authenticateUser, asyncHandler(async (req: Au
 }));
 
 // Publish all draft shifts in a date range (draft -> open)
-router.post('/publish-all', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+router.post('/publish-all', authenticateUser, requireBusinessOwner, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ message: 'Unauthorized' });
@@ -4346,7 +4346,7 @@ router.post('/:id/review', authenticateUser, asyncHandler(async (req: Authentica
   }
 
   if (reviewData.type === 'BARBER_REVIEWING_SHOP' && !isBarber) {
-    res.status(403).json({ message: 'Only the barber can submit BARBER_REVIEWING_SHOP reviews' });
+    res.status(403).json({ message: 'Only the professional can submit BARBER_REVIEWING_SHOP reviews' });
     return;
   }
 
@@ -4406,9 +4406,9 @@ router.post('/:id/review', authenticateUser, asyncHandler(async (req: Authentica
     await shiftReviewsRepo.revealReviewsForShift(shiftId);
   }
 
-  // If shop is reviewing barber, mark attendance as completed (unless no-show)
+  // If venue is reviewing professional, mark attendance as completed (unless no-show)
   if (reviewData.type === 'SHOP_REVIEWING_BARBER' && !reviewData.markAsNoShow) {
-    // Capture payment and transfer to barber
+    // Capture payment and transfer to professional
     if (shift.paymentIntentId && shift.paymentStatus === 'AUTHORIZED') {
       try {
         const chargeId = await stripeConnectService.capturePaymentIntentWithChargeId(shift.paymentIntentId);

@@ -340,5 +340,3 @@ const footer = {
   margin: '16px 0',
   textAlign: 'center' as const,
 };
-
-export default SuspensionAlertEmail;

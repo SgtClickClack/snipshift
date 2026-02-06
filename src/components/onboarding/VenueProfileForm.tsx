@@ -61,7 +61,7 @@ function getScoreTier(score: number): { label: string; color: string } {
   if (score >= 70) return { label: 'Stable Zone', color: '#3B82F6' };
   return { label: 'Variable Demand', color: '#F59E0B' };
 }
-import type { VenueOnboardingData } from '@/pages/Onboarding';
+import type { VenueOnboardingData } from '@/types/onboarding';
 
 interface VenueProfileFormProps {
   formData: VenueOnboardingData;
