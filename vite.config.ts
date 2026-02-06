@@ -18,7 +18,13 @@ export default defineConfig(({ mode }) => ({
       jsxRuntime: 'automatic',
     }),
     VitePWA({
-      selfDestroying: true, // Force all users' browsers to dump old cache
+      // STABILIZATION v4.0: Removed selfDestroying: true
+      // Self-destroying caused a race condition with the version-aware invalidation in main.tsx:
+      //   1. selfDestroying tells SW to unregister() itself on activation
+      //   2. main.tsx version check also calls r.unregister() on new deploys
+      //   3. Second call throws InvalidStateError (SW already destroying)
+      // Now: main.tsx version-aware invalidation is the SINGLE source of truth.
+      // SW stays alive for runtime caching (fonts, API, venue chunk).
       registerType: 'autoUpdate',
       includeAssets: ['brand-logo.png', 'brand-wordmark.png', 'brand-icon.png', 'brand-logo-192.png', 'brand-logo-512.png', 'logo.png', 'logo-white.png', 'og-image.jpg'],
       manifest: {
@@ -47,8 +53,9 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
-        // Cleared during transition to ensure no assets precached; forces fresh fetch
-        globPatterns: [],
+        // STABILIZATION v4.0: Restore lightweight precaching for critical shell assets
+        // Only precache index.html and the main entry — all lazy chunks use runtime caching
+        globPatterns: ['**/*.html'],
         // Exclude large files from precaching
         globIgnores: [
           '**/hospogoappicon.png',      // 7.66 MB - too large for precache

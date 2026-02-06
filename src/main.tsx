@@ -3,8 +3,9 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-// --- VERSION-AWARE CACHE INVALIDATION ---
-// Only clear caches when the build version changes, not on every page load.
+// --- VERSION-AWARE CACHE INVALIDATION (Stabilization v4.0) ---
+// SINGLE SOURCE OF TRUTH for cache management. selfDestroying removed from vite.config.ts.
+// Only clear runtime caches when build hash changes. SW stays alive for runtime caching.
 // __BUILD_TIMESTAMP__ is injected by vite.config.ts define block.
 const BUILD_VERSION_KEY = 'hospogo_build_version';
 const currentBuild = typeof __BUILD_TIMESTAMP__ !== 'undefined' ? __BUILD_TIMESTAMP__ : '';
@@ -12,20 +13,22 @@ const currentBuild = typeof __BUILD_TIMESTAMP__ !== 'undefined' ? __BUILD_TIMEST
 try {
   const previousBuild = localStorage.getItem(BUILD_VERSION_KEY);
   if (previousBuild && previousBuild !== currentBuild) {
-    // New deployment detected — clear stale caches
-    console.debug('[PWA] New build detected, clearing stale caches');
+    // New deployment detected — clear only runtime caches (api-cache, venue-chunk-cache)
+    // Preserve font caches and precache (SW autoUpdate handles precache refresh)
+    console.debug('[PWA] New build detected, clearing stale runtime caches');
     if ('caches' in window) {
+      const RUNTIME_CACHE_NAMES = ['api-cache', 'venue-chunk-cache'];
       caches.keys().then(names => names.forEach(name => {
-        try { caches.delete(name); } catch { /* cache already cleared */ }
+        // Only clear runtime caches — let SW manage its own precache + font caches
+        if (RUNTIME_CACHE_NAMES.includes(name)) {
+          try { caches.delete(name); } catch { /* cache already cleared */ }
+        }
       })).catch(() => { /* caches API unavailable */ });
     }
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(regs => 
-        regs.forEach(r => {
-          try { r.unregister(); } catch { /* SW in invalid state — selfDestroying already handled it */ }
-        })
-      ).catch(() => { /* getRegistrations unavailable */ });
-    }
+    // DO NOT manually unregister service workers.
+    // registerType: 'autoUpdate' handles SW lifecycle via skipWaiting + clientsClaim.
+    // Manual unregister races with autoUpdate and causes InvalidStateError.
+
     // Clear ONLY the chunk-related session flag, NOT all storage
     sessionStorage.removeItem('chunk_load_error_reload');
   }
