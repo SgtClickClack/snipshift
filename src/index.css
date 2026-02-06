@@ -64,7 +64,6 @@
     --radius-xl: 1.5rem;   /* 24px */
     --radius-full: 9999px;
     --error: 0 75% 45%;
-    --ring: 81 85% 58%;
     --success: 120 61% 50%;
     --success-foreground: 0 0% 100%;
     --warning: 45 100% 50%;
@@ -133,7 +132,6 @@
     --error: 0 75% 50%;
     --error-foreground: 0 0% 100%;
     --success: 120 61% 50%;
-    --ring: 81 85% 58%;
     --warning: 45 100% 60%;
     --warning-foreground: 0 0% 100%;
     --info: 210 100% 60%;
@@ -245,27 +243,16 @@
 @layer components {
   .btn-neon-primary {
     @apply bg-primary text-primary-foreground font-black py-3 px-8 rounded-full transition-all duration-300;
-    box-shadow: 0 0 5px hsl(var(--primary) / 0.9), 0 0 15px hsl(var(--primary) / 0.5),
-      0 0 30px hsl(var(--primary) / 0.2);
-    animation: neon-hum 3s infinite linear;
+    box-shadow: 0 0 8px hsl(var(--primary) / 0.25), 0 0 20px hsl(var(--primary) / 0.1);
   }
 
   .btn-neon-primary:hover {
-    box-shadow: 0 0 20px hsl(var(--primary) / 0.4);
+    box-shadow: 0 0 12px hsl(var(--primary) / 0.35), 0 0 30px hsl(var(--primary) / 0.15);
+    transform: translateY(-1px);
   }
 
   .btn-neon-outline {
     @apply border-2 border-primary text-primary font-bold py-3 px-8 rounded-full hover:bg-primary hover:text-primary-foreground transition-all;
-  }
-}
-
-@keyframes neon-hum {
-  0%,
-  100% {
-    filter: brightness(1);
-  }
-  50% {
-    filter: brightness(0.95);
   }
 }
 
@@ -350,7 +337,7 @@
 }
 
 .neon-glow {
-  text-shadow: 0 0 5px hsl(var(--primary) / 0.8), 0 0 12px hsl(var(--primary) / 0.4);
+  text-shadow: 0 0 6px hsl(var(--primary) / 0.35), 0 0 16px hsl(var(--primary) / 0.15);
   will-change: filter;
 }
 
@@ -372,7 +359,7 @@ button:active, a:active, [role="button"]:active {
 }
 
 #nprogress .peg {
-  box-shadow: 0 0 10px hsl(var(--primary)), 0 0 5px hsl(var(--primary));
+  box-shadow: 0 0 8px hsl(var(--primary) / 0.6), 0 0 4px hsl(var(--primary) / 0.3);
 }
 
 #nprogress .spinner-icon {

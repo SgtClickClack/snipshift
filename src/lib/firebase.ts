@@ -12,22 +12,19 @@ const getEnv = (key: keyof ImportMetaEnv) => {
   if (!value) {
     throw new Error(`Missing Firebase environment variable: ${key}`);
   }
-  return value;
+  return typeof value === 'string' ? value.trim() : value;
 };
 
 // Project snipshift-75b04: VITE_FIREBASE_PROJECT_ID and VITE_FIREBASE_MESSAGING_SENDER_ID
 // must match this project exactly; mismatches cause Firebase 400 errors (e.g. on token cleanup).
 // 
-// CRITICAL: authDomain must use env variable to avoid COOP (Cross-Origin-Opener-Policy) errors.
-// Hardcoding authDomain causes popup auth to fail with "window.closed" blocked errors.
+// COOP Resolution Complete: same-origin-allow-popups is set in vercel.json and vite.config.ts.
+// The Firebase default authDomain is required for popup auth (not a custom domain).
+// The console warning about window.closed is cosmetic — auth completes via postMessage.
 function buildConfig() {
-  // For local development, use the Firebase default authDomain if VITE_FIREBASE_AUTH_DOMAIN is not set
-  const authDomain = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 
-                     `${getEnv('VITE_FIREBASE_PROJECT_ID')}.firebaseapp.com`;
-  
   return {
     apiKey: getEnv('VITE_FIREBASE_API_KEY'),
-    authDomain,
+    authDomain: getEnv('VITE_FIREBASE_AUTH_DOMAIN'),
     projectId: getEnv('VITE_FIREBASE_PROJECT_ID'),
     storageBucket: getEnv('VITE_FIREBASE_STORAGE_BUCKET'),
     messagingSenderId: getEnv('VITE_FIREBASE_MESSAGING_SENDER_ID'),

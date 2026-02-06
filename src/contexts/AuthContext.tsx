@@ -462,11 +462,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Timer starts AFTER guard checks pass to avoid orphaned timers on deduplication
     console.time('Handshake-to-Unlock');
     
-    // Safety timeout: Ensure timer ends after 3 seconds if Firebase fails to respond
+    // Safety timeout: Ensure timer ends after 1.5 seconds if Firebase fails to respond
+    // Reduced from 3s to 1.5s for snappier dashboard feel when Firebase lags
     handshakeTimeoutRef.current = setTimeout(() => {
       console.timeEnd('Handshake-to-Unlock');
       handshakeTimeoutRef.current = null;
-    }, 3000);
+    }, 1500);
     
     // Mark hydration as started - this ref prevents the duplicate calls
     isHydratingRef.current = true;

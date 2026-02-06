@@ -72,6 +72,10 @@ export default defineConfig(({ mode }) => ({
                 maxEntries: 5,
                 maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
               },
+              cacheableResponse: {
+                statuses: [200],
+                headers: { 'Content-Type': 'application/javascript' },
+              },
             },
           },
           {

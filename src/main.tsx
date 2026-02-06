@@ -1,21 +1,35 @@
-if (typeof window !== "undefined") { if ("caches" in window) { caches.keys().then(names => names.forEach(name => caches.delete(name))); } localStorage.clear(); sessionStorage.clear(); if ("serviceWorker" in navigator) { navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister())); } }
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-// Nuclear Reset: Clear bad Firebase tokens causing 400 errors
-localStorage.clear();
-sessionStorage.clear();
-// Delete Firebase Installations IndexedDB database (causes 400 errors)
+// --- VERSION-AWARE CACHE INVALIDATION ---
+// Only clear caches when the build version changes, not on every page load.
+// __BUILD_TIMESTAMP__ is injected by vite.config.ts define block.
+const BUILD_VERSION_KEY = 'hospogo_build_version';
+const currentBuild = typeof __BUILD_TIMESTAMP__ !== 'undefined' ? __BUILD_TIMESTAMP__ : '';
+
 try {
-  indexedDB.deleteDatabase("firebase-installations-database");
-} catch (e) {
-  // Ignore errors if database doesn't exist
+  const previousBuild = localStorage.getItem(BUILD_VERSION_KEY);
+  if (previousBuild && previousBuild !== currentBuild) {
+    // New deployment detected — clear stale caches
+    console.debug('[PWA] New build detected, clearing stale caches');
+    if ('caches' in window) {
+      caches.keys().then(names => names.forEach(name => caches.delete(name)));
+    }
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => 
+        regs.forEach(r => r.unregister())
+      );
+    }
+    // Clear ONLY the chunk-related session flag, NOT all storage
+    sessionStorage.removeItem('chunk_load_error_reload');
+  }
+  localStorage.setItem(BUILD_VERSION_KEY, currentBuild);
+} catch {
+  // Storage access issues — non-blocking
 }
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
-}
+
 // Import react-big-calendar CSS globally to ensure it loads
 import "react-big-calendar/lib/css/react-big-calendar.css";
 // Pro Dashboard Kill-Switch: Critical fix for white-container glitch in dark mode demos
@@ -23,13 +37,6 @@ import "@/styles/pro-dashboard-overrides.css";
 import { StartupErrorBoundary } from "@/components/error/StartupErrorBoundary";
 import { initializeGTM } from "@/lib/analytics";
 import { logger } from "@/lib/logger";
-
-// Briefing Silence: suppress non-critical Firebase Installations noise
-const originalError = console.error;
-console.error = (...args) => {
-  if (args[0]?.includes?.("firebaseinstallations") || args[0]?.includes?.("400")) return;
-  originalError.apply(console, args);
-};
 
 // Global GTM Guard: Define dummy gtag function if blocked by ad-blockers/privacy extensions
 // This prevents 'undefined' errors throughout the app when tracking scripts are blocked
