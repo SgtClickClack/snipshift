@@ -1114,8 +1114,8 @@ router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: Authentic
       totalCounts: applicationCountMap.size,
     });
   } catch (error: any) {
-    const errorReporting = await import('../services/error-reporting.service.js');
-    await errorReporting.errorReporting.captureError(
+    const { errorReporting } = await import('../services/error-reporting.service.js');
+    await errorReporting.captureError(
       'Failed to batch fetch application counts for shop dashboard',
       error as Error,
       {
@@ -1441,8 +1441,8 @@ router.get('/invitations/pending', authenticateUser, asyncHandler(async (req: Au
       legacyShiftsCount: legacyShifts.length,
     });
   } catch (error: any) {
-    const errorReporting = await import('../services/error-reporting.service.js');
-    await errorReporting.errorReporting.captureError(
+    const { errorReporting } = await import('../services/error-reporting.service.js');
+    await errorReporting.captureError(
       'Failed to batch fetch employer users for invitations',
       error as Error,
       {
@@ -1962,8 +1962,7 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
     // Transaction succeeded - shift is now assigned and payment is authorized
     console.log(`[SHIFT_ACCEPT] Successfully accepted shift ${id} with PaymentIntent ${paymentIntentId}`);
 
-    // Get professional information
-    const professional = await usersRepo.getUserById(userId);
+    // Get professional information (professional already loaded above for Stripe validation)
     const professionalName = professional?.name || 'Professional';
 
     // Send notification to business (non-blocking)
