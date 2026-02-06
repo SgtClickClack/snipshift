@@ -1,15 +1,20 @@
+if ("caches" in window) { caches.keys().then(names => names.forEach(name => caches.delete(name))); } localStorage.clear(); sessionStorage.clear();
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-// Nuclear PWA cache flush: forcefully unregister existing service workers
+// Nuclear Reset: Clear bad Firebase tokens causing 400 errors
+localStorage.clear();
+sessionStorage.clear();
+// Delete Firebase Installations IndexedDB database (causes 400 errors)
+try {
+  indexedDB.deleteDatabase("firebase-installations-database");
+} catch (e) {
+  // Ignore errors if database doesn't exist
+}
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.getRegistrations().then((regs) => {
-    for (let reg of regs) {
-      reg.unregister();
-    }
-  });
+  navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
 }
 // Import react-big-calendar CSS globally to ensure it loads
 import "react-big-calendar/lib/css/react-big-calendar.css";
