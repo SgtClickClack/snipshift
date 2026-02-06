@@ -19,7 +19,7 @@
       "@/*": ["./_src/*"]
     }
   },
-  "include": ["_src/**/*.ts", "_src/**/*.tsx", "index.ts"],
+  "include": ["_src/**/*.ts", "_src/**/*.tsx", "_src/**/*.d.ts", "index.ts"],
   "exclude": ["node_modules", "dist"]
 }
 
