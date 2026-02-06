@@ -117,11 +117,11 @@ const ProfessionalDashboardSkeleton = () => (
       <div className="mb-8 p-6 bg-card border border-border rounded-lg">
         <div className="flex items-center gap-2 mb-4">
           <div className="h-6 w-32 bg-zinc-800 rounded animate-pulse" />
-          <div className="h-5 w-6 bg-[#BAFF39]/20 rounded-full animate-pulse" />
+          <div className="h-5 w-6 bg-primary/20 rounded-full animate-pulse" />
         </div>
         <div className="space-y-3">
           {[1, 2].map((i) => (
-            <div key={i} className="p-4 border border-[#BAFF39]/20 rounded-lg">
+            <div key={i} className="p-4 border border-primary/20 rounded-lg">
               <div className="flex gap-4">
                 <div className="w-16 h-16 rounded-lg bg-zinc-800 animate-pulse flex-shrink-0" />
                 <div className="flex-1 space-y-2">
@@ -132,7 +132,7 @@ const ProfessionalDashboardSkeleton = () => (
                     <div className="h-4 w-20 bg-zinc-800/40 rounded animate-pulse" />
                   </div>
                 </div>
-                <div className="h-8 w-28 bg-[#BAFF39]/20 rounded animate-pulse" />
+                <div className="h-8 w-28 bg-primary/20 rounded animate-pulse" />
               </div>
             </div>
           ))}
@@ -182,7 +182,7 @@ const ProfessionalDashboardSkeleton = () => (
                     <div className="h-3 w-12 bg-zinc-800/40 rounded animate-pulse" />
                   </div>
                 </div>
-                <div className="h-9 w-full bg-[#BAFF39]/20 rounded-lg animate-pulse" />
+                <div className="h-9 w-full bg-primary/20 rounded-lg animate-pulse" />
               </div>
             ))}
           </div>
@@ -582,7 +582,7 @@ function ProfessionalDashboardContent() {
         description: newState 
           ? "You'll receive priority notifications for gap shifts."
           : "Standard shift notifications restored.",
-        className: newState ? "border-[#BAFF39]/50 bg-[#BAFF39]/10" : "",
+        className: newState ? "border-primary/50 bg-primary/10" : "",
       });
     } catch (error) {
       // Toggle state anyway for demo purposes
@@ -592,7 +592,7 @@ function ProfessionalDashboardContent() {
         description: !isStandbyMode 
           ? "You'll receive priority notifications for gap shifts."
           : "Standard shift notifications restored.",
-        className: !isStandbyMode ? "border-[#BAFF39]/50 bg-[#BAFF39]/10" : "",
+        className: !isStandbyMode ? "border-primary/50 bg-primary/10" : "",
       });
     } finally {
       setIsTogglingStandby(false);
@@ -647,7 +647,7 @@ function ProfessionalDashboardContent() {
           recycle={false}
           numberOfPieces={300}
           gravity={0.3}
-          colors={['#BAFF39', '#84cc16', '#22c55e', '#10b981', '#ffffff', '#fbbf24']}
+          colors={['hsl(81,85%,58%)', '#84cc16', '#22c55e', '#10b981', '#ffffff', '#fbbf24']}
           confettiSource={{ x: windowSize.width / 2, y: windowSize.height / 3, w: 0, h: 0 }}
           style={{ zIndex: 9999, pointerEvents: 'none', position: 'fixed' }}
         />
@@ -663,8 +663,8 @@ function ProfessionalDashboardContent() {
         />
       </div>
 
-      {/* Dashboard Header */}
-      <div className="bg-card/95 backdrop-blur-sm shadow-lg border-b-2 border-border/50">
+      {/* Dashboard Header - Unified glassmorphism with Navbar */}
+      <div className="glass-header bg-card/95 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 md:gap-0">
             <div>
@@ -676,23 +676,23 @@ function ProfessionalDashboardContent() {
               <div 
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-300 cursor-pointer ${
                   isStandbyMode 
-                    ? 'bg-[#BAFF39]/10 border-[#BAFF39]/50 shadow-[0_0_15px_rgba(186,255,57,0.3)]' 
+                    ? 'bg-primary/10 border-primary/50 shadow-[0_0_15px_hsl(var(--primary)/0.3)]' 
                     : 'bg-zinc-900/50 border-zinc-700 hover:border-zinc-500'
                 }`}
                 onClick={handleToggleStandby}
                 data-testid="standby-mode-toggle"
               >
                 {isTogglingStandby ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-[#BAFF39]" />
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
                 ) : isStandbyMode ? (
-                  <Zap className={`h-4 w-4 text-[#BAFF39] ${isStandbyMode ? 'animate-pulse' : ''}`} />
+                  <Zap className={`h-4 w-4 text-primary ${isStandbyMode ? 'animate-pulse' : ''}`} />
                 ) : (
                   <Zap className="h-4 w-4 text-zinc-500" />
                 )}
-                <span className={`text-xs font-medium whitespace-nowrap ${isStandbyMode ? 'text-[#BAFF39]' : 'text-zinc-400'}`}>
+                <span className={`text-xs font-medium whitespace-nowrap ${isStandbyMode ? 'text-primary' : 'text-zinc-400'}`}>
                   {isStandbyMode ? 'Standby: Active' : 'Standby: Off'}
                 </span>
-                <div className={`w-8 h-4 rounded-full relative transition-colors ${isStandbyMode ? 'bg-[#BAFF39]' : 'bg-zinc-700'}`}>
+                <div className={`w-8 h-4 rounded-full relative transition-colors ${isStandbyMode ? 'bg-primary' : 'bg-zinc-700'}`}>
                   <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-all ${isStandbyMode ? 'left-4.5 right-0.5' : 'left-0.5'}`} 
                        style={{ left: isStandbyMode ? 'calc(100% - 14px)' : '2px' }} />
                 </div>
@@ -881,7 +881,7 @@ function ProfessionalDashboardContent() {
           {isStandbyMode && (
             <Badge 
               variant="outline" 
-              className="md:hidden bg-[#BAFF39]/10 text-[#BAFF39] border-[#BAFF39]/30 animate-pulse"
+              className="md:hidden bg-primary/10 text-primary border-primary/30 animate-pulse"
             >
               <Zap className="h-3 w-3 mr-1" />
               Priority Active

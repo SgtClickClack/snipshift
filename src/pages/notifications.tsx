@@ -31,9 +31,9 @@ function formatDate(dateString: string): string {
 function getNotificationIcon(type: Notification['type']) {
   switch (type) {
     case 'application_received':
-      return <Briefcase className="h-5 w-5 text-[#BAFF39]" />;
+      return <Briefcase className="h-5 w-5 text-primary" />;
     case 'application_status_change':
-      return <CheckCircle2 className="h-5 w-5 text-[#BAFF39]" />;
+      return <CheckCircle2 className="h-5 w-5 text-primary" />;
     case 'SHIFT_INVITE':
       return <Briefcase className="h-5 w-5 text-blue-600" />;
     case 'SHIFT_CONFIRMED':
@@ -52,7 +52,7 @@ function getNotificationBadge(type: Notification['type']) {
   switch (type) {
     case 'application_received':
       return (
-        <Badge className="bg-[#BAFF39]/10 text-[#BAFF39] border-[#BAFF39]/30">
+        <Badge className="bg-primary/10 text-primary border-primary/30">
           New Application
         </Badge>
       );
@@ -174,7 +174,7 @@ export default function NotificationsPage() {
               <Card
                 key={notification.id}
                 className={`card-chrome cursor-pointer transition-colors ${
-                  !notification.isRead ? 'border-l-4 border-l-[#BAFF39] bg-[#BAFF39]/5' : ''
+                  !notification.isRead ? 'border-l-4 border-l-primary bg-primary/5' : ''
                 } hover:border-white/20`}
                 onClick={() => handleNotificationClick(notification)}
               >
@@ -196,7 +196,7 @@ export default function NotificationsPage() {
                           {formatDate(notification.createdAt)}
                         </span>
                         {!notification.isRead && (
-                          <span className="text-xs text-[#BAFF39] font-medium">New</span>
+                          <span className="text-xs text-primary font-medium">New</span>
                         )}
                       </div>
                     </div>

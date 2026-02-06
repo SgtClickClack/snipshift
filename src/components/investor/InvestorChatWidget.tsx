@@ -4,11 +4,11 @@
  * A floating glassmorphism-style chat widget for the investor portal featuring:
  * - Foundry Agent AI assistant powered by Gemini
  * - Quick question chips for common investor inquiries
- * - Electric Lime (#BAFF39) "AI is Thinking" pulse animation
+ * - Electric Lime (primary) "AI is Thinking" pulse animation
  * - Smooth expand/collapse animations
  * 
  * Brand Colors:
- * - Neon: #BAFF39 (brand-neon)
+ * - Neon: primary (brand-neon)
  * - Dark BG: #0a0a0a
  */
 
@@ -191,13 +191,13 @@ export default function InvestorChatWidget() {
             {/* Header */}
             <div className="flex items-center justify-between p-5 border-b border-white/10 bg-black/50">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#BAFF39]/20 flex items-center justify-center">
-                  <Bot className="w-5 h-5 text-[#BAFF39]" />
+                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                  <Bot className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
                     <h3 className="text-white font-bold text-sm">Foundry Executive Agent</h3>
-                    <ShieldCheck className="w-3.5 h-3.5 text-[#BAFF39]" aria-label="Grounded in audited data" />
+                    <ShieldCheck className="w-3.5 h-3.5 text-primary" aria-label="Grounded in audited data" />
                   </div>
                   <p className="text-gray-500 text-xs">AI Investor Liaison • Audited Intelligence</p>
                 </div>
@@ -223,13 +223,13 @@ export default function InvestorChatWidget() {
                     className={`w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center ${
                       message.role === 'user' 
                         ? 'bg-white/10' 
-                        : 'bg-[#BAFF39]/20'
+                        : 'bg-primary/20'
                     }`}
                   >
                     {message.role === 'user' ? (
                       <User className="w-4 h-4 text-white" />
                     ) : (
-                      <Sparkles className="w-4 h-4 text-[#BAFF39]" />
+                      <Sparkles className="w-4 h-4 text-primary" />
                     )}
                   </div>
                   
@@ -237,7 +237,7 @@ export default function InvestorChatWidget() {
                   <div 
                     className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                       message.role === 'user'
-                        ? 'bg-[#BAFF39] text-black rounded-tr-sm'
+                        ? 'bg-primary text-black rounded-tr-sm'
                         : 'bg-white/5 text-gray-200 rounded-tl-sm border border-white/5'
                     }`}
                   >
@@ -256,22 +256,22 @@ export default function InvestorChatWidget() {
               {/* Thinking Indicator */}
               {queryMutation.isPending && (
                 <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#BAFF39]/20 flex items-center justify-center">
-                    <Sparkles className="w-4 h-4 text-[#BAFF39] animate-pulse" />
+                  <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 text-primary animate-pulse" />
                   </div>
                   <div className="bg-white/5 rounded-2xl rounded-tl-sm px-4 py-3 border border-white/5">
                     <div className="flex items-center gap-2">
                       <div className="flex gap-1">
                         <span 
-                          className="w-2 h-2 bg-[#BAFF39] rounded-full animate-bounce" 
+                          className="w-2 h-2 bg-primary rounded-full animate-bounce" 
                           style={{ animationDelay: '0ms' }} 
                         />
                         <span 
-                          className="w-2 h-2 bg-[#BAFF39] rounded-full animate-bounce" 
+                          className="w-2 h-2 bg-primary rounded-full animate-bounce" 
                           style={{ animationDelay: '150ms' }} 
                         />
                         <span 
-                          className="w-2 h-2 bg-[#BAFF39] rounded-full animate-bounce" 
+                          className="w-2 h-2 bg-primary rounded-full animate-bounce" 
                           style={{ animationDelay: '300ms' }} 
                         />
                       </div>
@@ -293,7 +293,7 @@ export default function InvestorChatWidget() {
                     <button
                       key={i}
                       onClick={() => handleQuickQuestion(q)}
-                      className="px-3 py-1.5 rounded-full text-xs font-medium bg-white/5 text-gray-300 border border-white/10 hover:border-[#BAFF39]/50 hover:text-[#BAFF39] transition-all"
+                      className="px-3 py-1.5 rounded-full text-xs font-medium bg-white/5 text-gray-300 border border-white/10 hover:border-primary/50 hover:text-primary transition-all"
                     >
                       {q.label}
                     </button>
@@ -313,12 +313,12 @@ export default function InvestorChatWidget() {
                   onKeyDown={handleKeyPress}
                   placeholder="Ask about the investment..."
                   disabled={queryMutation.isPending}
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#BAFF39]/50 transition-colors disabled:opacity-50"
+                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-primary/50 transition-colors disabled:opacity-50"
                 />
                 <Button
                   onClick={() => handleSend()}
                   disabled={!inputValue.trim() || queryMutation.isPending}
-                  className="px-4 py-3 rounded-xl bg-[#BAFF39] text-black hover:bg-[#BAFF39]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  className="px-4 py-3 rounded-xl bg-primary text-black hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   <Send className="w-4 h-4" />
                 </Button>
@@ -331,7 +331,7 @@ export default function InvestorChatWidget() {
         {!isOpen && (
           <button
             onClick={() => setIsOpen(true)}
-            className="group relative w-16 h-16 rounded-full bg-[#BAFF39] text-black flex items-center justify-center shadow-[0_4px_30px_rgba(186,255,57,0.4)] hover:shadow-[0_4px_40px_rgba(186,255,57,0.6)] transition-all duration-300 hover:scale-105"
+            className="group relative w-16 h-16 rounded-full bg-primary text-black flex items-center justify-center shadow-[0_4px_30px_rgba(186,255,57,0.4)] hover:shadow-[0_4px_40px_rgba(186,255,57,0.6)] transition-all duration-300 hover:scale-105"
             aria-label="Open chat"
             style={{ animation: 'chatButtonPulse 2s ease-in-out infinite' }}
           >
@@ -339,7 +339,7 @@ export default function InvestorChatWidget() {
             
             {/* Notification Badge */}
             <span className="absolute -top-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md">
-              <Sparkles className="w-3 h-3 text-[#BAFF39]" />
+              <Sparkles className="w-3 h-3 text-primary" />
             </span>
           </button>
         )}
@@ -378,7 +378,7 @@ export default function InvestorChatWidget() {
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #BAFF39;
+          background: hsl(var(--primary));
         }
       `}</style>
     </>

@@ -114,7 +114,7 @@ function RecommendedShiftCard({
 
         <div className="flex justify-between items-center gap-2">
           <div className="flex items-center gap-1">
-            <DollarSign className="h-4 w-4 text-[#BAFF39]" />
+            <DollarSign className="h-4 w-4 text-primary" />
             <span className="font-semibold">${hourlyRate.toFixed(2)}/hr</span>
             {hours && (
               <span className="text-xs text-muted-foreground">

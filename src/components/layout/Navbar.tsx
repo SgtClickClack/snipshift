@@ -146,7 +146,7 @@ export default function Navbar() {
   );
 
   return (
-    <nav className="bg-navbar text-navbar-foreground border-b-2 border-border shadow-xl sticky top-0 z-[var(--z-sticky)] pt-safe overflow-x-hidden w-full" data-presentation-hide="true">
+    <nav className="glass-header bg-navbar/95 text-navbar-foreground border-b-2 border-border shadow-xl sticky top-0 z-[var(--z-sticky)] pt-safe overflow-x-hidden w-full" data-presentation-hide="true">
       <div className="max-w-7xl mx-auto px-2 xs:px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex justify-between items-center h-16 xs:h-20 min-w-0">
           <Link
@@ -198,7 +198,7 @@ export default function Navbar() {
                   >
                     <MessageCircle className="h-4 w-4" />
                     {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-brand-neon text-brand-dark text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-[0_0_10px_rgba(186,255,57,0.35)]" data-testid="unread-badge">
+                      <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-[0_0_10px_hsl(var(--primary)/0.35)]" data-testid="unread-badge">
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </span>
                     )}
@@ -210,11 +210,11 @@ export default function Navbar() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-navbar-foreground hover:text-[#BAFF39] hover:bg-[#BAFF39]/10 relative flex-shrink-0 transition-all duration-300 group"
+                    className="text-navbar-foreground hover:text-primary hover:bg-primary/10 relative flex-shrink-0 transition-all duration-300 group"
                     title="Help Center"
                     data-testid="button-help-navbar"
                   >
-                    <HelpCircle className="h-4 w-4 group-hover:drop-shadow-[0_0_8px_rgba(186,255,57,0.6)] transition-all" />
+                    <HelpCircle className="h-4 w-4 group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)] transition-all" />
                   </Button>
                 </Link>
 
@@ -273,33 +273,33 @@ export default function Navbar() {
                       {isFounderEmail(user.email) && (
                         <>
                           <DropdownMenuSeparator className="bg-steel-600" />
-                          <DropdownMenuLabel className="text-xs text-[#BAFF39] font-semibold flex items-center gap-2">
-                            <Crown className="h-3.5 w-3.5 text-[#BAFF39] drop-shadow-[0_0_4px_rgba(186,255,57,0.6)]" />
+                          <DropdownMenuLabel className="text-xs text-primary font-semibold flex items-center gap-2">
+                            <Crown className="h-3.5 w-3.5 text-primary drop-shadow-[0_0_4px_hsl(var(--primary)/0.6)]" />
                             <span>
                               Hospo<span className="italic font-black">GO</span> CEO Insights
                             </span>
                           </DropdownMenuLabel>
                           <DropdownMenuItem asChild className="focus:bg-steel-700 focus:text-white cursor-pointer">
                             <Link to="/admin/lead-tracker">
-                              <Target className="mr-2 h-4 w-4 text-[#BAFF39]" />
+                              <Target className="mr-2 h-4 w-4 text-primary" />
                               <span>Lead Tracker</span>
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild className="focus:bg-steel-700 focus:text-white cursor-pointer">
                             <Link to="/admin/marketplace">
-                              <TrendingUp className="mr-2 h-4 w-4 text-[#BAFF39]" />
+                              <TrendingUp className="mr-2 h-4 w-4 text-primary" />
                               <span>Marketplace Liquidity</span>
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild className="focus:bg-steel-700 focus:text-white cursor-pointer">
                             <Link to="/admin/revenue">
-                              <DollarSign className="mr-2 h-4 w-4 text-[#BAFF39]" />
+                              <DollarSign className="mr-2 h-4 w-4 text-primary" />
                               <span>Revenue Forecast</span>
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild className="focus:bg-steel-700 focus:text-white cursor-pointer">
                             <Link to="/admin/cto-dashboard">
-                              <Cpu className="mr-2 h-4 w-4 text-[#BAFF39] drop-shadow-[0_0_4px_rgba(186,255,57,0.6)]" />
+                              <Cpu className="mr-2 h-4 w-4 text-primary drop-shadow-[0_0_4px_hsl(var(--primary)/0.6)]" />
                               <span>CTO Dashboard (Brain Monitor)</span>
                             </Link>
                           </DropdownMenuItem>
@@ -311,16 +311,16 @@ export default function Navbar() {
                               setIsPitchMode(!isPitchMode);
                             }}
                             className={`focus:bg-steel-700 focus:text-white cursor-pointer ${
-                              isPitchMode ? 'bg-[#BAFF39]/10' : ''
+                              isPitchMode ? 'bg-primary/10' : ''
                             }`}
                             data-testid="pitch-mode-toggle"
                           >
                             <Monitor className={`mr-2 h-4 w-4 ${
                               isPitchMode 
-                                ? 'text-[#BAFF39] drop-shadow-[0_0_6px_rgba(186,255,57,0.8)]' 
+                                ? 'text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.8)]' 
                                 : 'text-zinc-400'
                             }`} />
-                            <span className={isPitchMode ? 'text-[#BAFF39]' : ''}>
+                            <span className={isPitchMode ? 'text-primary' : ''}>
                               Pitch Mode {isPitchMode ? '(ON)' : '(OFF)'}
                             </span>
                           </DropdownMenuItem>

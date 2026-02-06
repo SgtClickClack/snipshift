@@ -6,7 +6,7 @@
  * 2. Search: Manual search for specific staff
  * 3. Marketplace: Post to job board
  * 
- * BRANDING: Uses Electric Lime (#BAFF39) for primary actions
+ * BRANDING: Uses brand primary for primary actions
  */
 
 import { useState, useMemo } from "react";
@@ -36,7 +36,7 @@ import type { ShiftBucket } from "./ShiftBucketPill";
 import type { Professional } from "./assign-staff-modal";
 
 // Electric Lime brand color
-const BRAND_LIME = "#BAFF39";
+const BRAND_LIME = "hsl(var(--primary))";
 
 export interface BucketManagementData {
   bucket: ShiftBucket;
@@ -252,7 +252,7 @@ export function ShiftBucketManagementModal({
                   onClick={() => setView('search')}
                   disabled={isLoading}
                   variant="outline"
-                  className="w-full h-14 justify-between font-semibold text-base border-2 hover:border-[#BAFF39] hover:bg-[#BAFF39]/10"
+                  className="w-full h-14 justify-between font-semibold text-base border-2 hover:border-primary hover:bg-primary/10"
                 >
                   <div className="flex items-center gap-3">
                     <Search className="h-5 w-5" />
@@ -274,7 +274,7 @@ export function ShiftBucketManagementModal({
                   }}
                   disabled={isLoading}
                   variant="outline"
-                  className="w-full h-14 justify-between font-semibold text-base border-2 hover:border-[#BAFF39] hover:bg-[#BAFF39]/10"
+                  className="w-full h-14 justify-between font-semibold text-base border-2 hover:border-primary hover:bg-primary/10"
                 >
                   <div className="flex items-center gap-3">
                     <Store className="h-5 w-5" />
@@ -429,7 +429,7 @@ function ProfessionalRow({
           onAssign();
         }}
         disabled={isLoading}
-        className="bg-[#BAFF39] hover:bg-[#BAFF39]/90 text-black font-semibold"
+        className="bg-primary hover:bg-primary/90 text-black font-semibold"
       >
         <UserPlus className="h-4 w-4 mr-1" />
         Assign

@@ -120,7 +120,7 @@ const STATUS_CONFIG = {
   partial: {
     label: 'Partial',
     icon: AlertTriangle,
-    className: 'bg-[#BAFF39]/20 text-[#BAFF39] border-[#BAFF39]/30',
+    className: 'bg-primary/20 text-primary border-primary/30',
   },
   failed: {
     label: 'Failed',
@@ -238,9 +238,9 @@ export default function XeroSyncHistory() {
         
         {/* LUCAS'S REQUIREMENT: "Last Audited by Engine" timestamp for investor confidence */}
         {history.length > 0 && (
-          <div className="mt-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-[#BAFF39]/10 border border-[#BAFF39]/30">
-            <ShieldCheck className="h-4 w-4 text-[#BAFF39]" />
-            <span className="text-xs font-medium text-[#BAFF39]">Last Audited by Engine:</span>
+          <div className="mt-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/30">
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            <span className="text-xs font-medium text-primary">Last Audited by Engine:</span>
             <span className="text-xs text-foreground">
               {formatDateSafe(history[0].syncedAt, 'MMMM d, yyyy', 'Never')} at {formatDateSafe(history[0].syncedAt, 'h:mm a', '')}
             </span>
@@ -255,8 +255,8 @@ export default function XeroSyncHistory() {
           </div>
         ) : history.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 px-6">
-          <div className="border-2 border-dashed border-[#BAFF39] rounded-xl p-8 max-w-md w-full text-center bg-[#BAFF39]/5">
-            <ShieldCheck className="h-16 w-16 mx-auto mb-4 text-[#BAFF39]" />
+          <div className="border-2 border-dashed border-primary rounded-xl p-8 max-w-md w-full text-center bg-primary/5">
+            <ShieldCheck className="h-16 w-16 mx-auto mb-4 text-primary" />
             <h3 className="text-lg font-semibold text-foreground mb-2">
               System Audit: Ready for first payroll cycle
             </h3>
@@ -324,7 +324,7 @@ export default function XeroSyncHistory() {
                         <div>
                           <p className="font-medium">{entry.syncedEmployees}/{entry.totalEmployees}</p>
                           {entry.failedEmployees > 0 && (
-                            <p className="text-xs text-[#BAFF39]">
+                            <p className="text-xs text-primary">
                               {entry.failedEmployees} skipped
                             </p>
                           )}
@@ -342,7 +342,7 @@ export default function XeroSyncHistory() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="text-[#BAFF39] hover:text-[#BAFF39] hover:bg-[#BAFF39]/10"
+                              className="text-primary hover:text-primary hover:bg-primary/10"
                               onClick={() => setTraceModalEntry(entry)}
                               title="View Xero Handshake Trace"
                             >
@@ -386,11 +386,11 @@ export default function XeroSyncHistory() {
 
       {/* RAW LEDGER PREVIEW MODAL - Xero Handshake Trace for Lucas's due diligence */}
       <Dialog open={!!traceModalEntry} onOpenChange={(open) => !open && setTraceModalEntry(null)}>
-        <DialogContent className="max-w-3xl max-h-[85vh] bg-zinc-950/95 backdrop-blur-xl border border-[#BAFF39]/30 shadow-[0_0_40px_rgba(186,255,57,0.15)]">
+        <DialogContent className="max-w-3xl max-h-[85vh] bg-zinc-950/95 backdrop-blur-xl border border-primary/30 shadow-[0_0_40px_rgba(186,255,57,0.15)]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3 text-white">
-              <div className="p-2 rounded-xl bg-[#BAFF39]/20 border border-[#BAFF39]/30">
-                <Fingerprint className="h-5 w-5 text-[#BAFF39]" />
+              <div className="p-2 rounded-xl bg-primary/20 border border-primary/30">
+                <Fingerprint className="h-5 w-5 text-primary" />
               </div>
               Xero Handshake Trace
             </DialogTitle>
@@ -403,10 +403,10 @@ export default function XeroSyncHistory() {
             {traceModalEntry && (
               <div className="space-y-4">
                 {/* Security Header */}
-                <div className="p-3 rounded-lg bg-[#BAFF39]/10 border border-[#BAFF39]/30 flex items-center gap-3">
-                  <Lock className="h-5 w-5 text-[#BAFF39]" />
+                <div className="p-3 rounded-lg bg-primary/10 border border-primary/30 flex items-center gap-3">
+                  <Lock className="h-5 w-5 text-primary" />
                   <div>
-                    <p className="text-sm font-semibold text-[#BAFF39]">Encrypted Financial Ledger</p>
+                    <p className="text-sm font-semibold text-primary">Encrypted Financial Ledger</p>
                     <p className="text-xs text-zinc-400">
                       AES-256-GCM encrypted • SHA-256 verified • ATO 7-year retention compliant
                     </p>
@@ -429,22 +429,22 @@ export default function XeroSyncHistory() {
                         // Highlight SHA-256 hash strings with Electric Lime background
                         .replace(
                           /"sha256:[a-f0-9]+"/g,
-                          (match) => `<span class="sha256-highlight" style="background: rgba(186, 255, 57, 0.15); border: 1px solid rgba(186, 255, 57, 0.3); border-radius: 4px; padding: 1px 4px; color: #BAFF39; font-weight: 600; text-shadow: 0 0 10px rgba(186, 255, 57, 0.4);">${match}</span>`
+                          (match) => `<span class="sha256-highlight" style="background: rgba(186, 255, 57, 0.15); border: 1px solid rgba(186, 255, 57, 0.3); border-radius: 4px; padding: 1px 4px; color: hsl(var(--primary)); font-weight: 600; text-shadow: 0 0 10px rgba(186, 255, 57, 0.4);">${match}</span>`
                         )
                         // Highlight algorithm field
                         .replace(
                           /"algorithm":\s*"SHA-256"/g,
-                          (match) => `<span style="color: #BAFF39; font-weight: 600;">${match}</span>`
+                          (match) => `<span style="color: hsl(var(--primary)); font-weight: 600;">${match}</span>`
                         )
                         // Highlight sourceHash and xeroAckHash keys
                         .replace(
                           /"(sourceHash|xeroAckHash)":/g,
-                          (_match, key) => `<span style="color: #BAFF39; font-weight: 500;">"${key}"</span>:`
+                          (_match, key) => `<span style="color: hsl(var(--primary)); font-weight: 500;">"${key}"</span>:`
                         )
                         // Highlight bidirectionalMatch: true
                         .replace(
                           /"bidirectionalMatch":\s*true/g,
-                          (match) => `<span style="color: #BAFF39; font-weight: 600;">${match}</span>`
+                          (match) => `<span style="color: hsl(var(--primary)); font-weight: 600;">${match}</span>`
                         )
                         // Highlight VERIFIED status
                         .replace(
@@ -458,7 +458,7 @@ export default function XeroSyncHistory() {
                 {/* Verification Footer */}
                 <div className="p-3 rounded-lg bg-zinc-800/50 border border-zinc-700">
                   <div className="flex items-center gap-2 mb-2">
-                    <ShieldCheck className="h-4 w-4 text-[#BAFF39]" />
+                    <ShieldCheck className="h-4 w-4 text-primary" />
                     <span className="text-sm font-medium text-white">Bidirectional Reconciliation</span>
                   </div>
                   <p className="text-xs text-zinc-400">
@@ -474,7 +474,7 @@ export default function XeroSyncHistory() {
           {/* HOSPO-GO Branding Footer */}
           <div className="pt-3 border-t border-zinc-800 flex justify-center">
             <span className="text-[10px] text-zinc-600 tracking-wider">
-              Powered by <span className="font-black italic">HOSPO<span className="text-[#BAFF39]">GO</span></span>
+              Powered by <span className="font-black italic">HOSPO<span className="text-primary">GO</span></span>
             </span>
           </div>
         </DialogContent>

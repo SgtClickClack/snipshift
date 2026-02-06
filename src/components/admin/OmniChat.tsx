@@ -5,7 +5,7 @@
  * HospoGo's technical and business DNA.
  * 
  * Features:
- * - Electric Lime (#BAFF39) glow effect for chat bubble
+ * - Electric Lime (primary) glow effect for chat bubble
  * - Urbanist 900 for headings, Inter for body text
  * - Brisbane 100 investor-ready aesthetic
  * - Introspective Analysis mode for explaining unfamiliar code
@@ -200,7 +200,7 @@ export default function OmniChat() {
     // Convert **bold** to <strong>
     let formatted = content.replace(/\*\*([^*]+)\*\*/g, '<strong class="text-white">$1</strong>');
     // Convert `code` to <code>
-    formatted = formatted.replace(/`([^`]+)`/g, '<code class="px-1 py-0.5 rounded bg-zinc-800 text-[#BAFF39] font-mono text-sm">$1</code>');
+    formatted = formatted.replace(/`([^`]+)`/g, '<code class="px-1 py-0.5 rounded bg-zinc-800 text-primary font-mono text-sm">$1</code>');
     // Convert code blocks
     formatted = formatted.replace(/```(\w+)?\n([\s\S]*?)```/g, 
       '<pre class="p-3 rounded-lg bg-zinc-900 border border-zinc-800 overflow-x-auto my-2"><code class="text-sm font-mono text-zinc-300">$2</code></pre>'
@@ -217,17 +217,17 @@ export default function OmniChat() {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
           <button
-            className="fixed bottom-6 right-6 sm:right-24 z-[var(--z-floating)] p-4 rounded-full bg-zinc-900 border-2 border-[#BAFF39]/50 shadow-[0_0_30px_rgba(186,255,57,0.3)] hover:shadow-[0_0_40px_rgba(186,255,57,0.5)] transition-all duration-300 group"
+            className="fixed bottom-6 right-6 sm:right-24 z-[var(--z-floating)] p-4 rounded-full bg-zinc-900 border-2 border-primary/50 shadow-[0_0_30px_rgba(186,255,57,0.3)] hover:shadow-[0_0_40px_rgba(186,255,57,0.5)] transition-all duration-300 group"
             data-testid="omnichat-trigger"
             title="Open HospoGo Architect"
           >
-            <Brain className="h-6 w-6 text-[#BAFF39] group-hover:scale-110 transition-transform" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#BAFF39] animate-pulse" />
+            <Brain className="h-6 w-6 text-primary group-hover:scale-110 transition-transform" />
+            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-primary animate-pulse" />
           </button>
         </DialogTrigger>
 
         <DialogContent 
-          className={`bg-zinc-950/95 backdrop-blur-xl border border-[#BAFF39]/30 shadow-[0_0_60px_rgba(186,255,57,0.15)] p-0 gap-0 transition-all duration-300 ${
+          className={`bg-zinc-950/95 backdrop-blur-xl border border-primary/30 shadow-[0_0_60px_rgba(186,255,57,0.15)] p-0 gap-0 transition-all duration-300 ${
             isExpanded 
               ? 'max-w-4xl h-[85vh]' 
               : 'max-w-xl h-[600px]'
@@ -237,8 +237,8 @@ export default function OmniChat() {
           <DialogHeader className="p-4 border-b border-zinc-800 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-[#BAFF39]/20 border border-[#BAFF39]/30">
-                  <Brain className="h-5 w-5 text-[#BAFF39]" />
+                <div className="p-2 rounded-xl bg-primary/20 border border-primary/30">
+                  <Brain className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <DialogTitle 
@@ -297,7 +297,7 @@ export default function OmniChat() {
             <div className="mt-2 px-1">
               <Badge 
                 variant="outline" 
-                className="bg-[#BAFF39]/10 text-[#BAFF39] border-[#BAFF39]/30 text-[10px] gap-1"
+                className="bg-primary/10 text-primary border-primary/30 text-[10px] gap-1"
               >
                 {MODE_CONFIG[mode].icon}
                 {MODE_CONFIG[mode].description}
@@ -310,7 +310,7 @@ export default function OmniChat() {
             <div className="space-y-4">
               {messages.length === 0 && (
                 <div className="text-center py-12 space-y-4">
-                  <Sparkles className="h-12 w-12 mx-auto text-[#BAFF39]/30" />
+                  <Sparkles className="h-12 w-12 mx-auto text-primary/30" />
                   <div>
                     <p className="text-zinc-400 text-sm">Ask me anything about HospoGo</p>
                     <p className="text-zinc-600 text-xs mt-1">
@@ -327,7 +327,7 @@ export default function OmniChat() {
                       <button
                         key={suggestion}
                         onClick={() => setInput(suggestion)}
-                        className="px-3 py-1.5 rounded-full bg-zinc-800/50 border border-zinc-700 text-xs text-zinc-400 hover:text-[#BAFF39] hover:border-[#BAFF39]/50 transition-colors"
+                        className="px-3 py-1.5 rounded-full bg-zinc-800/50 border border-zinc-700 text-xs text-zinc-400 hover:text-primary hover:border-primary/50 transition-colors"
                       >
                         {suggestion}
                       </button>
@@ -344,7 +344,7 @@ export default function OmniChat() {
                   <div
                     className={`max-w-[85%] rounded-2xl px-4 py-3 ${
                       message.role === 'user'
-                        ? 'bg-[#BAFF39]/20 border border-[#BAFF39]/30 text-white'
+                        ? 'bg-primary/20 border border-primary/30 text-white'
                         : 'bg-zinc-800/50 border border-zinc-700 text-zinc-300'
                     }`}
                   >
@@ -384,7 +384,7 @@ export default function OmniChat() {
                 <div className="flex justify-start">
                   <div className="bg-zinc-800/50 border border-zinc-700 rounded-2xl px-4 py-3">
                     <div className="flex items-center gap-2 text-zinc-400">
-                      <Loader2 className="h-4 w-4 animate-spin text-[#BAFF39]" />
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
                       <span className="text-sm">Analyzing codebase...</span>
                     </div>
                   </div>
@@ -408,7 +408,7 @@ export default function OmniChat() {
               <Button
                 onClick={handleSend}
                 disabled={!input.trim() || chatMutation.isPending}
-                className="bg-[#BAFF39] text-zinc-900 hover:bg-[#BAFF39]/90 h-11 px-4"
+                className="bg-primary text-zinc-900 hover:bg-primary/90 h-11 px-4"
                 title="Send message"
               >
                 {chatMutation.isPending ? (
@@ -422,7 +422,7 @@ export default function OmniChat() {
             {/* Footer */}
             <div className="mt-2 flex justify-center">
               <span className="text-[10px] text-zinc-600 tracking-wider">
-                Powered by <span className="font-black italic">HOSPO<span className="text-[#BAFF39]">GO</span></span> × Gemini 2.0
+                Powered by <span className="font-black italic">HOSPO<span className="text-primary">GO</span></span> × Gemini 2.0
               </span>
             </div>
           </div>

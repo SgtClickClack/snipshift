@@ -325,8 +325,8 @@ export default function StaffPage() {
               </div>
             ) : filteredStaff.length === 0 ? (
               <div className="text-center py-12 px-4">
-                <div className="mx-auto w-16 h-16 rounded-2xl bg-[#BAFF39]/10 flex items-center justify-center mb-4">
-                  <Users className="h-8 w-8 text-[#BAFF39]" />
+                <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                  <Users className="h-8 w-8 text-primary" />
                 </div>
                 {showFavoritesOnly ? (
                   <>
@@ -336,7 +336,7 @@ export default function StaffPage() {
                     </p>
                     <Button 
                       onClick={toggleFavoritesFilter}
-                      className="bg-[#BAFF39] hover:bg-[#BAFF39]/90 text-black font-semibold shadow-[0_0_15px_rgba(186,255,57,0.3)]"
+                      className="bg-primary hover:bg-primary/90 text-black font-semibold shadow-[0_0_15px_rgba(186,255,57,0.3)]"
                     >
                       <Filter className="h-4 w-4 mr-2" />
                       Show All Staff
@@ -376,8 +376,8 @@ export default function StaffPage() {
                       className={cn(
                         "h-10 w-10 shrink-0 transition-all",
                         s.isFavorite 
-                          ? "text-[#BAFF39] hover:text-[#BAFF39]/80" 
-                          : "text-gray-400 hover:text-[#BAFF39]"
+                          ? "text-primary hover:text-primary/80" 
+                          : "text-gray-400 hover:text-primary"
                       )}
                       onClick={() => handleToggleFavorite(s.id, s.isFavorite || false)}
                       disabled={togglingId === s.id}
@@ -390,7 +390,7 @@ export default function StaffPage() {
                         <Star 
                           className={cn(
                             "h-5 w-5 transition-all",
-                            s.isFavorite && "fill-[#BAFF39]"
+                            s.isFavorite && "fill-primary"
                           )} 
                         />
                       )}

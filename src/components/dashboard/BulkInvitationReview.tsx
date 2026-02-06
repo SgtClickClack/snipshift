@@ -52,7 +52,7 @@ function ConfettiCelebration({ show, earnings }: { show: boolean; earnings: numb
             left: `${Math.random() * 100}%`,
             animationDelay: `${Math.random() * 0.5}s`,
             animationDuration: `${2 + Math.random() * 2}s`,
-            backgroundColor: ['#BAFF39', '#FFD700', '#FF6B6B', '#4ECDC4', '#9B59B6'][Math.floor(Math.random() * 5)],
+            backgroundColor: ['hsl(var(--primary))', '#FFD700', '#FF6B6B', '#4ECDC4', '#9B59B6'][Math.floor(Math.random() * 5)],
             width: `${8 + Math.random() * 8}px`,
             height: `${8 + Math.random() * 8}px`,
             borderRadius: Math.random() > 0.5 ? '50%' : '2px',
@@ -64,18 +64,18 @@ function ConfettiCelebration({ show, earnings }: { show: boolean; earnings: numb
       {/* Success message overlay */}
       <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm pointer-events-auto animate-in fade-in duration-300">
         <div className="text-center p-8 max-w-md mx-4">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#BAFF39]/20 mb-6 animate-bounce will-change-transform">
-            <PartyPopper className="w-10 h-10 text-[#BAFF39]" />
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/20 mb-6 animate-bounce will-change-transform">
+            <PartyPopper className="w-10 h-10 text-primary" />
           </div>
           <h2 className="text-3xl font-black text-white mb-3 flex items-center justify-center gap-2">
-            <Sparkles className="w-6 h-6 text-[#BAFF39]" />
+            <Sparkles className="w-6 h-6 text-primary" />
             You're Booked!
-            <Sparkles className="w-6 h-6 text-[#BAFF39]" />
+            <Sparkles className="w-6 h-6 text-primary" />
           </h2>
           <p className="text-lg text-white/80 mb-4">
             You just locked in
           </p>
-          <div className="inline-block px-6 py-3 rounded-2xl bg-[#BAFF39] text-black font-black text-2xl shadow-[0_0_30px_rgba(186,255,57,0.5)]">
+          <div className="inline-block px-6 py-3 rounded-2xl bg-primary text-black font-black text-2xl shadow-[0_0_30px_rgba(186,255,57,0.5)]">
             ${earnings.toFixed(2)}
           </div>
           <p className="text-sm text-white/60 mt-3">
@@ -222,7 +222,7 @@ export function BulkInvitationReview() {
         toast({
           title: `🎉 ${result.summary.accepted} shift${result.summary.accepted > 1 ? 's' : ''} confirmed!`,
           description: `You've locked in $${earnings.toFixed(2)} in earnings!`,
-          className: 'border-[#BAFF39]/50 bg-[#BAFF39]/10',
+          className: 'border-primary/50 bg-primary/10',
         });
       } else if (result.summary.alreadyTaken > 0) {
         toast({
@@ -388,7 +388,7 @@ export function BulkInvitationReview() {
         </div>
 
         <div className="mt-2 flex items-center justify-between">
-          <div className="flex items-center gap-1 text-sm font-medium text-[#BAFF39]">
+          <div className="flex items-center gap-1 text-sm font-medium text-primary">
             <DollarSign className="h-4 w-4" />
             ${calculateEarnings(shift.hourlyRate, shift.startTime, shift.endTime)}
           </div>
@@ -590,7 +590,7 @@ export function BulkInvitationReview() {
               </CardTitle>
               <CardDescription>
                 {data.totalCount} invitation{data.totalCount > 1 ? 's' : ''} • 
-                <span className="text-[#BAFF39] font-semibold ml-1">
+                <span className="text-primary font-semibold ml-1">
                   ${totalPotentialEarnings.toFixed(2)} potential
                 </span>
               </CardDescription>
@@ -608,7 +608,7 @@ export function BulkInvitationReview() {
                 disabled={selectedIds.size === 0 || bulkAcceptMutation.isPending}
                 className={cn(
                   "relative overflow-hidden transition-all duration-300",
-                  selectedIds.size > 0 && "bg-[#BAFF39] hover:bg-[#BAFF39]/90 text-black shadow-[0_0_20px_rgba(186,255,57,0.4)]"
+                  selectedIds.size > 0 && "bg-primary hover:bg-primary/90 text-black shadow-[0_0_20px_rgba(186,255,57,0.4)]"
                 )}
               >
                 {bulkAcceptMutation.isPending ? (

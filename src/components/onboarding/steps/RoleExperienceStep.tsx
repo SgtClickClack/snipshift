@@ -71,16 +71,16 @@ export const RoleExperienceStep = ({
         <p className="text-gray-300">Tell venues what kind of shifts you're looking for.</p>
       </div>
 
-      <div className="p-4 rounded-lg bg-[#BAFF39]/5 border border-[#BAFF39]/20">
+      <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
         <div className="flex items-start gap-3">
-          <div className="rounded-full bg-[#BAFF39]/20 p-2">
-            <Sparkles className="h-4 w-4 text-[#BAFF39]" />
+          <div className="rounded-full bg-primary/20 p-2">
+            <Sparkles className="h-4 w-4 text-primary" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-white">Clean Streak Redemption</h3>
             <p className="text-xs text-gray-400 mt-1">
               Build your reputation with reliability. Complete{' '}
-              <span className="text-[#BAFF39] font-medium">5 consecutive on-time shifts</span>{' '}
+              <span className="text-primary font-medium">5 consecutive on-time shifts</span>{' '}
               to automatically remove any demerit strikes. Your reliability is your currency.
             </p>
           </div>

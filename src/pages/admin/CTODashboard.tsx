@@ -166,17 +166,17 @@ const ARR_MILESTONE_TARGET = 1_500_000; // $1.5M ARR milestone
 function CTODashboardLoadingState() {
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
-      <Card className="max-w-md w-full bg-black/40 backdrop-blur-xl border border-[#BAFF39]/30 shadow-[0_0_40px_rgba(186,255,57,0.15)]">
+      <Card className="max-w-md w-full bg-black/40 backdrop-blur-xl border border-primary/30 shadow-[0_0_40px_rgba(186,255,57,0.15)]">
         <CardContent className="pt-6 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#BAFF39]/20 flex items-center justify-center animate-pulse">
-            <Brain className="h-8 w-8 text-[#BAFF39]" />
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
+            <Brain className="h-8 w-8 text-primary" />
           </div>
           <h2 className="text-xl font-bold text-white mb-2">Establishing Secure Connection</h2>
           <p className="text-zinc-400 text-sm">
             Verifying authentication handshake...
           </p>
           <div className="mt-4 flex justify-center">
-            <Loader2 className="h-5 w-5 animate-spin text-[#BAFF39]" />
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
           </div>
         </CardContent>
       </Card>
@@ -298,7 +298,7 @@ function CTODashboardInner() {
         description: result?.simulatedReset 
           ? 'Demo environment cleared. Brisbane 100 baseline ready for practice run.'
           : 'All demo shifts, invitations, and leads cleared. Brisbane 100 baseline re-seeded.',
-        className: 'border-[#BAFF39]/50 bg-[#BAFF39]/10',
+        className: 'border-primary/50 bg-primary/10',
         duration: TOAST_DURATION.MISSION_CRITICAL, // 8s for investor visibility
       });
     },
@@ -309,7 +309,7 @@ function CTODashboardInner() {
       toast({
         title: '🔄 Foundry Reset Complete',
         description: 'Demo environment cleared. Brisbane 100 baseline ready for practice run.',
-        className: 'border-[#BAFF39]/50 bg-[#BAFF39]/10',
+        className: 'border-primary/50 bg-primary/10',
         duration: TOAST_DURATION.MISSION_CRITICAL, // 8s for investor visibility
       });
     },
@@ -512,7 +512,7 @@ function CTODashboardInner() {
       toast({
         title: '🛡️ Hardened Knowledge Base',
         description: 'Gap patched and added to the AI knowledge base.',
-        className: 'border-[#BAFF39]/50 bg-[#BAFF39]/10',
+        className: 'border-primary/50 bg-primary/10',
         duration: TOAST_DURATION.MISSION_CRITICAL, // 8s for investor visibility
       });
     },
@@ -522,7 +522,7 @@ function CTODashboardInner() {
       toast({
         title: '🛡️ Hardened Knowledge Base',
         description: 'Gap marked as patched. Manual entry logged.',
-        className: 'border-[#BAFF39]/50 bg-[#BAFF39]/10',
+        className: 'border-primary/50 bg-primary/10',
         duration: TOAST_DURATION.MISSION_CRITICAL, // 8s for investor visibility
       });
     },
@@ -577,7 +577,7 @@ function CTODashboardInner() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-              <Brain className="h-8 w-8 text-[#BAFF39] drop-shadow-[0_0_8px_rgba(186,255,57,0.6)]" />
+              <Brain className="h-8 w-8 text-primary drop-shadow-[0_0_8px_rgba(186,255,57,0.6)]" />
               CTO Command Center
             </h1>
             <p className="text-zinc-400 mt-1">
@@ -674,7 +674,7 @@ function CTODashboardInner() {
             <Button
               onClick={() => refetchGaps()}
               variant="outline"
-              className="border-[#BAFF39]/50 text-[#BAFF39] hover:bg-[#BAFF39]/10"
+              className="border-primary/50 text-primary hover:bg-primary/10"
             >
               <RefreshCw className="mr-2 h-4 w-4" />
               Refresh Data
@@ -685,9 +685,9 @@ function CTODashboardInner() {
         <motion.div variants={metricsStagger} initial="hidden" animate="visible" className="space-y-6">
           {/* Live Revenue Engine - Top Banner */}
           <motion.div variants={metricsItem}>
-            <Card className="bg-black/40 backdrop-blur-xl border-2 border-[#BAFF39]/40 shadow-[0_0_40px_rgba(186,255,57,0.15)]">
+            <Card className="bg-black/40 backdrop-blur-xl border-2 border-primary/40 shadow-[0_0_40px_rgba(186,255,57,0.15)]">
               <CardHeader className="pb-2">
-                <CardTitle className="text-[#BAFF39] flex items-center gap-2 text-lg">
+                <CardTitle className="text-primary flex items-center gap-2 text-lg">
                   <Rocket className="h-5 w-5" />
                   Live Revenue Engine — Brisbane 100 Pipeline
                 </CardTitle>
@@ -700,12 +700,12 @@ function CTODashboardInner() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {/* Projected Annualised Revenue - Hero Metric */}
                   {/* TYPOGRAPHY: Urbanist 900 italic for investor impact */}
-                  <div className="sm:col-span-2 p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[#BAFF39]/20 via-[#BAFF39]/10 to-transparent border border-[#BAFF39]/30">
+                  <div className="sm:col-span-2 p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/30">
                     <p className="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-1">
                       Projected Annualised Revenue
                     </p>
                     <p 
-                      className={`text-3xl sm:text-5xl lg:text-6xl text-[#BAFF39] tracking-tighter drop-shadow-[0_0_20px_rgba(186,255,57,0.4)] ${sensitiveClass}`}
+                      className={`text-3xl sm:text-5xl lg:text-6xl text-primary tracking-tighter drop-shadow-[0_0_20px_rgba(186,255,57,0.4)] ${sensitiveClass}`}
                       style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 900, fontStyle: 'italic' }}
                     >
                       ${revenueMetrics.projectedARR.toLocaleString()}
@@ -716,12 +716,12 @@ function CTODashboardInner() {
                   </div>
 
                   {/* Committed ARR - Active + Onboarding (100% certainty) */}
-                  <div className="p-4 rounded-xl bg-zinc-800/50 border border-[#BAFF39]/30">
+                  <div className="p-4 rounded-xl bg-zinc-800/50 border border-primary/30">
                     <div className="flex items-center gap-2 mb-2">
-                      <CheckCircle2 className="h-4 w-4 text-[#BAFF39]" />
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
                       <span className="text-xs uppercase tracking-wider text-zinc-500">Committed ARR</span>
                     </div>
-                    <p className={`text-2xl font-bold text-[#BAFF39] ${sensitiveClass}`}>
+                    <p className={`text-2xl font-bold text-primary ${sensitiveClass}`}>
                       ${revenueMetrics.committedARR.toLocaleString()}
                     </p>
                     <p className="text-xs text-zinc-500 mt-1">
@@ -760,7 +760,7 @@ function CTODashboardInner() {
                   </div>
                   <div className="flex gap-4 items-center">
                     <div className="flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full bg-[#BAFF39]" />
+                      <span className="w-3 h-3 rounded-full bg-primary" />
                       <span className="text-sm text-zinc-400">Active</span>
                       <span className="text-sm text-white font-bold">{revenueMetrics.active}</span>
                     </div>
@@ -781,10 +781,10 @@ function CTODashboardInner() {
                 <div className="mt-6 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <Sparkles className="h-4 w-4 text-[#BAFF39] animate-pulse" />
+                      <Sparkles className="h-4 w-4 text-primary animate-pulse" />
                       <span className="text-sm font-semibold text-white">Pilot Momentum → $1.5M ARR</span>
                     </div>
-                    <Badge className="bg-[#BAFF39]/20 text-[#BAFF39] border border-[#BAFF39]/40 text-xs">
+                    <Badge className="bg-primary/20 text-primary border border-primary/40 text-xs">
                       {revenueMetrics.total} Brisbane 100 Leads
                     </Badge>
                   </div>
@@ -794,7 +794,7 @@ function CTODashboardInner() {
                       className="h-3 bg-zinc-800"
                     />
                     <div className="flex justify-between text-xs">
-                      <span className={`text-[#BAFF39] font-bold ${sensitiveClass}`}>
+                      <span className={`text-primary font-bold ${sensitiveClass}`}>
                         ${revenueMetrics.projectedARR.toLocaleString()} Projected ARR
                       </span>
                       <span className="text-zinc-500">
@@ -823,7 +823,7 @@ function CTODashboardInner() {
           <Card className="bg-black/40 backdrop-blur-xl border-zinc-800">
             <CardHeader className="pb-2">
               <CardTitle className="text-white flex items-center gap-2 text-lg">
-                <Target className="h-5 w-5 text-[#BAFF39]" />
+                <Target className="h-5 w-5 text-primary" />
                 Market Saturation Forecaster — Brisbane Pilot
               </CardTitle>
               <CardDescription className="text-zinc-500">
@@ -836,7 +836,7 @@ function CTODashboardInner() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-zinc-400">Brisbane Pilot Saturation</span>
-                    <Badge className={`bg-[#BAFF39]/20 text-[#BAFF39] border border-[#BAFF39]/40 text-lg px-4 py-1 font-bold ${sensitiveClass}`}>
+                    <Badge className={`bg-primary/20 text-primary border border-primary/40 text-lg px-4 py-1 font-bold ${sensitiveClass}`}>
                       {saturationLevel}%
                     </Badge>
                   </div>
@@ -857,12 +857,12 @@ function CTODashboardInner() {
                 </div>
 
                 {/* Projected ARR Display - Hero Metric */}
-                <div className="p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[#BAFF39]/20 via-[#BAFF39]/10 to-transparent border-2 border-[#BAFF39]/40 shadow-[0_0_30px_rgba(186,255,57,0.2)]">
+                <div className="p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border-2 border-primary/40 shadow-[0_0_30px_rgba(186,255,57,0.2)]">
                   <p className="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-2">
                     Projected ARR at {saturationLevel}% Saturation
                   </p>
                   <p 
-                    className={`text-4xl sm:text-6xl lg:text-7xl text-[#BAFF39] tracking-tighter drop-shadow-[0_0_30px_rgba(186,255,57,0.5)] ${sensitiveClass}`}
+                    className={`text-4xl sm:text-6xl lg:text-7xl text-primary tracking-tighter drop-shadow-[0_0_30px_rgba(186,255,57,0.5)] ${sensitiveClass}`}
                     style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 900, fontStyle: 'italic' }}
                   >
                     ${((saturationLevel / 100) * 100 * 149 * 12).toLocaleString()}
@@ -876,7 +876,7 @@ function CTODashboardInner() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   <div 
                     className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                      saturationLevel === 10 ? 'bg-[#BAFF39]/10 border-[#BAFF39]/50' : 'bg-zinc-800/30 border-zinc-700 hover:border-zinc-600'
+                      saturationLevel === 10 ? 'bg-primary/10 border-primary/50' : 'bg-zinc-800/30 border-zinc-700 hover:border-zinc-600'
                     }`}
                     onClick={() => setSaturationLevel(10)}
                   >
@@ -886,17 +886,17 @@ function CTODashboardInner() {
                   </div>
                   <div 
                     className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                      saturationLevel === 25 ? 'bg-[#BAFF39]/10 border-[#BAFF39]/50' : 'bg-zinc-800/30 border-zinc-700 hover:border-zinc-600'
+                      saturationLevel === 25 ? 'bg-primary/10 border-primary/50' : 'bg-zinc-800/30 border-zinc-700 hover:border-zinc-600'
                     }`}
                     onClick={() => setSaturationLevel(25)}
                   >
                     <p className="text-xs text-zinc-500 mb-1">Realistic (25%)</p>
-                    <p className={`text-lg font-bold text-[#BAFF39] ${sensitiveClass}`}>${(25 * 149 * 12).toLocaleString()}</p>
+                    <p className={`text-lg font-bold text-primary ${sensitiveClass}`}>${(25 * 149 * 12).toLocaleString()}</p>
                     <p className="text-[10px] text-zinc-600 mt-1">25 venues</p>
                   </div>
                   <div 
                     className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                      saturationLevel === 50 ? 'bg-[#BAFF39]/10 border-[#BAFF39]/50' : 'bg-zinc-800/30 border-zinc-700 hover:border-zinc-600'
+                      saturationLevel === 50 ? 'bg-primary/10 border-primary/50' : 'bg-zinc-800/30 border-zinc-700 hover:border-zinc-600'
                     }`}
                     onClick={() => setSaturationLevel(50)}
                   >
@@ -909,12 +909,12 @@ function CTODashboardInner() {
                 {/* Valuation Justification */}
                 <div className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800">
                   <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp className="h-4 w-4 text-[#BAFF39]" />
+                    <TrendingUp className="h-4 w-4 text-primary" />
                     <span className="text-sm font-semibold text-white">$10M Valuation Justification</span>
                   </div>
                   <p className="text-xs text-zinc-400">
                     At {saturationLevel}% Brisbane 100 capture, we achieve{' '}
-                    <span className={`text-[#BAFF39] font-bold ${sensitiveClass}`}>
+                    <span className={`text-primary font-bold ${sensitiveClass}`}>
                       ${((saturationLevel / 100) * 100 * 149 * 12).toLocaleString()} ARR
                     </span>{' '}
                     from a single pilot market. National expansion to 5,000 venues represents{' '}
@@ -937,7 +937,7 @@ function CTODashboardInner() {
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <CardTitle className="text-white flex items-center gap-2">
-                    <Activity className="h-5 w-5 text-[#BAFF39] animate-pulse" />
+                    <Activity className="h-5 w-5 text-primary animate-pulse" />
                     Brain Monitor — AI Intelligence Gaps
                   </CardTitle>
                   <CardDescription className="text-zinc-500 mt-1">
@@ -966,7 +966,7 @@ function CTODashboardInner() {
             <CardContent>
               {isLoadingGaps ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-[#BAFF39]" />
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   <span className="ml-3 text-zinc-400">Loading intelligence gaps...</span>
                 </div>
               ) : filteredGaps.length === 0 ? (
@@ -1005,7 +1005,7 @@ function CTODashboardInner() {
                               <div className="max-w-xs flex items-start gap-2">
                                 {/* Shield icon for patched gaps - Hardened Knowledge Base indicator */}
                                 {isPatched && (
-                                  <Shield className="h-4 w-4 text-[#BAFF39] flex-shrink-0 mt-0.5 drop-shadow-[0_0_4px_rgba(186,255,57,0.5)]" />
+                                  <Shield className="h-4 w-4 text-primary flex-shrink-0 mt-0.5 drop-shadow-[0_0_4px_rgba(186,255,57,0.5)]" />
                                 )}
                                 <div>
                                   <p className="truncate" title={gap.query}>
@@ -1038,7 +1038,7 @@ function CTODashboardInner() {
                             {/* Status - hidden on smaller laptops */}
                             <TableCell className="hidden lg:table-cell">
                               {isPatched ? (
-                                <Badge className="bg-[#BAFF39]/20 text-[#BAFF39] border border-[#BAFF39]/50 gap-1 text-xs">
+                                <Badge className="bg-primary/20 text-primary border border-primary/50 gap-1 text-xs">
                                   <Shield className="h-3 w-3" />
                                   Hardened
                                 </Badge>
@@ -1056,7 +1056,7 @@ function CTODashboardInner() {
                                   size="sm"
                                   onClick={() => patchGapMutation.mutate(gap.id)}
                                   disabled={patchGapMutation.isPending}
-                                  className="bg-[#BAFF39] text-zinc-900 hover:bg-[#BAFF39]/90 text-xs transition-all duration-200 hover:scale-105"
+                                  className="bg-primary text-zinc-900 hover:bg-primary/90 text-xs transition-all duration-200 hover:scale-105"
                                 >
                                   {patchGapMutation.isPending ? (
                                     <Loader2 className="h-3 w-3 animate-spin" />
@@ -1110,7 +1110,7 @@ function CTODashboardInner() {
             <Card className="bg-black/40 backdrop-blur-xl border-zinc-800">
               <CardHeader className="pb-3">
                 <CardTitle className="text-white flex items-center gap-2 text-base">
-                  <Terminal className="h-4 w-4 text-[#BAFF39]" />
+                  <Terminal className="h-4 w-4 text-primary" />
                   System Integrity Feed
                 </CardTitle>
                 <CardDescription className="text-zinc-500 text-xs">
@@ -1124,17 +1124,17 @@ function CTODashboardInner() {
                     <div 
                       key={audit.id}
                       className={`flex items-center justify-between p-2 rounded-lg ${
-                        index === 0 ? 'bg-[#BAFF39]/10 border border-[#BAFF39]/30' : 'bg-zinc-800/30'
+                        index === 0 ? 'bg-primary/10 border border-primary/30' : 'bg-zinc-800/30'
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <CheckCircle2 className={`h-3.5 w-3.5 ${index === 0 ? 'text-[#BAFF39]' : 'text-zinc-500'}`} />
-                        <span className={`text-xs font-mono ${index === 0 ? 'text-[#BAFF39]' : 'text-zinc-400'}`}>
+                        <CheckCircle2 className={`h-3.5 w-3.5 ${index === 0 ? 'text-primary' : 'text-zinc-500'}`} />
+                        <span className={`text-xs font-mono ${index === 0 ? 'text-primary' : 'text-zinc-400'}`}>
                           {formatDateSafe(audit.timestamp, 'MMM d, HH:mm', 'Unknown')}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge className={`text-[10px] ${index === 0 ? 'bg-[#BAFF39]/20 text-[#BAFF39]' : 'bg-zinc-700 text-zinc-400'}`}>
+                        <Badge className={`text-[10px] ${index === 0 ? 'bg-primary/20 text-primary' : 'bg-zinc-700 text-zinc-400'}`}>
                           {audit.testsPassed}/{audit.testsRun}
                         </Badge>
                         <span className="text-[10px] text-zinc-600">{audit.duration}</span>
@@ -1157,11 +1157,11 @@ function CTODashboardInner() {
                           {formatDateSafe(log.timestamp, 'HH:mm:ss', '00:00:00')}
                         </span>
                         {log.status === 'success' ? (
-                          <CheckCircle2 className="h-3 w-3 text-[#BAFF39] flex-shrink-0 mt-0.5" />
+                          <CheckCircle2 className="h-3 w-3 text-primary flex-shrink-0 mt-0.5" />
                         ) : (
                           <Activity className="h-3 w-3 text-blue-400 flex-shrink-0 mt-0.5" />
                         )}
-                        <span className={log.status === 'success' ? 'text-[#BAFF39]' : 'text-blue-400'}>
+                        <span className={log.status === 'success' ? 'text-primary' : 'text-blue-400'}>
                           {log.message}
                         </span>
                       </div>
@@ -1176,7 +1176,7 @@ function CTODashboardInner() {
 
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-zinc-800">
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-[#BAFF39] animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                     <span className="text-xs text-zinc-400">All Systems Operational</span>
                   </div>
                   <Dialog open={isAuditLogModalOpen} onOpenChange={setIsAuditLogModalOpen}>
@@ -1184,7 +1184,7 @@ function CTODashboardInner() {
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="text-xs text-[#BAFF39] hover:bg-[#BAFF39]/10 h-7 px-2"
+                        className="text-xs text-primary hover:bg-primary/10 h-7 px-2"
                       >
                         <Eye className="h-3 w-3 mr-1" />
                         View Full Audit Log
@@ -1193,7 +1193,7 @@ function CTODashboardInner() {
                     <DialogContent className="bg-zinc-950/95 backdrop-blur-xl border border-zinc-700/50 max-w-4xl max-h-[80vh] overflow-hidden">
                       <DialogHeader>
                         <DialogTitle className="text-white flex items-center gap-2">
-                          <ShieldCheck className="h-5 w-5 text-[#BAFF39]" />
+                          <ShieldCheck className="h-5 w-5 text-primary" />
                           Final QA Certification Report
                         </DialogTitle>
                         <DialogDescription className="text-zinc-400">
@@ -1203,8 +1203,8 @@ function CTODashboardInner() {
                       <ScrollArea className="h-[60vh] pr-4">
                         <div className="prose prose-invert prose-sm max-w-none">
                           <div className="space-y-4 text-zinc-300">
-                            <div className="p-4 rounded-lg bg-[#BAFF39]/10 border border-[#BAFF39]/30">
-                              <h3 className="text-[#BAFF39] text-lg font-bold mb-2">✅ Certification Status: PASSED</h3>
+                            <div className="p-4 rounded-lg bg-primary/10 border border-primary/30">
+                              <h3 className="text-primary text-lg font-bold mb-2">✅ Certification Status: PASSED</h3>
                               <p className="text-sm text-zinc-400">
                                 All 28 E2E tests passed. System ready for production deployment.
                               </p>
@@ -1227,7 +1227,7 @@ function CTODashboardInner() {
                             </ul>
 
                             <h4 className="text-white font-semibold">Brand Compliance</h4>
-                            <p className="text-sm">Electric Lime (#BAFF39) validated across all UI components.</p>
+                            <p className="text-sm">Brand primary validated across all UI components.</p>
 
                             <div className="mt-4 p-3 rounded bg-zinc-800/50 border border-zinc-700">
                               <p className="text-xs text-zinc-500">
@@ -1246,10 +1246,10 @@ function CTODashboardInner() {
             </Card>
 
             {/* Partnership Overview - Evergent Synergy */}
-            <Card className="bg-black/40 backdrop-blur-xl border-zinc-800 border-2 border-[#BAFF39]/20">
+            <Card className="bg-black/40 backdrop-blur-xl border-zinc-800 border-2 border-primary/20">
               <CardHeader className="pb-3">
                 <CardTitle className="text-white flex items-center gap-2 text-base">
-                  <Handshake className="h-4 w-4 text-[#BAFF39]" />
+                  <Handshake className="h-4 w-4 text-primary" />
                   Partnership Overview
                 </CardTitle>
                 <CardDescription className="text-zinc-500 text-xs">
@@ -1259,14 +1259,14 @@ function CTODashboardInner() {
               <CardContent>
                 <div className="space-y-4">
                   {/* HIGH-VISIBILITY Advisory Pool - 10% */}
-                  <div className="p-4 rounded-xl bg-gradient-to-br from-[#BAFF39]/20 via-[#BAFF39]/10 to-transparent border-2 border-[#BAFF39]/40 shadow-[0_0_20px_rgba(186,255,57,0.15)]">
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border-2 border-primary/40 shadow-[0_0_20px_rgba(186,255,57,0.15)]">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs uppercase tracking-widest text-[#BAFF39] font-bold">Advisory Pool</span>
-                      <Badge className="bg-[#BAFF39]/30 text-[#BAFF39] border border-[#BAFF39]/50 text-xs animate-pulse">
+                      <span className="text-xs uppercase tracking-widest text-primary font-bold">Advisory Pool</span>
+                      <Badge className="bg-primary/30 text-primary border border-primary/50 text-xs animate-pulse">
                         Reserved
                       </Badge>
                     </div>
-                    <p className="text-4xl font-black text-[#BAFF39] drop-shadow-[0_0_15px_rgba(186,255,57,0.5)]">10%</p>
+                    <p className="text-4xl font-black text-primary drop-shadow-[0_0_15px_rgba(186,255,57,0.5)]">10%</p>
                     <p className="text-xs text-zinc-400 mt-1">
                       Equity reserved for strategic advisors
                     </p>
@@ -1282,7 +1282,7 @@ function CTODashboardInner() {
                         <p className={`text-sm font-semibold text-white ${sensitiveClass}`}>Lucas Helmke</p>
                         <p className="text-xs text-zinc-400">CFO Advisory Partner</p>
                       </div>
-                      <Badge className="bg-[#BAFF39]/20 text-[#BAFF39] border border-[#BAFF39]/40 text-xs gap-1 animate-pulse">
+                      <Badge className="bg-primary/20 text-primary border border-primary/40 text-xs gap-1 animate-pulse">
                         <CheckCircle2 className="h-3 w-3" />
                         CFO Access Active
                       </Badge>
@@ -1293,28 +1293,28 @@ function CTODashboardInner() {
                   <Dialog open={isEvergentModalOpen} onOpenChange={setIsEvergentModalOpen}>
                     <DialogTrigger asChild>
                       <button 
-                        className="w-full flex items-center justify-between p-3 rounded-lg bg-zinc-800/50 border border-zinc-700 hover:border-[#BAFF39]/50 hover:bg-zinc-800 transition-all group cursor-pointer"
+                        className="w-full flex items-center justify-between p-3 rounded-lg bg-zinc-800/50 border border-zinc-700 hover:border-primary/50 hover:bg-zinc-800 transition-all group cursor-pointer"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-lg bg-[#BAFF39]/10">
-                            <ShieldCheck className="h-4 w-4 text-[#BAFF39]" />
+                          <div className="p-2 rounded-lg bg-primary/10">
+                            <ShieldCheck className="h-4 w-4 text-primary" />
                           </div>
                           <div className="text-left">
-                            <p className="text-sm font-medium text-white group-hover:text-[#BAFF39] transition-colors">
+                            <p className="text-sm font-medium text-white group-hover:text-primary transition-colors">
                               Evergent Synergy Memo
                             </p>
                             <p className="text-xs text-zinc-500">Strategic partnership framework</p>
                           </div>
                         </div>
-                        <ExternalLink className="h-4 w-4 text-zinc-500 group-hover:text-[#BAFF39] transition-colors" />
+                        <ExternalLink className="h-4 w-4 text-zinc-500 group-hover:text-primary transition-colors" />
                       </button>
                     </DialogTrigger>
                     <DialogContent className="bg-zinc-950/80 backdrop-blur-2xl border border-white/10 shadow-[0_0_60px_rgba(186,255,57,0.15)] max-w-3xl max-h-[85vh] overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-br from-[#BAFF39]/5 via-transparent to-purple-500/5 pointer-events-none" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-purple-500/5 pointer-events-none" />
                       <DialogHeader className="relative z-10">
                         <DialogTitle className="text-white flex items-center gap-3 text-xl">
-                          <div className="p-2 rounded-xl bg-[#BAFF39]/20 border border-[#BAFF39]/30">
-                            <Handshake className="h-6 w-6 text-[#BAFF39]" />
+                          <div className="p-2 rounded-xl bg-primary/20 border border-primary/30">
+                            <Handshake className="h-6 w-6 text-primary" />
                           </div>
                           Evergent × HospoGo Synergy Memo
                         </DialogTitle>
@@ -1325,8 +1325,8 @@ function CTODashboardInner() {
                       <ScrollArea className="h-[60vh] pr-4 relative z-10">
                         <div className="space-y-6 text-zinc-300">
                           {/* Executive Summary */}
-                          <div className="p-4 rounded-xl bg-[#BAFF39]/10 border border-[#BAFF39]/30">
-                            <h3 className="text-[#BAFF39] font-bold mb-2">Executive Summary</h3>
+                          <div className="p-4 rounded-xl bg-primary/10 border border-primary/30">
+                            <h3 className="text-primary font-bold mb-2">Executive Summary</h3>
                             <p className="text-sm text-zinc-400">
                               Strategic partnership framework establishing advisory engagement, 
                               equity allocation, and growth objectives for the Brisbane 100 pilot 
@@ -1340,7 +1340,7 @@ function CTODashboardInner() {
                             <div className="grid grid-cols-2 gap-3">
                               <div className="p-3 rounded-lg bg-zinc-800/50 border border-zinc-700">
                                 <p className="text-xs text-zinc-500 uppercase tracking-wider">Strategic Advisory Pool</p>
-                                <p className="text-2xl font-bold text-[#BAFF39]">10%</p>
+                                <p className="text-2xl font-bold text-primary">10%</p>
                               </div>
                               <div className="p-3 rounded-lg bg-zinc-800/50 border border-zinc-700">
                                 <p className="text-xs text-zinc-500 uppercase tracking-wider">CFO Advisor</p>
@@ -1354,21 +1354,21 @@ function CTODashboardInner() {
                             <h4 className="text-white font-semibold mb-3">Growth Advisory Focus</h4>
                             <ul className="space-y-2 text-sm">
                               <li className="flex items-start gap-2 p-2 rounded bg-zinc-800/30">
-                                <span className="w-2 h-2 rounded-full bg-[#BAFF39] mt-1.5" />
+                                <span className="w-2 h-2 rounded-full bg-primary mt-1.5" />
                                 <div>
                                   <span className="font-medium text-white">Suburban Loyalty Engine</span>
                                   <p className="text-xs text-zinc-500">Local casuals prefer local shifts → 85%+ staff retention</p>
                                 </div>
                               </li>
                               <li className="flex items-start gap-2 p-2 rounded bg-zinc-800/30">
-                                <span className="w-2 h-2 rounded-full bg-[#BAFF39] mt-1.5" />
+                                <span className="w-2 h-2 rounded-full bg-primary mt-1.5" />
                                 <div>
                                   <span className="font-medium text-white">Brisbane 100 → National Scale</span>
                                   <p className="text-xs text-zinc-500">Pilot metrics → Geographic expansion to 5,000+ venues</p>
                                 </div>
                               </li>
                               <li className="flex items-start gap-2 p-2 rounded bg-zinc-800/30">
-                                <span className="w-2 h-2 rounded-full bg-[#BAFF39] mt-1.5" />
+                                <span className="w-2 h-2 rounded-full bg-primary mt-1.5" />
                                 <div>
                                   <span className="font-medium text-white">Xero Enterprise Partnership</span>
                                   <p className="text-xs text-zinc-500">App Marketplace listing → Enterprise tier integration</p>
@@ -1383,7 +1383,7 @@ function CTODashboardInner() {
                             <div className="space-y-2 text-sm">
                               <div className="flex justify-between p-2 rounded bg-zinc-800/30">
                                 <span className="text-zinc-400">Brisbane 100 (Q1 2026)</span>
-                                <span className={`text-[#BAFF39] font-bold ${sensitiveClass}`}>$178,800</span>
+                                <span className={`text-primary font-bold ${sensitiveClass}`}>$178,800</span>
                               </div>
                               <div className="flex justify-between p-2 rounded bg-zinc-800/30">
                                 <span className="text-zinc-400">Brisbane 500 (Q4 2026)</span>
@@ -1393,9 +1393,9 @@ function CTODashboardInner() {
                                 <span className="text-zinc-400">National 1,000 (Q2 2027)</span>
                                 <span className={`text-white font-bold ${sensitiveClass}`}>$1.788M</span>
                               </div>
-                              <div className="flex justify-between p-2 rounded bg-[#BAFF39]/10 border border-[#BAFF39]/30">
-                                <span className="text-[#BAFF39]">National 5,000 (Q4 2028)</span>
-                                <span className={`text-[#BAFF39] font-black ${sensitiveClass}`}>$8.94M</span>
+                              <div className="flex justify-between p-2 rounded bg-primary/10 border border-primary/30">
+                                <span className="text-primary">National 5,000 (Q4 2028)</span>
+                                <span className={`text-primary font-black ${sensitiveClass}`}>$8.94M</span>
                               </div>
                             </div>
                           </div>
@@ -1416,20 +1416,20 @@ function CTODashboardInner() {
                   {/* Growth Advisory */}
                   <div className="p-3 rounded-lg bg-zinc-800/30 border border-zinc-700">
                     <div className="flex items-center gap-2 mb-2">
-                      <TrendingUp className="h-4 w-4 text-[#BAFF39]" />
+                      <TrendingUp className="h-4 w-4 text-primary" />
                       <span className="text-xs font-medium text-zinc-300">Growth Advisory Focus</span>
                     </div>
                     <ul className="space-y-1 text-xs text-zinc-400">
                       <li className="flex items-center gap-2">
-                        <span className="w-1 h-1 rounded-full bg-[#BAFF39]" />
+                        <span className="w-1 h-1 rounded-full bg-primary" />
                         Suburban Loyalty Engine
                       </li>
                       <li className="flex items-center gap-2">
-                        <span className="w-1 h-1 rounded-full bg-[#BAFF39]" />
+                        <span className="w-1 h-1 rounded-full bg-primary" />
                         Brisbane 100 → National Scale
                       </li>
                       <li className="flex items-center gap-2">
-                        <span className="w-1 h-1 rounded-full bg-[#BAFF39]" />
+                        <span className="w-1 h-1 rounded-full bg-primary" />
                         Xero Enterprise Partnership
                       </li>
                     </ul>
@@ -1481,89 +1481,89 @@ function CTODashboardInner() {
                     >
                       {/* QR Code pattern for demo - simplified visual representation */}
                       {/* Position detection patterns (corners) */}
-                      <rect x="0" y="0" width="7" height="7" fill="#BAFF39"/>
+                      <rect x="0" y="0" width="7" height="7" fill="hsl(var(--primary))"/>
                       <rect x="1" y="1" width="5" height="5" fill="#fff"/>
-                      <rect x="2" y="2" width="3" height="3" fill="#BAFF39"/>
+                      <rect x="2" y="2" width="3" height="3" fill="hsl(var(--primary))"/>
                       
-                      <rect x="30" y="0" width="7" height="7" fill="#BAFF39"/>
+                      <rect x="30" y="0" width="7" height="7" fill="hsl(var(--primary))"/>
                       <rect x="31" y="1" width="5" height="5" fill="#fff"/>
-                      <rect x="32" y="2" width="3" height="3" fill="#BAFF39"/>
+                      <rect x="32" y="2" width="3" height="3" fill="hsl(var(--primary))"/>
                       
-                      <rect x="0" y="30" width="7" height="7" fill="#BAFF39"/>
+                      <rect x="0" y="30" width="7" height="7" fill="hsl(var(--primary))"/>
                       <rect x="1" y="31" width="5" height="5" fill="#fff"/>
-                      <rect x="2" y="32" width="3" height="3" fill="#BAFF39"/>
+                      <rect x="2" y="32" width="3" height="3" fill="hsl(var(--primary))"/>
                       
                       {/* Timing patterns */}
-                      <rect x="8" y="6" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="10" y="6" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="12" y="6" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="14" y="6" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="16" y="6" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="18" y="6" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="20" y="6" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="22" y="6" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="8" y="6" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="10" y="6" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="12" y="6" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="14" y="6" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="16" y="6" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="18" y="6" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="20" y="6" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="22" y="6" width="1" height="1" fill="hsl(var(--primary))"/>
                       
-                      <rect x="6" y="8" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="6" y="10" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="6" y="12" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="6" y="14" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="6" y="16" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="6" y="18" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="6" y="20" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="6" y="22" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="6" y="8" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="6" y="10" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="6" y="12" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="6" y="14" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="6" y="16" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="6" y="18" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="6" y="20" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="6" y="22" width="1" height="1" fill="hsl(var(--primary))"/>
                       
                       {/* Data modules - HOSPOGO pattern */}
-                      <rect x="8" y="8" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="9" y="9" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="10" y="8" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="11" y="10" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="12" y="9" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="13" y="8" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="14" y="11" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="15" y="10" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="16" y="9" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="17" y="8" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="18" y="12" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="19" y="11" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="20" y="10" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="21" y="9" width="1" height="1" fill="#BAFF39"/>
-                      <rect x="22" y="8" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="8" y="8" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="9" y="9" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="10" y="8" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="11" y="10" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="12" y="9" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="13" y="8" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="14" y="11" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="15" y="10" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="16" y="9" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="17" y="8" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="18" y="12" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="19" y="11" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="20" y="10" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="21" y="9" width="1" height="1" fill="hsl(var(--primary))"/>
+                      <rect x="22" y="8" width="1" height="1" fill="hsl(var(--primary))"/>
                       
                       {/* More data modules */}
-                      <rect x="8" y="14" width="2" height="2" fill="#BAFF39"/>
-                      <rect x="11" y="13" width="2" height="2" fill="#BAFF39"/>
-                      <rect x="14" y="14" width="2" height="2" fill="#BAFF39"/>
-                      <rect x="17" y="15" width="2" height="2" fill="#BAFF39"/>
-                      <rect x="20" y="14" width="2" height="2" fill="#BAFF39"/>
-                      <rect x="23" y="13" width="2" height="2" fill="#BAFF39"/>
+                      <rect x="8" y="14" width="2" height="2" fill="hsl(var(--primary))"/>
+                      <rect x="11" y="13" width="2" height="2" fill="hsl(var(--primary))"/>
+                      <rect x="14" y="14" width="2" height="2" fill="hsl(var(--primary))"/>
+                      <rect x="17" y="15" width="2" height="2" fill="hsl(var(--primary))"/>
+                      <rect x="20" y="14" width="2" height="2" fill="hsl(var(--primary))"/>
+                      <rect x="23" y="13" width="2" height="2" fill="hsl(var(--primary))"/>
                       
-                      <rect x="8" y="18" width="2" height="2" fill="#BAFF39"/>
-                      <rect x="12" y="19" width="2" height="2" fill="#BAFF39"/>
-                      <rect x="16" y="18" width="2" height="2" fill="#BAFF39"/>
-                      <rect x="20" y="19" width="2" height="2" fill="#BAFF39"/>
-                      <rect x="24" y="18" width="2" height="2" fill="#BAFF39"/>
+                      <rect x="8" y="18" width="2" height="2" fill="hsl(var(--primary))"/>
+                      <rect x="12" y="19" width="2" height="2" fill="hsl(var(--primary))"/>
+                      <rect x="16" y="18" width="2" height="2" fill="hsl(var(--primary))"/>
+                      <rect x="20" y="19" width="2" height="2" fill="hsl(var(--primary))"/>
+                      <rect x="24" y="18" width="2" height="2" fill="hsl(var(--primary))"/>
                       
-                      <rect x="10" y="22" width="2" height="2" fill="#BAFF39"/>
-                      <rect x="14" y="23" width="2" height="2" fill="#BAFF39"/>
-                      <rect x="18" y="22" width="2" height="2" fill="#BAFF39"/>
-                      <rect x="22" y="23" width="2" height="2" fill="#BAFF39"/>
-                      <rect x="26" y="22" width="2" height="2" fill="#BAFF39"/>
+                      <rect x="10" y="22" width="2" height="2" fill="hsl(var(--primary))"/>
+                      <rect x="14" y="23" width="2" height="2" fill="hsl(var(--primary))"/>
+                      <rect x="18" y="22" width="2" height="2" fill="hsl(var(--primary))"/>
+                      <rect x="22" y="23" width="2" height="2" fill="hsl(var(--primary))"/>
+                      <rect x="26" y="22" width="2" height="2" fill="hsl(var(--primary))"/>
                       
-                      <rect x="8" y="26" width="2" height="2" fill="#BAFF39"/>
-                      <rect x="12" y="27" width="2" height="2" fill="#BAFF39"/>
-                      <rect x="16" y="26" width="2" height="2" fill="#BAFF39"/>
-                      <rect x="20" y="27" width="2" height="2" fill="#BAFF39"/>
-                      <rect x="24" y="26" width="2" height="2" fill="#BAFF39"/>
+                      <rect x="8" y="26" width="2" height="2" fill="hsl(var(--primary))"/>
+                      <rect x="12" y="27" width="2" height="2" fill="hsl(var(--primary))"/>
+                      <rect x="16" y="26" width="2" height="2" fill="hsl(var(--primary))"/>
+                      <rect x="20" y="27" width="2" height="2" fill="hsl(var(--primary))"/>
+                      <rect x="24" y="26" width="2" height="2" fill="hsl(var(--primary))"/>
                       
                       {/* Alignment pattern */}
-                      <rect x="28" y="28" width="5" height="5" fill="#BAFF39"/>
+                      <rect x="28" y="28" width="5" height="5" fill="hsl(var(--primary))"/>
                       <rect x="29" y="29" width="3" height="3" fill="#fff"/>
-                      <rect x="30" y="30" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="30" y="30" width="1" height="1" fill="hsl(var(--primary))"/>
                     </svg>
                   </div>
                   <div className="mt-4 text-center">
                     <p className="text-sm text-zinc-400 mb-2">Points to:</p>
-                    <code className="px-3 py-1 rounded bg-zinc-800 text-[#BAFF39] font-mono text-sm">
+                    <code className="px-3 py-1 rounded bg-zinc-800 text-primary font-mono text-sm">
                       {typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : '/dashboard'}
                     </code>
                   </div>
@@ -1579,18 +1579,18 @@ function CTODashboardInner() {
               <DialogTrigger asChild>
                 <Button
                   variant="outline"
-                  className="border-[#BAFF39]/50 text-[#BAFF39] hover:bg-[#BAFF39]/10 gap-2"
+                  className="border-primary/50 text-primary hover:bg-primary/10 gap-2"
                   data-testid="briefing-runsheet-button"
                 >
                   <BookOpen className="h-4 w-4" />
                   Briefing Run-Sheet
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-zinc-950/95 backdrop-blur-xl border border-[#BAFF39]/30 shadow-[0_0_60px_rgba(186,255,57,0.15)] max-w-4xl max-h-[85vh] overflow-hidden">
+              <DialogContent className="bg-zinc-950/95 backdrop-blur-xl border border-primary/30 shadow-[0_0_60px_rgba(186,255,57,0.15)] max-w-4xl max-h-[85vh] overflow-hidden">
                 <DialogHeader>
                   <DialogTitle className="text-white flex items-center gap-3 text-xl">
-                    <div className="p-2 rounded-xl bg-[#BAFF39]/20 border border-[#BAFF39]/30">
-                      <BookOpen className="h-6 w-6 text-[#BAFF39]" />
+                    <div className="p-2 rounded-xl bg-primary/20 border border-primary/30">
+                      <BookOpen className="h-6 w-6 text-primary" />
                     </div>
                     Brisbane Briefing Success Guide
                   </DialogTitle>
@@ -1601,27 +1601,27 @@ function CTODashboardInner() {
                 <ScrollArea className="h-[60vh] pr-4">
                   <div className="space-y-6 text-zinc-300">
                     {/* Pre-Briefing Checklist */}
-                    <div className="p-4 rounded-xl bg-[#BAFF39]/10 border border-[#BAFF39]/30">
-                      <h3 className="text-[#BAFF39] font-bold mb-3 flex items-center gap-2">
+                    <div className="p-4 rounded-xl bg-primary/10 border border-primary/30">
+                      <h3 className="text-primary font-bold mb-3 flex items-center gap-2">
                         <CheckCircle2 className="h-5 w-5" />
                         Pre-Briefing Checklist
                       </h3>
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-[#BAFF39]" />
-                          <span>Rick CEO Profile: <strong className="text-[#BAFF39]">VERIFIED</strong></span>
+                          <span className="w-2 h-2 rounded-full bg-primary" />
+                          <span>Rick CEO Profile: <strong className="text-primary">VERIFIED</strong></span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-[#BAFF39]" />
-                          <span>Session Persistence: <strong className="text-[#BAFF39]">VERIFIED</strong></span>
+                          <span className="w-2 h-2 rounded-full bg-primary" />
+                          <span>Session Persistence: <strong className="text-primary">VERIFIED</strong></span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-[#BAFF39]" />
-                          <span>Lead Tracker Seed Data: <strong className="text-[#BAFF39]">VERIFIED</strong></span>
+                          <span className="w-2 h-2 rounded-full bg-primary" />
+                          <span>Lead Tracker Seed Data: <strong className="text-primary">VERIFIED</strong></span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-[#BAFF39]" />
-                          <span>DVS Handshake Modal: <strong className="text-[#BAFF39]">VERIFIED</strong></span>
+                          <span className="w-2 h-2 rounded-full bg-primary" />
+                          <span>DVS Handshake Modal: <strong className="text-primary">VERIFIED</strong></span>
                         </div>
                       </div>
                     </div>
@@ -1630,17 +1630,17 @@ function CTODashboardInner() {
                     <div className="p-4 rounded-xl bg-zinc-800/50 border border-zinc-700">
                       <h4 className="text-white font-semibold mb-3">Act 1: The Dopamine Hit (Lead Tracker)</h4>
                       <ol className="space-y-2 text-sm text-zinc-400 list-decimal list-inside">
-                        <li>Log in as <code className="text-[#BAFF39] bg-zinc-900 px-1 rounded">julian.g.roberts@gmail.com</code></li>
+                        <li>Log in as <code className="text-primary bg-zinc-900 px-1 rounded">julian.g.roberts@gmail.com</code></li>
                         <li>Navigate to <strong className="text-white">CEO Insights → Lead Tracker</strong></li>
                         <li>Click "Demo Seed (25)" to inject Brisbane 100 leads</li>
-                        <li>Note the <strong className="text-[#BAFF39]">Pipeline ARR: $44,700</strong> displayed</li>
+                        <li>Note the <strong className="text-primary">Pipeline ARR: $44,700</strong> displayed</li>
                         <li>Change one lead status from "Onboarding" → "Active"</li>
                         <li>Navigate to <strong className="text-white">CTO Dashboard</strong></li>
-                        <li>Observe <strong className="text-[#BAFF39]">Projected ARR</strong> updates (+$1,788)</li>
+                        <li>Observe <strong className="text-primary">Projected ARR</strong> updates (+$1,788)</li>
                       </ol>
                       <div className="mt-3 p-2 rounded bg-zinc-900/50 border border-zinc-700">
                         <p className="text-xs italic text-zinc-500">
-                          <strong className="text-[#BAFF39]">Rick's Line:</strong> "Every time I convert a lead, this dashboard shows me the revenue impact in real-time."
+                          <strong className="text-primary">Rick's Line:</strong> "Every time I convert a lead, this dashboard shows me the revenue impact in real-time."
                         </p>
                       </div>
                     </div>
@@ -1652,11 +1652,11 @@ function CTODashboardInner() {
                         <li>Open any Professional Dashboard</li>
                         <li>Click the <strong className="text-white">Compliance Vault</strong> card</li>
                         <li>For any verified document, click the green checkmark</li>
-                        <li>Observe the <strong className="text-[#BAFF39]">DVS Certificate Modal</strong></li>
+                        <li>Observe the <strong className="text-primary">DVS Certificate Modal</strong></li>
                       </ol>
                       <div className="mt-3 p-2 rounded bg-zinc-900/50 border border-zinc-700">
                         <p className="text-xs italic text-zinc-500">
-                          <strong className="text-[#BAFF39]">Lucas's Validation:</strong> "This is government-grade verification. The audit trail is legally defensible."
+                          <strong className="text-primary">Lucas's Validation:</strong> "This is government-grade verification. The audit trail is legally defensible."
                         </p>
                       </div>
                     </div>
@@ -1674,7 +1674,7 @@ function CTODashboardInner() {
                       </ol>
                       <div className="mt-3 p-2 rounded bg-zinc-900/50 border border-zinc-700">
                         <p className="text-xs italic text-zinc-500">
-                          <strong className="text-[#BAFF39]">Rick's Line:</strong> "This is how the platform gets smarter. Every gap becomes fuel for the next 100 venues."
+                          <strong className="text-primary">Rick's Line:</strong> "This is how the platform gets smarter. Every gap becomes fuel for the next 100 venues."
                         </p>
                       </div>
                     </div>
@@ -1688,7 +1688,7 @@ function CTODashboardInner() {
                       </ol>
                       <div className="mt-3 p-2 rounded bg-zinc-900/50 border border-zinc-700">
                         <p className="text-xs italic text-zinc-500">
-                          <strong className="text-[#BAFF39]">Rick's Line:</strong> "Even in the Brisbane Convention Centre with spotty Wi-Fi, the engine holds state locally."
+                          <strong className="text-primary">Rick's Line:</strong> "Even in the Brisbane Convention Centre with spotty Wi-Fi, the engine holds state locally."
                         </p>
                       </div>
                     </div>
@@ -1706,7 +1706,7 @@ function CTODashboardInner() {
                     {/* Footer */}
                     <div className="pt-3 border-t border-zinc-800 flex justify-center">
                       <span className="text-[10px] text-zinc-600 tracking-wider">
-                        Powered by <span className="font-black italic">HOSPO<span className="text-[#BAFF39]">GO</span></span>
+                        Powered by <span className="font-black italic">HOSPO<span className="text-primary">GO</span></span>
                       </span>
                     </div>
                   </div>
@@ -1734,9 +1734,9 @@ function CTODashboardInner() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-wider text-zinc-500">Success Rate</p>
-                  <p className="text-2xl font-bold text-[#BAFF39] mt-1">94.2%</p>
+                  <p className="text-2xl font-bold text-primary mt-1">94.2%</p>
                 </div>
-                <TrendingUp className="h-6 w-6 text-[#BAFF39]/50" />
+                <TrendingUp className="h-6 w-6 text-primary/50" />
               </div>
             </CardContent>
           </Card>
@@ -1756,7 +1756,7 @@ function CTODashboardInner() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-wider text-zinc-500">Manual Coverage</p>
-                  <p className="text-2xl font-bold text-[#BAFF39] mt-1">89%</p>
+                  <p className="text-2xl font-bold text-primary mt-1">89%</p>
                 </div>
                 <FileText className="h-6 w-6 text-zinc-600" />
               </div>

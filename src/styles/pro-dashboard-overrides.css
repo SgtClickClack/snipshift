@@ -69,7 +69,7 @@
    ========================================================================== */
 
 .dark .btn-primary-lime {
-  background-color: #BAFF39 !important;
+  background-color: hsl(var(--primary)) !important;
   color: #0f172a !important;
 }
 

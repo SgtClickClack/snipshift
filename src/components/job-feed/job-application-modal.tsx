@@ -276,11 +276,11 @@ export default function JobApplicationModal({ isOpen, onClose, onSuccess, job }:
 
           {hasAlreadyApplied ? (
             <div className="text-center py-8">
-              <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                <h3 className="text-lg font-medium text-green-800 mb-2">
+              <div className="bg-success/20 border border-success/30 rounded-lg p-6">
+                <h3 className="text-lg font-medium text-success-foreground mb-2">
                   Application Already Submitted
                 </h3>
-                <p className="text-green-600">
+                <p className="text-success">
                   You have already applied for this position. The venue owner will review your application and contact you if you're selected.
                 </p>
               </div>

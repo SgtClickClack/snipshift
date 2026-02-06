@@ -96,7 +96,7 @@ export const WaitlistPage = () => {
                     onClick={() => setRole('venue')}
                     className={`flex-1 py-2.5 px-4 rounded-md font-semibold text-sm transition-all ${
                       role === 'venue'
-                        ? 'bg-gradient-to-r from-blue-500 to-[#BAFF39] text-white shadow-lg shadow-blue-500/50'
+                        ? 'bg-gradient-to-r from-blue-500 to-primary text-white shadow-lg shadow-blue-500/50'
                         : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
@@ -107,7 +107,7 @@ export const WaitlistPage = () => {
                     onClick={() => setRole('staff')}
                     className={`flex-1 py-2.5 px-4 rounded-md font-semibold text-sm transition-all ${
                       role === 'staff'
-                        ? 'bg-gradient-to-r from-blue-500 to-[#BAFF39] text-white shadow-lg shadow-blue-500/50'
+                        ? 'bg-gradient-to-r from-blue-500 to-primary text-white shadow-lg shadow-blue-500/50'
                         : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
@@ -163,7 +163,7 @@ export const WaitlistPage = () => {
                     (role === 'venue' && (!managerEmail || !venueName)) ||
                     (role === 'staff' && (!fullName || !mobileNumber))
                   }
-                  className="w-full bg-[#BAFF39] hover:bg-[#BAFF39]/90 disabled:bg-slate-700 disabled:cursor-not-allowed text-black font-black italic py-3 rounded-lg transition-all transform hover:scale-[1.02] disabled:transform-none shadow-[0_0_20px_rgba(186,255,57,0.4)] hover:shadow-[0_0_30px_rgba(186,255,57,0.6)]"
+                  className="w-full bg-primary hover:bg-primary/90 disabled:bg-slate-700 disabled:cursor-not-allowed text-primary-foreground font-black italic py-3 rounded-lg transition-all transform hover:scale-[1.02] disabled:transform-none shadow-[0_0_20px_hsl(var(--primary)/0.4)] hover:shadow-[0_0_30px_hsl(var(--primary)/0.6)]"
                 >
                   {isSubmitting ? 'Submitting...' : 'Secure Early Access'}
                 </button>

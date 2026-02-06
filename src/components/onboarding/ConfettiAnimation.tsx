@@ -33,7 +33,7 @@ export function ConfettiAnimation() {
     }> = [];
 
     // Create particles
-    const colors = ['#BAFF39', '#00FF88', '#00D4FF', '#FF00FF', '#FF8800']; // Neon colors
+    const colors = ['hsl(81,85%,58%)', '#00FF88', '#00D4FF', '#FF00FF', '#FF8800']; // Neon colors
     for (let i = 0; i < 100; i++) {
       particles.push({
         x: Math.random() * canvas.width,

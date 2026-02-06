@@ -34,13 +34,15 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
-        'brand-neon': '#BAFF39',
+        'brand-neon': 'hsl(var(--primary))',
         'brand-dark': '#0A0A0A',
         'brand-accent': '#8B5CF6',
         'brand-surface': '#161616',
+        /* Architect Portal style guide: primary uses desaturated variant for consistency */
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          muted: "hsl(var(--primary-muted))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -70,9 +72,11 @@ export default {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
         },
+        /* Architect Portal style guide: accent uses desaturated charcoal */
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
+          muted: "hsl(var(--accent-muted))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
@@ -147,9 +151,9 @@ export default {
       },
       boxShadow: {
         "neon-realistic":
-          "0 0 5px rgba(186, 255, 57, 0.9), 0 0 15px rgba(186, 255, 57, 0.5), 0 0 30px rgba(186, 255, 57, 0.2)",
+          "0 0 5px hsl(var(--primary) / 0.9), 0 0 15px hsl(var(--primary) / 0.5), 0 0 30px hsl(var(--primary) / 0.2)",
         "neon-hover":
-          "0 0 20px rgba(186, 255, 57, 0.4)",
+          "0 0 20px hsl(var(--primary) / 0.4)",
       },
       keyframes: {
         "accordion-down": {
@@ -163,11 +167,11 @@ export default {
         "neon-pulse": {
           "0%, 100%": {
             "box-shadow":
-              "0 0 12px 5px #BAFF39, 0 0 26px 10px rgba(186,255,57,0.25)",
+              "0 0 12px 5px hsl(var(--primary)), 0 0 26px 10px hsl(var(--primary) / 0.25)",
           },
           "50%": {
             "box-shadow":
-              "0 0 22px 20px #BAFF39, 0 0 46px 24px rgba(186,255,57,0.6)",
+              "0 0 22px 20px hsl(var(--primary)), 0 0 46px 24px hsl(var(--primary) / 0.6)",
           },
         },
         "neon-flicker": {
@@ -189,11 +193,11 @@ export default {
         },
         "steady-hum": {
           "0%, 100%": {
-            "text-shadow": "0 0 4px rgba(186,255,57,0.6), 0 0 8px rgba(186,255,57,0.4), 0 0 12px rgba(186,255,57,0.2)",
+            "text-shadow": "0 0 4px hsl(var(--primary) / 0.6), 0 0 8px hsl(var(--primary) / 0.4), 0 0 12px hsl(var(--primary) / 0.2)",
             opacity: "1",
           },
           "50%": {
-            "text-shadow": "0 0 6px rgba(186,255,57,0.8), 0 0 12px rgba(186,255,57,0.5), 0 0 18px rgba(186,255,57,0.3)",
+            "text-shadow": "0 0 6px hsl(var(--primary) / 0.8), 0 0 12px hsl(var(--primary) / 0.5), 0 0 18px hsl(var(--primary) / 0.3)",
             opacity: "0.98",
           },
         },

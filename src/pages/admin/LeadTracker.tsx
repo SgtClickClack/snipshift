@@ -7,7 +7,7 @@
  * - Contact management with last contacted dates
  * - Notes for each lead
  * - CEO/Admin guarded access
- * - Electric Lime (#BAFF39) branding for Active status
+ * - Electric Lime (primary) branding for Active status
  */
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
@@ -417,8 +417,8 @@ const STATUS_CONFIG: Record<LeadStatus, { label: string; color: string; bgColor:
   },
   active: {
     label: 'Active',
-    color: 'text-[#BAFF39]',
-    bgColor: 'bg-[#BAFF39]/20 border-[#BAFF39]/50',
+    color: 'text-primary',
+    bgColor: 'bg-primary/20 border-primary/50',
   },
 };
 
@@ -542,7 +542,7 @@ export default function LeadTracker() {
     toast({
       title: 'Sync complete',
       description: 'All offline changes have been synced.',
-      className: 'border-[#BAFF39]/50 bg-[#BAFF39]/10',
+      className: 'border-primary/50 bg-primary/10',
     });
   }, [queryClient, toast]);
 
@@ -867,7 +867,7 @@ export default function LeadTracker() {
       toast({
         title: '🏭 Foundry Initialized',
         description: `${autoOnboardingLead?.venueName} is now a Platform Licensee.`,
-        className: 'border-[#BAFF39]/50 bg-[#BAFF39]/10',
+        className: 'border-primary/50 bg-primary/10',
       });
       setAutoOnboardingLead(null);
     },
@@ -879,7 +879,7 @@ export default function LeadTracker() {
       toast({
         title: '🏭 Foundry Initialized',
         description: `${autoOnboardingLead?.venueName} is now a Platform Licensee.`,
-        className: 'border-[#BAFF39]/50 bg-[#BAFF39]/10',
+        className: 'border-primary/50 bg-primary/10',
       });
       setAutoOnboardingLead(null);
     },
@@ -937,7 +937,7 @@ export default function LeadTracker() {
       toast({
         title: '🎉 Brisbane 100 Seeded!',
         description: `Injected ${BRISBANE_100_SEED_DATA.length} leads: 5 Active venues, 15 Onboarding. ARR projection now live.`,
-        className: 'border-[#BAFF39]/50 bg-[#BAFF39]/10',
+        className: 'border-primary/50 bg-primary/10',
       });
     } catch (error: any) {
       toast({
@@ -1066,7 +1066,7 @@ export default function LeadTracker() {
     if (score >= 90) {
       return {
         tier: 'Elite',
-        color: 'text-[#BAFF39]',
+        color: 'text-primary',
         description: 'Predictable demand, high retention, neighborhood anchor'
       };
     }
@@ -1100,7 +1100,7 @@ export default function LeadTracker() {
     // Suburban: slow, steady pulse (2-3s)
     // CBD: fast, variable pulse (0.5-1s)
     const animationDuration = isSuburban ? '2.5s' : isCBD ? '0.8s' : '1.5s';
-    const pulseColor = isSuburban ? '#BAFF39' : isCBD ? '#F59E0B' : '#60A5FA';
+    const pulseColor = isSuburban ? 'primary' : isCBD ? '#F59E0B' : '#60A5FA';
     const glowIntensity = isSuburban ? '0.6' : isCBD ? '0.4' : '0.5';
     
     return (
@@ -1219,7 +1219,7 @@ export default function LeadTracker() {
     toast({
       title: '📊 Growth Report Downloaded',
       description: `Export includes ${leads.length} venues with projected ARR of $${totalARR.toLocaleString()}.`,
-      className: 'border-[#BAFF39]/50 bg-[#BAFF39]/10',
+      className: 'border-primary/50 bg-primary/10',
     });
   };
 
@@ -1263,7 +1263,7 @@ export default function LeadTracker() {
           height={window.innerHeight}
           recycle={false}
           numberOfPieces={500}
-          colors={['#BAFF39', '#8FD629', '#FFFFFF', '#2DD4BF', '#22C55E', '#A3E635']}
+          colors={['primary', '#8FD629', '#FFFFFF', '#2DD4BF', '#22C55E', '#A3E635']}
           confettiSource={{ x: window.innerWidth / 2, y: window.innerHeight / 4, w: 100, h: 0 }}
           tweenDuration={6000}
           gravity={0.15}
@@ -1275,7 +1275,7 @@ export default function LeadTracker() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-              <Target className="h-8 w-8 text-[#BAFF39]" />
+              <Target className="h-8 w-8 text-primary" />
               Brisbane 100
             </h1>
             <p className="text-zinc-400 mt-1">
@@ -1288,33 +1288,33 @@ export default function LeadTracker() {
               className={cn(
                 "flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200",
                 presentationMode 
-                  ? "bg-[#BAFF39]/20 border border-[#BAFF39]/50" 
+                  ? "bg-primary/20 border border-primary/50" 
                   : "bg-zinc-800/50 border border-zinc-700/50"
               )}
               data-testid="presentation-mode-toggle"
             >
               {presentationMode ? (
-                <EyeOff className="h-4 w-4 text-[#BAFF39]" />
+                <EyeOff className="h-4 w-4 text-primary" />
               ) : (
                 <Eye className="h-4 w-4 text-zinc-400" />
               )}
               <span className={cn(
                 "text-sm font-medium",
-                presentationMode ? "text-[#BAFF39]" : "text-zinc-400"
+                presentationMode ? "text-primary" : "text-zinc-400"
               )}>
                 Presentation
               </span>
               <Switch
                 checked={presentationMode}
                 onCheckedChange={setPresentationMode}
-                className="data-[state=checked]:bg-[#BAFF39]"
+                className="data-[state=checked]:bg-primary"
               />
             </div>
             {/* GROWTH ADVISORY: Download Report Button - For Lucas/Investors */}
             <Button
               onClick={downloadGrowthReport}
               variant="outline"
-              className="border-[#BAFF39]/50 text-[#BAFF39] hover:bg-[#BAFF39]/10 hover:text-[#BAFF39] shadow-[0_0_10px_rgba(186,255,57,0.15)]"
+              className="border-primary/50 text-primary hover:bg-primary/10 hover:text-primary shadow-[0_0_10px_rgba(186,255,57,0.15)]"
               title="Download Growth Report: Projected ARR, Suburban Loyalty scores, and pipeline data"
               data-testid="download-growth-report"
             >
@@ -1330,7 +1330,7 @@ export default function LeadTracker() {
                 onClick={seedBrisbane100}
                 disabled={isSeedingData}
                 variant="outline"
-                className="border-[#BAFF39]/50 text-[#BAFF39] hover:bg-[#BAFF39]/10 hover:text-[#BAFF39]"
+                className="border-primary/50 text-primary hover:bg-primary/10 hover:text-primary"
                 title="Demo Data Seeding: Inject Brisbane 100 leads for investor demo"
                 data-testid="demo-data-seed-toggle"
               >
@@ -1359,7 +1359,7 @@ export default function LeadTracker() {
               <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-2xl">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <FileSpreadsheet className="h-5 w-5 text-[#BAFF39]" />
+                    <FileSpreadsheet className="h-5 w-5 text-primary" />
                     Bulk Import Leads
                   </DialogTitle>
                   <DialogDescription className="text-zinc-400">
@@ -1392,7 +1392,7 @@ export default function LeadTracker() {
                       <div className="max-h-32 overflow-y-auto space-y-1">
                         {bulkImportPreview.slice(0, 5).map((lead, i) => (
                           <div key={i} className="flex items-center gap-2 text-sm p-2 rounded bg-zinc-800/50">
-                            <Building2 className="h-3 w-3 text-[#BAFF39]" />
+                            <Building2 className="h-3 w-3 text-primary" />
                             <span className="text-white font-medium">{lead.venueName}</span>
                             <span className="text-zinc-500">•</span>
                             <span className="text-zinc-400">{lead.contactPerson}</span>
@@ -1441,7 +1441,7 @@ export default function LeadTracker() {
                     <Button
                       onClick={handleBulkImport}
                       disabled={bulkImportPreview.length === 0 || bulkImportErrors.length > 0 || bulkImportMutation.isPending}
-                      className="flex-1 sm:flex-none bg-[#BAFF39] text-zinc-900 hover:bg-[#BAFF39]/90"
+                      className="flex-1 sm:flex-none bg-primary text-zinc-900 hover:bg-primary/90"
                     >
                       {bulkImportMutation.isPending ? (
                         <>
@@ -1460,7 +1460,7 @@ export default function LeadTracker() {
                 {/* HOSPO-GO Branding Footer */}
                 <div className="pt-3 border-t border-zinc-800 flex justify-center">
                   <span className="text-[10px] text-zinc-600 tracking-wider">
-                    Powered by <span className="font-black italic">HOSPO<span className="text-[#BAFF39]">GO</span></span>
+                    Powered by <span className="font-black italic">HOSPO<span className="text-primary">GO</span></span>
                   </span>
                 </div>
               </DialogContent>
@@ -1475,7 +1475,7 @@ export default function LeadTracker() {
               }
             }}>
               <DialogTrigger asChild>
-                <Button className="bg-[#BAFF39] text-zinc-900 hover:bg-[#BAFF39]/90 font-semibold shadow-[0_0_20px_rgba(186,255,57,0.3)]">
+                <Button className="bg-primary text-zinc-900 hover:bg-primary/90 font-semibold shadow-[0_0_20px_rgba(186,255,57,0.3)]">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Lead
                 </Button>
@@ -1576,7 +1576,7 @@ export default function LeadTracker() {
                   <Button
                     onClick={handleSave}
                     disabled={saveMutation.isPending}
-                    className="flex-1 sm:flex-none bg-[#BAFF39] text-zinc-900 hover:bg-[#BAFF39]/90"
+                    className="flex-1 sm:flex-none bg-primary text-zinc-900 hover:bg-primary/90"
                   >
                     {saveMutation.isPending ? (
                       <>
@@ -1592,7 +1592,7 @@ export default function LeadTracker() {
               {/* HOSPO-GO Branding Footer */}
               <div className="pt-3 border-t border-zinc-800 flex justify-center">
                 <span className="text-[10px] text-zinc-600 tracking-wider">
-                  Powered by <span className="font-black italic">HOSPO<span className="text-[#BAFF39]">GO</span></span>
+                  Powered by <span className="font-black italic">HOSPO<span className="text-primary">GO</span></span>
                 </span>
               </div>
             </DialogContent>
@@ -1601,16 +1601,16 @@ export default function LeadTracker() {
         </div>
 
         {/* Live Revenue Engine - Projected ARR Banner */}
-        <Card className="bg-gradient-to-r from-[#BAFF39]/20 via-[#BAFF39]/10 to-transparent border-2 border-[#BAFF39]/40 shadow-[0_0_30px_rgba(186,255,57,0.15)]">
+        <Card className="bg-gradient-to-r from-primary/20 via-primary/10 to-transparent border-2 border-primary/40 shadow-[0_0_30px_rgba(186,255,57,0.15)]">
           <CardContent className="py-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-2xl bg-[#BAFF39]/20">
-                  <Rocket className="h-8 w-8 text-[#BAFF39]" />
+                <div className="p-3 rounded-2xl bg-primary/20">
+                  <Rocket className="h-8 w-8 text-primary" />
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-widest text-zinc-500 font-bold">Revenue Pipeline</p>
-                  <p className="text-4xl font-black text-[#BAFF39] tracking-tight">
+                  <p className="text-4xl font-black text-primary tracking-tight">
                     ${stats.pipelineARR.toLocaleString()}
                   </p>
                   <p className="text-sm text-zinc-400 mt-1">Pipeline ARR ({stats.total} leads × $149/mo)</p>
@@ -1618,7 +1618,7 @@ export default function LeadTracker() {
               </div>
               <div className="flex flex-wrap gap-4 md:gap-6 text-center justify-center">
                 <div className="px-4 md:px-6 py-3 rounded-xl bg-zinc-800/50 border border-zinc-700">
-                  <p className="text-xl md:text-2xl font-bold text-[#BAFF39]">${stats.projectedARR.toLocaleString()}</p>
+                  <p className="text-xl md:text-2xl font-bold text-primary">${stats.projectedARR.toLocaleString()}</p>
                   <p className="text-[10px] uppercase tracking-wider text-zinc-500">Committed ARR</p>
                 </div>
                 <div className="px-4 md:px-6 py-3 rounded-xl bg-zinc-800/50 border border-zinc-700">
@@ -1673,25 +1673,25 @@ export default function LeadTracker() {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-zinc-900/80 border-[#BAFF39]/30">
+          <Card className="bg-zinc-900/80 border-primary/30">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-wider text-zinc-500">Active</p>
-                  <p className="text-3xl font-bold text-[#BAFF39] mt-1">{stats.active}</p>
+                  <p className="text-3xl font-bold text-primary mt-1">{stats.active}</p>
                 </div>
-                <Building2 className="h-8 w-8 text-[#BAFF39]/50" />
+                <Building2 className="h-8 w-8 text-primary/50" />
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-[#BAFF39]/10 to-transparent border-[#BAFF39]/30">
+          <Card className="bg-gradient-to-br from-primary/10 to-transparent border-primary/30">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-wider text-zinc-500">Conversion</p>
-                  <p className="text-3xl font-bold text-[#BAFF39] mt-1">{stats.conversionRate}%</p>
+                  <p className="text-3xl font-bold text-primary mt-1">{stats.conversionRate}%</p>
                 </div>
-                <TrendingUp className="h-8 w-8 text-[#BAFF39]/50" />
+                <TrendingUp className="h-8 w-8 text-primary/50" />
               </div>
             </CardContent>
           </Card>
@@ -1730,7 +1730,7 @@ export default function LeadTracker() {
         <Card className="bg-zinc-900/80 border-zinc-800">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-[#BAFF39]" />
+              <Building2 className="h-5 w-5 text-primary" />
               Pipeline ({filteredLeads.length})
             </CardTitle>
             <CardDescription className="text-zinc-500">
@@ -1740,7 +1740,7 @@ export default function LeadTracker() {
           <CardContent>
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-[#BAFF39]" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <span className="ml-3 text-zinc-400">Loading leads...</span>
               </div>
             ) : filteredLeads.length === 0 ? (
@@ -1760,20 +1760,20 @@ export default function LeadTracker() {
                         <TableHead className="text-zinc-400">
                           {/* SUBURBAN LOYALTY SCORE - Investor Intelligence */}
                           <div className="flex items-center gap-1.5">
-                            <Brain className="h-3.5 w-3.5 text-[#BAFF39]" />
+                            <Brain className="h-3.5 w-3.5 text-primary" />
                             <span>Loyalty</span>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <button className="p-0.5 rounded hover:bg-zinc-700/50" aria-label="Loyalty Score Algorithm Info">
-                                  <Info className="h-3 w-3 text-zinc-500 hover:text-[#BAFF39]" />
+                                  <Info className="h-3 w-3 text-zinc-500 hover:text-primary" />
                                 </button>
                               </TooltipTrigger>
                               <TooltipContent 
                                 side="bottom" 
-                                className="max-w-[320px] bg-zinc-900 border-[#BAFF39]/30 shadow-[0_0_15px_rgba(186,255,57,0.15)]"
+                                className="max-w-[320px] bg-zinc-900 border-primary/30 shadow-[0_0_15px_rgba(186,255,57,0.15)]"
                               >
                                 <div className="p-2">
-                                  <p className="font-bold text-[#BAFF39] mb-2 flex items-center gap-1.5">
+                                  <p className="font-bold text-primary mb-2 flex items-center gap-1.5">
                                     <Brain className="h-4 w-4" />
                                     Neighborhood Stability Index
                                   </p>
@@ -1844,7 +1844,7 @@ export default function LeadTracker() {
                                 <div 
                                   className={cn(
                                     "flex items-center gap-2 cursor-help px-2 py-1 rounded-md w-fit",
-                                    loyaltyScore >= 90 ? "bg-[#BAFF39]/10" : loyaltyScore >= 70 ? "bg-blue-500/10" : "bg-amber-500/10"
+                                    loyaltyScore >= 90 ? "bg-primary/10" : loyaltyScore >= 70 ? "bg-blue-500/10" : "bg-amber-500/10"
                                   )}
                                   data-testid={`loyalty-score-${lead.id}`}
                                 >
@@ -1860,11 +1860,11 @@ export default function LeadTracker() {
                               </TooltipTrigger>
                               <TooltipContent 
                                 side="right" 
-                                className="max-w-[340px] bg-zinc-900 border-[#BAFF39]/30 shadow-[0_0_15px_rgba(186,255,57,0.15)]"
+                                className="max-w-[340px] bg-zinc-900 border-primary/30 shadow-[0_0_15px_rgba(186,255,57,0.15)]"
                               >
                                 <div className="p-3 space-y-3">
                                   <div className="flex items-center gap-2">
-                                    <Brain className="h-5 w-5 text-[#BAFF39]" />
+                                    <Brain className="h-5 w-5 text-primary" />
                                     <span className="font-bold text-white">Suburban Loyalty Score</span>
                                   </div>
                                   
@@ -1887,7 +1887,7 @@ export default function LeadTracker() {
                                   
                                   <div className="border-t border-zinc-700 pt-2">
                                     <p className="text-xs text-zinc-300 mb-1">
-                                      <strong className="text-[#BAFF39]">Algorithm:</strong> Neighborhood Stability Index
+                                      <strong className="text-primary">Algorithm:</strong> Neighborhood Stability Index
                                     </p>
                                     <p className="text-xs text-zinc-400">
                                       <strong>Weights:</strong> Predictable labor demand, staff retention rates (+4.6%), and local foot traffic consistency.
@@ -1906,7 +1906,7 @@ export default function LeadTracker() {
                             {lead.status === 'lead' ? (
                               <span className="text-zinc-600">—</span>
                             ) : (
-                              <span className={`font-semibold ${lead.status === 'active' ? 'text-[#BAFF39]' : 'text-blue-400'}`}>
+                              <span className={`font-semibold ${lead.status === 'active' ? 'text-primary' : 'text-blue-400'}`}>
                                 ${(MONTHLY_PLATFORM_FEE * 12).toLocaleString()}
                               </span>
                             )}
@@ -1938,7 +1938,7 @@ export default function LeadTracker() {
                                     handleAutoOnboard(lead);
                                   }}
                                   disabled={autoOnboardMutation.isPending && autoOnboardingLead?.id === lead.id}
-                                  className="text-[#BAFF39] hover:text-[#BAFF39] hover:bg-[#BAFF39]/10 gap-1"
+                                  className="text-primary hover:text-primary hover:bg-primary/10 gap-1"
                                   title="Auto-Onboard: Create venue and owner account instantly"
                                 >
                                   {autoOnboardMutation.isPending && autoOnboardingLead?.id === lead.id ? (

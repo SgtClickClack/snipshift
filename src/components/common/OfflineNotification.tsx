@@ -8,7 +8,7 @@
  * Features:
  * - Listens to browser online/offline events
  * - Graceful reconnection detection with "Syncing Resumed" message
- * - Non-intrusive toast-style notification with Electric Lime (#BAFF39) branding
+ * - Non-intrusive toast-style notification with brand primary branding
  * - Position avoids overlap with Support Bot and bottom nav
  */
 

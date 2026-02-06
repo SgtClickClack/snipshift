@@ -155,9 +155,9 @@ export default function LandingPage() {
                 >
                   The Roster That{" "}
                   <span className="relative inline-block">
-                    <span className="relative z-10 text-[#BAFF39]">Never Quits</span>
+                    <span className="relative z-10 text-primary">Never Quits</span>
                     <span
-                      className="absolute bottom-1 left-0 w-full h-[4px] bg-[#BAFF39]/60 rounded-full"
+                      className="absolute bottom-1 left-0 w-full h-[4px] bg-primary/60 rounded-full"
                       aria-hidden="true"
                     />
                   </span>
@@ -181,7 +181,7 @@ export default function LandingPage() {
                   <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4 mt-10 items-stretch sm:items-center">
                     <Link to="/signup?role=hub" className="w-full sm:w-auto">
                       <Button
-                        className="w-full sm:w-auto bg-[#BAFF39] text-black font-black px-12 py-5 rounded-full hover:shadow-[0_0_20px_rgba(186,255,57,0.4)] transition-all duration-300 min-h-[44px]"
+                        className="w-full sm:w-auto bg-primary text-black font-black px-12 py-5 rounded-full hover:shadow-[0_0_20px_rgba(186,255,57,0.4)] transition-all duration-300 min-h-[44px]"
                         data-testid="button-find-staff"
                       >
                         FIND STAFF
@@ -201,7 +201,7 @@ export default function LandingPage() {
                     <Link to="/investorportal" className="w-full sm:w-auto">
                       <Button
                         variant="ghost"
-                        className="w-full sm:w-auto border-2 border-[#BAFF39]/20 text-[#BAFF39] font-bold px-12 py-5 rounded-full hover:border-[#BAFF39]/50 hover:shadow-[0_0_12px_rgba(186,255,57,0.3)] transition-all duration-300 min-h-[44px] flex items-center gap-2"
+                        className="w-full sm:w-auto border-2 border-primary/20 text-primary font-bold px-12 py-5 rounded-full hover:border-primary/50 hover:shadow-[0_0_12px_rgba(186,255,57,0.3)] transition-all duration-300 min-h-[44px] flex items-center gap-2"
                         data-testid="button-investor-briefing"
                       >
                         <ChartLine className="h-4 w-4" />
@@ -219,7 +219,7 @@ export default function LandingPage() {
                       className="w-full sm:w-auto"
                     >
                       <Button
-                        className="w-full sm:w-auto bg-[#BAFF39] text-black font-black px-12 py-5 rounded-full hover:shadow-[0_0_20px_rgba(186,255,57,0.4)] transition-all duration-300 min-h-[44px]"
+                        className="w-full sm:w-auto bg-primary text-black font-black px-12 py-5 rounded-full hover:shadow-[0_0_20px_rgba(186,255,57,0.4)] transition-all duration-300 min-h-[44px]"
                         data-testid={user.isOnboarded === true ? "button-go-to-dashboard" : "button-complete-setup"}
                       >
                         {user.isOnboarded === true ? 'Go to Dashboard' : 'Complete Setup'}
@@ -228,7 +228,7 @@ export default function LandingPage() {
                     <Link to="/investorportal" className="w-full sm:w-auto">
                       <Button
                         variant="ghost"
-                        className="w-full sm:w-auto border-2 border-[#BAFF39]/20 text-[#BAFF39] font-bold px-12 py-5 rounded-full hover:border-[#BAFF39]/50 hover:shadow-[0_0_12px_rgba(186,255,57,0.3)] transition-all duration-300 min-h-[44px] flex items-center gap-2"
+                        className="w-full sm:w-auto border-2 border-primary/20 text-primary font-bold px-12 py-5 rounded-full hover:border-primary/50 hover:shadow-[0_0_12px_rgba(186,255,57,0.3)] transition-all duration-300 min-h-[44px] flex items-center gap-2"
                         data-testid="button-investor-briefing"
                       >
                         <ChartLine className="h-4 w-4" />
@@ -256,11 +256,11 @@ export default function LandingPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Card className="bg-[#161616] border border-zinc-800 p-10 rounded-3xl hover:border-[#BAFF39]/50 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 group overflow-visible">
+              <Card className="bg-[#161616] border border-zinc-800 p-10 rounded-3xl hover:border-primary/50 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 group overflow-visible">
                 <CardContent className="pt-0">
                   <span className="relative z-badge text-zinc-600 font-mono text-xs sm:text-sm mb-2 block" data-testid="step-badge-1">Step 1</span>
-                  <div className="w-14 h-14 rounded-xl bg-[#BAFF39]/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                    <UserPlus className="h-7 w-7 text-[#BAFF39]" />
+                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <UserPlus className="h-7 w-7 text-primary" />
                   </div>
                   <h3 className="text-xl font-bold text-white mb-3">Create Your Profile</h3>
                   <p className="text-zinc-400 text-sm leading-relaxed">
@@ -269,11 +269,11 @@ export default function LandingPage() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-[#161616] border border-zinc-800 p-10 rounded-3xl hover:border-[#BAFF39]/50 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 group overflow-visible">
+              <Card className="bg-[#161616] border border-zinc-800 p-10 rounded-3xl hover:border-primary/50 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 group overflow-visible">
                 <CardContent className="pt-0">
                   <span className="relative z-badge text-zinc-600 font-mono text-xs sm:text-sm mb-2 block" data-testid="step-badge-2">Step 2</span>
-                  <div className="w-14 h-14 rounded-xl bg-[#BAFF39]/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                    <FileText className="h-7 w-7 text-[#BAFF39]" />
+                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <FileText className="h-7 w-7 text-primary" />
                   </div>
                   <h3 className="text-xl font-bold text-white mb-3">
                     Post or Browse Opportunities
@@ -285,11 +285,11 @@ export default function LandingPage() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-[#161616] border border-zinc-800 p-10 rounded-3xl hover:border-[#BAFF39]/50 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 group overflow-visible">
+              <Card className="bg-[#161616] border border-zinc-800 p-10 rounded-3xl hover:border-primary/50 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 group overflow-visible">
                 <CardContent className="pt-0">
                   <span className="relative z-badge text-zinc-600 font-mono text-xs sm:text-sm mb-2 block" data-testid="step-badge-3">Step 3</span>
-                  <div className="w-14 h-14 rounded-xl bg-[#BAFF39]/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                    <Handshake className="h-7 w-7 text-[#BAFF39]" />
+                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <Handshake className="h-7 w-7 text-primary" />
                   </div>
                   <h3 className="text-xl font-bold text-white mb-3">Connect & Apply</h3>
                   <p className="text-zinc-400 text-sm leading-relaxed">
@@ -299,11 +299,11 @@ export default function LandingPage() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-[#161616] border border-zinc-800 p-10 rounded-3xl hover:border-[#BAFF39]/50 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 group overflow-visible">
+              <Card className="bg-[#161616] border border-zinc-800 p-10 rounded-3xl hover:border-primary/50 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 group overflow-visible">
                 <CardContent className="pt-0">
                   <span className="relative z-badge text-zinc-600 font-mono text-xs sm:text-sm mb-2 block" data-testid="step-badge-4">Step 4</span>
-                  <div className="w-14 h-14 rounded-xl bg-[#BAFF39]/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                    <CheckCircle className="h-7 w-7 text-[#BAFF39]" />
+                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <CheckCircle className="h-7 w-7 text-primary" />
                   </div>
                   <h3 className="text-xl font-bold text-white mb-3">Work Together</h3>
                   <p className="text-zinc-400 text-sm leading-relaxed">
@@ -329,11 +329,11 @@ export default function LandingPage() {
 
             <div className="grid md:grid-cols-2 gap-8 md:gap-10">
               {/* For Shops */}
-              <Card className="bg-[#161616] border border-zinc-800 p-10 rounded-3xl hover:border-[#BAFF39]/50 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300">
+              <Card className="bg-[#161616] border border-zinc-800 p-10 rounded-3xl hover:border-primary/50 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300">
                 <CardContent className="pt-0">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-14 h-14 bg-[#BAFF39]/10 rounded-xl flex items-center justify-center">
-                      <Store className="h-7 w-7 text-[#BAFF39]" />
+                    <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center">
+                      <Store className="h-7 w-7 text-primary" />
                     </div>
                     <h3 className="text-2xl font-bold text-white">For Venues</h3>
                   </div>
@@ -342,21 +342,21 @@ export default function LandingPage() {
                   </p>
                   <ul className="space-y-3 mb-8">
                     <li className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-[#BAFF39] mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                       <span className="text-zinc-300">Verified professionals with ratings</span>
                     </li>
                     <li className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-[#BAFF39] mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                       <span className="text-zinc-300">Instant booking for last-minute coverage</span>
                     </li>
                     <li className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-[#BAFF39] mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                       <span className="text-zinc-300">No long-term contracts required</span>
                     </li>
                   </ul>
                   {!hasUser && !isLoading && (
                     <Link to="/signup?role=hub">
-                      <Button className="w-full bg-[#BAFF39] text-black font-black py-4 rounded-full hover:shadow-[0_0_20px_rgba(186,255,57,0.4)] transition-all duration-300">
+                      <Button className="w-full bg-primary text-black font-black py-4 rounded-full hover:shadow-[0_0_20px_rgba(186,255,57,0.4)] transition-all duration-300">
                         Get Started as Venue
                       </Button>
                     </Link>
@@ -365,11 +365,11 @@ export default function LandingPage() {
               </Card>
 
               {/* For Staff */}
-              <Card className="bg-[#161616] border border-zinc-800 p-10 rounded-3xl hover:border-[#BAFF39]/50 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300">
+              <Card className="bg-[#161616] border border-zinc-800 p-10 rounded-3xl hover:border-primary/50 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300">
                 <CardContent className="pt-0">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-14 h-14 bg-[#BAFF39]/10 rounded-xl flex items-center justify-center">
-                      <UserCheck className="h-7 w-7 text-[#BAFF39]" />
+                    <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center">
+                      <UserCheck className="h-7 w-7 text-primary" />
                     </div>
                     <h3 className="text-2xl font-bold text-white">For Staff</h3>
                   </div>
@@ -378,15 +378,15 @@ export default function LandingPage() {
                   </p>
                   <ul className="space-y-3 mb-8">
                     <li className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-[#BAFF39] mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                       <span className="text-zinc-300">Flexible shifts that fit your schedule</span>
                     </li>
                     <li className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-[#BAFF39] mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                       <span className="text-zinc-300">Secure payments processed through Stripe</span>
                     </li>
                     <li className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-[#BAFF39] mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                       <span className="text-zinc-300">Build your reputation with ratings</span>
                     </li>
                   </ul>
@@ -409,11 +409,11 @@ export default function LandingPage() {
             <div className="flex flex-col gap-10">
               <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
                 <div className="flex items-center gap-3">
-                  <Shield className="h-6 w-6 text-[#BAFF39]" />
+                  <Shield className="h-6 w-6 text-primary" />
                   <span className="text-lg font-semibold text-white">Verified Pros</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <CreditCard className="h-6 w-6 text-[#BAFF39]" />
+                  <CreditCard className="h-6 w-6 text-primary" />
                   <span className="text-lg font-semibold text-white">Payments powered by Stripe</span>
                 </div>
               </div>
@@ -441,7 +441,7 @@ export default function LandingPage() {
                 <Link to="/signup?role=hub" className="w-full sm:w-auto">
                   <Button
                     size="lg"
-                    className="w-full sm:w-auto h-auto bg-[#BAFF39] text-black px-10 py-4 rounded-full font-black text-lg hover:shadow-[0_0_20px_rgba(186,255,57,0.4)] transition-all duration-300 min-h-[44px]"
+                    className="w-full sm:w-auto h-auto bg-primary text-black px-10 py-4 rounded-full font-black text-lg hover:shadow-[0_0_20px_rgba(186,255,57,0.4)] transition-all duration-300 min-h-[44px]"
                     data-testid="button-join-venue"
                   >
                     Venue Sign Up

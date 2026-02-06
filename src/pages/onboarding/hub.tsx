@@ -545,7 +545,7 @@ export default function HubOnboardingPage() {
               <CardDescription className="text-steel-300">
                 {currentStep === 1 && (
                   <>
-                    Build your venue identity and unlock the <span className="text-[#BAFF39] font-semibold">$149/month Logistics Platform Fee</span>
+                    Build your venue identity and unlock the <span className="text-primary font-semibold">$149/month Logistics Platform Fee</span>
                     <br />
                     <span className="text-xs text-steel-400 mt-1 block">
                       One flat fee. No success taxes. No per-shift charges.
@@ -563,7 +563,7 @@ export default function HubOnboardingPage() {
                 )}
                 {currentStep === 3 && (
                   <>
-                    Almost there! Initializing your <span className="text-[#BAFF39]">Hospitality Engine</span>...
+                    Almost there! Initializing your <span className="text-primary">Hospitality Engine</span>...
                   </>
                 )}
               </CardDescription>
@@ -583,7 +583,7 @@ export default function HubOnboardingPage() {
                       onBlur={handleBlur}
                       placeholder="e.g. The Grand Hotel"
                       required
-                      className={`bg-white/5 backdrop-blur-md border-white/10 text-white placeholder:text-steel-400 focus-visible:ring-[#BAFF39] focus-visible:border-[#BAFF39] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] ${
+                      className={`bg-white/5 backdrop-blur-md border-white/10 text-white placeholder:text-steel-400 focus-visible:ring-primary focus-visible:border-primary shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] ${
                         getFieldError('venueName', formData.venueName, true) 
                           ? 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500' 
                           : ''
@@ -618,7 +618,7 @@ export default function HubOnboardingPage() {
                       }}
                       placeholder="Start typing a Brisbane suburb or address..."
                       readyToLoadMaps={isAuthReady}
-                      className={`bg-white/5 backdrop-blur-md border-white/10 text-white placeholder:text-steel-400 focus-visible:ring-[#BAFF39] focus-visible:border-[#BAFF39] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] ${
+                      className={`bg-white/5 backdrop-blur-md border-white/10 text-white placeholder:text-steel-400 focus-visible:ring-primary focus-visible:border-primary shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] ${
                         getFieldError('location', formData.location, true) 
                           ? 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500' 
                           : ''
@@ -642,14 +642,14 @@ export default function HubOnboardingPage() {
                       onBlur={handleBlur}
                       placeholder="Briefly describe your venue..."
                       rows={4}
-                      className="bg-white/5 backdrop-blur-md border-white/10 text-white placeholder:text-steel-400 focus-visible:ring-[#BAFF39] focus-visible:border-[#BAFF39] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]"
+                      className="bg-white/5 backdrop-blur-md border-white/10 text-white placeholder:text-steel-400 focus-visible:ring-primary focus-visible:border-primary shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]"
                     />
                   </div>
 
                   {/* Step 2: Capacity Baseline Info */}
-                  <div className="p-4 rounded-lg bg-[#BAFF39]/5 border border-[#BAFF39]/20">
+                  <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
                     <p className="text-sm text-steel-300">
-                      <span className="text-[#BAFF39] font-semibold">Next Step:</span> After creating your venue, you'll configure{' '}
+                      <span className="text-primary font-semibold">Next Step:</span> After creating your venue, you'll configure{' '}
                       <span className="text-white font-medium">Capacity Templates</span> — the brain of your Hospitality Engine.
                       These templates tell us how many staff you need for each shift type.
                     </p>
@@ -687,7 +687,7 @@ export default function HubOnboardingPage() {
                     appearance: {
                       theme: 'stripe',
                       variables: {
-                        colorPrimary: '#BAFF39',
+                        colorPrimary: 'hsl(var(--primary))',
                         colorBackground: '#ffffff',
                         colorText: '#1a1a2e',
                       },

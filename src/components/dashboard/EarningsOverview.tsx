@@ -3,7 +3,7 @@
  * 
  * Features:
  * - Total earnings display
- * - Simple SVG line chart with #BAFF39 color and glow effect
+ * - Simple SVG line chart with primary color and glow effect
  * - Recent earnings trend
  * - Quick link to full earnings dashboard
  */
@@ -47,7 +47,7 @@ function SparklineChart({
   data, 
   width = 200, 
   height = 60, 
-  color = '#BAFF39' 
+  color = 'hsl(var(--primary))' 
 }: SparklineChartProps) {
   if (!data || data.length === 0) {
     return (

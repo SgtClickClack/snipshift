@@ -158,8 +158,8 @@ export default function StaffFavourites() {
           </div>
         ) : staff.length === 0 ? (
           <div className="text-center py-8 px-4">
-            <div className="mx-auto w-14 h-14 rounded-xl bg-[#BAFF39]/10 flex items-center justify-center mb-3">
-              <Users className="h-7 w-7 text-[#BAFF39]" />
+            <div className="mx-auto w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
+              <Users className="h-7 w-7 text-primary" />
             </div>
             <p className="text-base font-semibold mb-1">The A-Team Awaits</p>
             <p className="text-sm text-muted-foreground max-w-xs mx-auto">

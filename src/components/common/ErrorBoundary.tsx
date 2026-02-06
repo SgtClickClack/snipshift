@@ -5,7 +5,7 @@
  * and displays a professional "Foundry Recovery" state.
  * 
  * Branding:
- * - Electric Lime (#BAFF39) borders
+ * - Brand primary borders
  * - Urbanist 900 typography
  * - Professional messaging: "Component Idling—Engine maintaining state. Refresh to re-engage."
  * 
@@ -79,15 +79,15 @@ export class ErrorBoundary extends Component<Props, State> {
           data-testid="foundry-recovery-state"
         >
           <div 
-            className="max-w-md w-full rounded-xl border-2 border-[#BAFF39]/50 bg-zinc-900/95 backdrop-blur-sm p-6 space-y-4"
+            className="max-w-md w-full rounded-xl border-2 border-primary/50 bg-zinc-900/95 backdrop-blur-sm p-6 space-y-4"
             style={{
               boxShadow: '0 0 30px rgba(186, 255, 57, 0.15), inset 0 0 20px rgba(186, 255, 57, 0.05)',
             }}
           >
             {/* Header with Icon */}
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-[#BAFF39]/10 border border-[#BAFF39]/30">
-                <Shield className="h-6 w-6 text-[#BAFF39]" />
+              <div className="p-3 rounded-xl bg-primary/10 border border-primary/30">
+                <Shield className="h-6 w-6 text-primary" />
               </div>
               <div>
                 <h3 
@@ -129,7 +129,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <Button
                 size="sm"
                 onClick={this.handleRefresh}
-                className="flex-1 bg-[#BAFF39] text-zinc-900 hover:bg-[#BAFF39]/90 font-semibold"
+                className="flex-1 bg-primary text-zinc-900 hover:bg-primary/90 font-semibold"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Refresh
@@ -151,7 +151,7 @@ export class ErrorBoundary extends Component<Props, State> {
             {/* HOSPO-GO Branding Footer */}
             <div className="pt-3 border-t border-zinc-800 flex justify-center">
               <span className="text-[10px] text-zinc-600 tracking-wider">
-                Protected by <span className="font-black italic">HOSPO<span className="text-[#BAFF39]">GO</span></span> Engine
+                Protected by <span className="font-black italic">HOSPO<span className="text-primary">GO</span></span> Engine
               </span>
             </div>
           </div>

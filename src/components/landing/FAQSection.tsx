@@ -56,25 +56,25 @@ function FAQItem({ question, answer, isOpen, onClick, icon, id }: FAQItemProps) 
   const ariaExpanded = isOpen ? 'true' : 'false';
   const buttonContent = (
     <>
-      <span className={`text-lg font-bold flex items-center gap-2 ${isOpen ? 'text-[#BAFF39]' : 'text-white'} group-hover:text-[#BAFF39]`}>
-        {icon === 'shield' && <ShieldCheck className="w-5 h-5 text-[#BAFF39]" />}
+      <span className={`text-lg font-bold flex items-center gap-2 ${isOpen ? 'text-primary' : 'text-white'} group-hover:text-primary`}>
+        {icon === 'shield' && <ShieldCheck className="w-5 h-5 text-primary" />}
         {question}
       </span>
       <motion.div
         animate={{ rotate: isOpen ? 180 : 0 }}
         transition={{ duration: 0.3 }}
       >
-        <ChevronDown className={`w-6 h-6 ${isOpen ? 'text-[#BAFF39]' : 'text-zinc-500'}`} />
+        <ChevronDown className={`w-6 h-6 ${isOpen ? 'text-primary' : 'text-zinc-500'}`} />
       </motion.div>
     </>
   );
 
   return (
-    <div className={`border-b transition-colors ${isOpen ? 'border-[#BAFF39]' : 'border-zinc-800'}`}>
+    <div className={`border-b transition-colors ${isOpen ? 'border-primary' : 'border-zinc-800'}`}>
       <button
         onClick={onClick}
         id={buttonId}
-        className="w-full py-6 flex justify-between items-center text-left hover:text-[#BAFF39] transition-colors group"
+        className="w-full py-6 flex justify-between items-center text-left hover:text-primary transition-colors group"
         aria-expanded={ariaExpanded}
         aria-controls={panelId}
         aria-label={question}

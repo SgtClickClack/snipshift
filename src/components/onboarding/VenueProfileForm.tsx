@@ -57,7 +57,7 @@ function calculateLoyaltyScore(suburb: string): number {
 }
 
 function getScoreTier(score: number): { label: string; color: string } {
-  if (score >= 92) return { label: 'Elite Stability', color: '#BAFF39' };
+  if (score >= 92) return { label: 'Elite Stability', color: 'hsl(var(--primary))' };
   if (score >= 70) return { label: 'Stable Zone', color: '#3B82F6' };
   return { label: 'Variable Demand', color: '#F59E0B' };
 }
@@ -172,7 +172,7 @@ export function VenueProfileForm({ formData, updateFormData }: VenueProfileFormP
                         >
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
-                              <Sparkles className="w-4 h-4 text-[#BAFF39]" />
+                              <Sparkles className="w-4 h-4 text-primary" />
                               <span className="font-semibold">Suburban Loyalty Index</span>
                             </div>
                             <p className="text-xs text-zinc-400">

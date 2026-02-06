@@ -141,7 +141,7 @@ export default function RevenueForecast() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#BAFF39]" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -159,7 +159,7 @@ export default function RevenueForecast() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-              <DollarSign className="h-8 w-8 text-[#BAFF39]" />
+              <DollarSign className="h-8 w-8 text-primary" />
               Revenue Forecast
             </h1>
             <p className="text-zinc-400 mt-1">
@@ -168,7 +168,7 @@ export default function RevenueForecast() {
           </div>
           <Badge 
             variant="outline" 
-            className="bg-[#BAFF39]/10 text-[#BAFF39] border-[#BAFF39]/30 px-4 py-2"
+            className="bg-primary/10 text-primary border-primary/30 px-4 py-2"
           >
             <Star className="h-4 w-4 mr-2" />
             ${MONTHLY_PLATFORM_FEE}/venue/month
@@ -198,23 +198,23 @@ export default function RevenueForecast() {
           </Card>
 
           {/* Pipeline ARR */}
-          <Card className="bg-gradient-to-br from-[#BAFF39]/10 to-transparent border-[#BAFF39]/30">
+          <Card className="bg-gradient-to-br from-primary/10 to-transparent border-primary/30">
             <CardHeader className="pb-2">
-              <CardDescription className="text-[#BAFF39] uppercase tracking-wider text-xs">
+              <CardDescription className="text-primary uppercase tracking-wider text-xs">
                 Pipeline ARR
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-black text-[#BAFF39]">
+                <span className="text-4xl font-black text-primary">
                   ${(projections.projectedARR / 1000).toFixed(1)}K
                 </span>
-                <span className="text-[#BAFF39]/60">AUD</span>
+                <span className="text-primary/60">AUD</span>
               </div>
               <p className="text-sm text-zinc-500 mt-2">
                 {projections.projectedActiveVenues} venues @ {leadStats.conversionRate}% conversion
               </p>
-              <Badge className="mt-3 bg-[#BAFF39]/20 text-[#BAFF39] border-[#BAFF39]/30">
+              <Badge className="mt-3 bg-primary/20 text-primary border-primary/30">
                 <ArrowUpRight className="h-3 w-3 mr-1" />
                 +{Math.round(((projections.projectedARR - projections.currentARR) / projections.currentARR) * 100)}%
               </Badge>
@@ -252,7 +252,7 @@ export default function RevenueForecast() {
         <Card className="bg-zinc-900/80 border-zinc-800">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
-              <Target className="h-5 w-5 text-[#BAFF39]" />
+              <Target className="h-5 w-5 text-primary" />
               Brisbane 100 Progress
             </CardTitle>
             <CardDescription className="text-zinc-500">
@@ -263,7 +263,7 @@ export default function RevenueForecast() {
             {/* Progress stats */}
             <div className="grid grid-cols-4 gap-4 mb-6">
               <div className="text-center p-4 rounded-xl bg-zinc-800/50">
-                <p className="text-2xl font-black text-[#BAFF39]">{leadStats.activeVenues}</p>
+                <p className="text-2xl font-black text-primary">{leadStats.activeVenues}</p>
                 <p className="text-xs text-zinc-500 uppercase tracking-wider">Active</p>
               </div>
               <div className="text-center p-4 rounded-xl bg-zinc-800/50">
@@ -284,14 +284,14 @@ export default function RevenueForecast() {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-zinc-400">Progress to 100</span>
-                <span className="text-[#BAFF39] font-bold">{brisbaneProgress.toFixed(0)}%</span>
+                <span className="text-primary font-bold">{brisbaneProgress.toFixed(0)}%</span>
               </div>
               <div className="h-4 bg-zinc-800 rounded-full overflow-hidden flex">
                 <div 
-                  className="h-full bg-[#BAFF39] transition-all duration-500"
+                  className="h-full bg-primary transition-all duration-500"
                   style={{ 
                     width: `${(leadStats.activeVenues / 100) * 100}%`,
-                    boxShadow: '0 0 10px #BAFF39'
+                    boxShadow: '0 0 10px hsl(var(--primary))'
                   }}
                 />
                 <div 
@@ -305,7 +305,7 @@ export default function RevenueForecast() {
               </div>
               <div className="flex gap-4 text-xs text-zinc-500">
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-[#BAFF39]" /> Active
+                  <span className="w-2 h-2 rounded-full bg-primary" /> Active
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-blue-500" /> Onboarding
@@ -322,7 +322,7 @@ export default function RevenueForecast() {
         <Card className="bg-zinc-900/80 border-zinc-800">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-[#BAFF39]" />
+              <TrendingUp className="h-5 w-5 text-primary" />
               12-Month ARR Projection
             </CardTitle>
             <CardDescription className="text-zinc-500">
@@ -356,7 +356,7 @@ export default function RevenueForecast() {
                   y1={200 - (projections.brisbane100ARR / 1000)}
                   x2="580"
                   y2={200 - (projections.brisbane100ARR / 1000)}
-                  stroke="#BAFF39"
+                  stroke="hsl(var(--primary))"
                   strokeWidth="2"
                   strokeDasharray="8 4"
                   opacity="0.5"
@@ -364,7 +364,7 @@ export default function RevenueForecast() {
                 <text
                   x="45"
                   y={195 - (projections.brisbane100ARR / 1000)}
-                  fill="#BAFF39"
+                  fill="hsl(var(--primary))"
                   fontSize="10"
                   opacity="0.7"
                 >
@@ -398,7 +398,7 @@ export default function RevenueForecast() {
                     }).join(' ')}
                   `}
                   fill="none"
-                  stroke="#BAFF39"
+                  stroke="hsl(var(--primary))"
                   strokeWidth="3"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -414,7 +414,7 @@ export default function RevenueForecast() {
                         cx={x}
                         cy={y}
                         r="5"
-                        fill="#BAFF39"
+                        fill="hsl(var(--primary))"
                         stroke="#0a0a0a"
                         strokeWidth="2"
                       />
@@ -434,8 +434,8 @@ export default function RevenueForecast() {
                 {/* Gradient definition */}
                 <defs>
                   <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#BAFF39" stopOpacity="0.4" />
-                    <stop offset="100%" stopColor="#BAFF39" stopOpacity="0" />
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
                   </linearGradient>
                 </defs>
               </svg>
@@ -451,13 +451,13 @@ export default function RevenueForecast() {
               </div>
               <div className="text-center">
                 <p className="text-xs text-zinc-500 uppercase tracking-wider">12-Month Growth</p>
-                <p className="text-lg font-bold text-[#BAFF39]">
+                <p className="text-lg font-bold text-primary">
                   +{Math.round(((projections.monthlyProjection[11].arr - projections.monthlyProjection[0].arr) / projections.monthlyProjection[0].arr) * 100)}%
                 </p>
               </div>
               <div className="text-right">
                 <p className="text-xs text-zinc-500 uppercase tracking-wider">Projected ARR (12mo)</p>
-                <p className="text-lg font-bold text-[#BAFF39]">
+                <p className="text-lg font-bold text-primary">
                   ${(projections.monthlyProjection[11].arr / 1000).toFixed(1)}K
                 </p>
               </div>
@@ -469,7 +469,7 @@ export default function RevenueForecast() {
         <Card className="bg-zinc-900/80 border-zinc-800">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
-              <Zap className="h-5 w-5 text-[#BAFF39]" />
+              <Zap className="h-5 w-5 text-primary" />
               Model Assumptions
             </CardTitle>
           </CardHeader>

@@ -72,7 +72,7 @@ export function PartnerTrustBar({ variant = "footer", className }: PartnerTrustB
                   target="_blank"
                   rel="noopener noreferrer"
                   className={cn(
-                    "flex items-center gap-2 transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#BAFF39]/50 focus:ring-offset-2 focus:ring-offset-transparent rounded",
+                    "flex items-center gap-2 transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-transparent rounded",
                     isFooter && "grayscale opacity-70 hover:opacity-90"
                   )}
                   aria-label={partner.label}

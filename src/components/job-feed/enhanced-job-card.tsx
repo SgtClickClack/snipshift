@@ -179,7 +179,7 @@ export function EnhancedJobCard({
               variant={job.status === 'open' ? 'default' : 'secondary'}
               className={
                 job.status === 'open' 
-                  ? 'bg-green-100 text-green-700 border-green-200' 
+                  ? 'bg-success/20 text-success border-success/30' 
                   : ''
               }
             >

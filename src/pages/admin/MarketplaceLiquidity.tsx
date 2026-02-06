@@ -67,7 +67,7 @@ const MOCK_FILL_RATE_HISTORY = [
 function BarChart({ 
   data, 
   dataKey, 
-  color = '#BAFF39',
+  color = 'hsl(var(--primary))',
   maxValue 
 }: { 
   data: Array<{ [key: string]: string | number }>; 
@@ -110,7 +110,7 @@ function BarChart({
 function Sparkline({ 
   data, 
   dataKey,
-  color = '#BAFF39',
+  color = 'hsl(var(--primary))',
   target
 }: { 
   data: Array<{ [key: string]: string | number }>; 
@@ -146,7 +146,7 @@ function Sparkline({
           y1={targetY} 
           x2={width - padding} 
           y2={targetY}
-          stroke="#BAFF39"
+          stroke="hsl(var(--primary))"
           strokeWidth="1"
           strokeDasharray="4 2"
           opacity="0.5"
@@ -208,14 +208,14 @@ function MetricCard({
       <CardContent className="pt-6">
         <div className="flex items-start justify-between mb-4">
           <div className="p-3 rounded-xl bg-zinc-800">
-            <Icon className="h-5 w-5 text-[#BAFF39]" />
+            <Icon className="h-5 w-5 text-primary" />
           </div>
           {trend !== undefined && (
             <Badge 
               variant="outline" 
               className={`${
                 (isGood !== undefined ? isGood : trendPositive)
-                  ? 'bg-[#BAFF39]/20 text-[#BAFF39] border-[#BAFF39]/30'
+                  ? 'bg-primary/20 text-primary border-primary/30'
                   : 'bg-red-500/20 text-red-400 border-red-500/30'
               }`}
             >
@@ -227,7 +227,7 @@ function MetricCard({
         
         <p className="text-xs uppercase tracking-wider text-zinc-500 mb-1">{title}</p>
         <div className="flex items-baseline gap-2">
-          <span className={`text-4xl font-black ${meetsTarget ? 'text-[#BAFF39]' : 'text-white'}`}>
+          <span className={`text-4xl font-black ${meetsTarget ? 'text-primary' : 'text-white'}`}>
             {value.toFixed(unit === '%' ? 1 : 0)}
           </span>
           {unit && <span className="text-lg text-zinc-500">{unit}</span>}
@@ -236,7 +236,7 @@ function MetricCard({
         {target && (
           <p className="text-xs text-zinc-600 mt-2">
             Target: {target}{unit || ''}
-            {meetsTarget && <span className="text-[#BAFF39] ml-2">✓</span>}
+            {meetsTarget && <span className="text-primary ml-2">✓</span>}
           </p>
         )}
       </CardContent>
@@ -292,7 +292,7 @@ export default function MarketplaceLiquidity() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#BAFF39]" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -304,7 +304,7 @@ export default function MarketplaceLiquidity() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-              <Activity className="h-8 w-8 text-[#BAFF39]" />
+              <Activity className="h-8 w-8 text-primary" />
               Marketplace Liquidity
             </h1>
             <p className="text-zinc-400 mt-1">
@@ -313,7 +313,7 @@ export default function MarketplaceLiquidity() {
           </div>
           <Badge 
             variant="outline" 
-            className="bg-[#BAFF39]/10 text-[#BAFF39] border-[#BAFF39]/30 px-4 py-2"
+            className="bg-primary/10 text-primary border-primary/30 px-4 py-2"
           >
             <Zap className="h-4 w-4 mr-2" />
             Live Data
@@ -360,7 +360,7 @@ export default function MarketplaceLiquidity() {
           <Card className="bg-zinc-900/80 border-zinc-800">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
-                <Target className="h-5 w-5 text-[#BAFF39]" />
+                <Target className="h-5 w-5 text-primary" />
                 Fill Rate Trend
               </CardTitle>
               <CardDescription className="text-zinc-500">
@@ -387,7 +387,7 @@ export default function MarketplaceLiquidity() {
           <Card className="bg-zinc-900/80 border-zinc-800">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-[#BAFF39]" />
+                <TrendingUp className="h-5 w-5 text-primary" />
                 A-Team Growth
               </CardTitle>
               <CardDescription className="text-zinc-500">
@@ -398,7 +398,7 @@ export default function MarketplaceLiquidity() {
               <BarChart 
                 data={MOCK_MONTHLY_GROWTH} 
                 dataKey="aTeam"
-                color="#BAFF39"
+                color="hsl(var(--primary))"
               />
             </CardContent>
           </Card>
@@ -408,7 +408,7 @@ export default function MarketplaceLiquidity() {
         <Card className="bg-zinc-900/80 border-zinc-800">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
-              <Activity className="h-5 w-5 text-[#BAFF39]" />
+              <Activity className="h-5 w-5 text-primary" />
               Shift Distribution
             </CardTitle>
             <CardDescription className="text-zinc-500">
@@ -421,8 +421,8 @@ export default function MarketplaceLiquidity() {
                 <p className="text-4xl font-black text-white mb-2">{metrics.shiftsPosted}</p>
                 <p className="text-xs uppercase tracking-wider text-zinc-500">Total Posted</p>
               </div>
-              <div className="text-center p-6 rounded-xl bg-[#BAFF39]/10 border border-[#BAFF39]/30">
-                <p className="text-4xl font-black text-[#BAFF39] mb-2">{metrics.shiftsFilled}</p>
+              <div className="text-center p-6 rounded-xl bg-primary/10 border border-primary/30">
+                <p className="text-4xl font-black text-primary mb-2">{metrics.shiftsFilled}</p>
                 <p className="text-xs uppercase tracking-wider text-zinc-500">Filled</p>
               </div>
               <div className="text-center p-6 rounded-xl bg-amber-500/10 border border-amber-500/30">
@@ -439,10 +439,10 @@ export default function MarketplaceLiquidity() {
               </div>
               <div className="h-3 bg-zinc-800 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-[#BAFF39] transition-all duration-500"
+                  className="h-full bg-primary transition-all duration-500"
                   style={{ 
                     width: `${(metrics.shiftsFilled / metrics.shiftsPosted) * 100}%`,
-                    boxShadow: '0 0 10px #BAFF39'
+                    boxShadow: '0 0 10px hsl(var(--primary))'
                   }}
                 />
               </div>

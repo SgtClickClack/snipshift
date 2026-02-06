@@ -80,7 +80,7 @@ export default function Pricing() {
           </p>
           <p className="text-sm text-zinc-500 mt-2">
             Pricing below is for venues. Looking for work?{" "}
-            <Link to="/signup?role=professional" className="text-[#BAFF39] hover:underline font-medium">
+            <Link to="/signup?role=professional" className="text-primary hover:underline font-medium">
               Join as a Professional. It's free.
             </Link>
           </p>
@@ -93,13 +93,13 @@ export default function Pricing() {
               key={plan.name}
               className={`relative flex flex-col overflow-visible rounded-3xl p-10 transition-all duration-300 ${
                 plan.highlighted
-                  ? "border-2 border-[#BAFF39] scale-105 z-10 bg-zinc-900 shadow-2xl"
-                  : "border border-zinc-800 bg-[#161616] hover:border-[#BAFF39]/50 hover:-translate-y-2 hover:shadow-2xl"
+                  ? "border-2 border-primary scale-105 z-10 bg-zinc-900 shadow-2xl"
+                  : "border border-zinc-800 bg-[#161616] hover:border-primary/50 hover:-translate-y-2 hover:shadow-2xl"
               }`}
             >
               {plan.badge && (
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20" data-testid={`pricing-badge-${plan.name.toLowerCase()}`}>
-                  <span className="bg-[#BAFF39] text-black text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                  <span className="bg-primary text-black text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
                     {plan.badge}
                   </span>
                 </div>
@@ -135,7 +135,7 @@ export default function Pricing() {
                 <ul className="space-y-3">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start">
-                      <Check className="h-5 w-5 text-[#BAFF39] mr-2 flex-shrink-0 mt-0.5" />
+                      <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" />
                       <span className="text-zinc-300 text-sm">{renderFeature(feature)}</span>
                     </li>
                   ))}
@@ -145,7 +145,7 @@ export default function Pricing() {
                 {plan.cta === "Post a Job" ? (
                   <Link to="/signup?plan=starter" className="w-full">
                     <Button
-                      className="w-full font-bold py-4 rounded-full border-2 border-zinc-600 text-white bg-transparent hover:bg-white/5 hover:border-[#BAFF39]/50 transition-all duration-300"
+                      className="w-full font-bold py-4 rounded-full border-2 border-zinc-600 text-white bg-transparent hover:bg-white/5 hover:border-primary/50 transition-all duration-300"
                     >
                       {plan.cta}
                     </Button>
@@ -153,7 +153,7 @@ export default function Pricing() {
                 ) : plan.cta === "Start 14-Day Free Trial" ? (
                   <Link to="/signup?plan=business&trial=true" className="w-full" data-testid="business-trial-cta">
                     <Button
-                      className="w-full font-black py-4 rounded-full bg-[#BAFF39] text-black hover:shadow-[0_0_20px_rgba(186,255,57,0.4)] transition-all duration-300"
+                      className="w-full font-black py-4 rounded-full bg-primary text-black hover:shadow-[0_0_20px_rgba(186,255,57,0.4)] transition-all duration-300"
                       data-testid="business-trial-button"
                     >
                       {plan.cta}
@@ -177,8 +177,8 @@ export default function Pricing() {
         <div className="mt-16 text-center">
           <Card className="max-w-2xl mx-auto bg-gradient-to-r from-zinc-900 to-zinc-800 border border-zinc-700 rounded-2xl p-8">
             <div className="flex items-center justify-center mb-4">
-              <div className="p-3 bg-[#BAFF39]/10 rounded-full">
-                <Users className="h-8 w-8 text-[#BAFF39]" />
+              <div className="p-3 bg-primary/10 rounded-full">
+                <Users className="h-8 w-8 text-primary" />
               </div>
             </div>
             <h3 className="text-2xl font-bold text-white mb-2">
@@ -189,7 +189,7 @@ export default function Pricing() {
               Get access to shifts from top venues, keep all your earnings, and build your reputation.
             </p>
             <Link to="/signup?role=professional">
-              <Button className="font-bold py-3 px-8 rounded-full border-2 border-[#BAFF39] text-[#BAFF39] bg-transparent hover:bg-[#BAFF39] hover:text-black transition-all duration-300">
+              <Button className="font-bold py-3 px-8 rounded-full border-2 border-primary text-primary bg-transparent hover:bg-primary hover:text-black transition-all duration-300">
                 Join as a Professional
               </Button>
             </Link>

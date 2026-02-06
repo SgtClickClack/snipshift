@@ -81,7 +81,7 @@ export const QuickNav: React.FC<QuickNavProps> = ({ onViewChange }) => {
                 className={cn(
                   "group flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all",
                   isActive 
-                    ? "bg-[#BAFF39]/10 text-[#BAFF39]" 
+                    ? "bg-primary/10 text-primary" 
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 )}
               >
@@ -95,7 +95,7 @@ export const QuickNav: React.FC<QuickNavProps> = ({ onViewChange }) => {
 
       {/* Mobile Bottom Navigation - Fixed to bottom */}
       <nav 
-        className="md:hidden fixed bottom-0 left-0 right-0 z-[var(--z-fixed)] bg-card/95 backdrop-blur-lg border-t border-border pb-safe"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-[var(--z-fixed)] glass-header bg-card/95 border-t border-border pb-safe"
         data-testid="mobile-bottom-nav"
         data-presentation-hide="true"
       >
@@ -111,25 +111,25 @@ export const QuickNav: React.FC<QuickNavProps> = ({ onViewChange }) => {
                 className={cn(
                   "group relative flex flex-col items-center justify-center gap-0.5 min-h-[44px] min-w-[60px] py-2 px-3 rounded-lg transition-all",
                   isActive 
-                    ? "text-[#BAFF39]" 
+                    ? "text-primary" 
                     : "text-muted-foreground"
                 )}
               >
                 <Icon 
                   className={cn(
                     "h-5 w-5 transition-all group-hover:scale-105",
-                    isActive && "drop-shadow-[0_0_8px_rgba(186,255,57,0.8)]"
+                    isActive && "drop-shadow-[0_0_8px_hsl(var(--primary)/0.8)]"
                   )} 
                 />
                 <span className={cn(
                   "text-[10px] font-semibold tracking-wide",
-                  isActive && "text-[#BAFF39]"
+                  isActive && "text-primary"
                 )}>
                   {item.label}
                 </span>
                 {/* Active indicator dot */}
                 {isActive && (
-                  <span className="absolute bottom-1 w-1 h-1 rounded-full bg-[#BAFF39] shadow-[0_0_6px_rgba(186,255,57,0.9)]" />
+                  <span className="absolute bottom-1 w-1 h-1 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.9)]" />
                 )}
               </button>
             );

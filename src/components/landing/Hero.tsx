@@ -86,9 +86,9 @@ export default function Hero() {
             >
               The Roster That{" "}
               <span className="relative inline-block">
-                <span className="relative z-10 text-[#BAFF39]">Never Quits</span>
+                <span className="relative z-10 text-primary">Never Quits</span>
                 <span
-                  className="absolute bottom-1 left-0 w-full h-[3px] bg-[#BAFF39]/60 rounded-full"
+                  className="absolute bottom-1 left-0 w-full h-[3px] bg-primary/60 rounded-full"
                   aria-hidden="true"
                 />
               </span>
@@ -108,7 +108,7 @@ export default function Hero() {
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-stretch sm:items-center">
                 <Link to="/signup?role=hub" className="w-full sm:w-auto">
                   <Button
-                    className="w-full sm:w-auto bg-[#BAFF39] text-black font-bold px-10 py-4 rounded-full shadow-lg shadow-[#BAFF39]/20 hover:bg-[#a6de00] transition-all min-h-[44px]"
+                    className="w-full sm:w-auto bg-primary text-primary-foreground font-bold px-10 py-4 rounded-full shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all min-h-[44px]"
                     data-testid="button-find-staff"
                   >
                     FIND STAFF
@@ -128,7 +128,7 @@ export default function Hero() {
             ) : hasUser ? (
               <Link to={getDashboardLink()} className="w-full sm:w-auto">
                 <Button
-                  className="w-full sm:w-auto bg-[#BAFF39] text-black font-bold px-10 py-4 rounded-full shadow-lg shadow-[#BAFF39]/20 hover:bg-[#a6de00] transition-all min-h-[44px]"
+                  className="w-full sm:w-auto bg-primary text-primary-foreground font-bold px-10 py-4 rounded-full shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all min-h-[44px]"
                   data-testid="button-go-to-dashboard"
                 >
                   Go to Dashboard

@@ -210,8 +210,8 @@ export default function StaffPayRates() {
                         className={cn(
                           "h-4 w-4 transition-colors",
                           isFavorite 
-                            ? "fill-[#BAFF39] text-[#BAFF39]" 
-                            : "text-gray-400 hover:text-[#BAFF39]"
+                            ? "fill-primary text-primary" 
+                            : "text-gray-400 hover:text-primary"
                         )} 
                       />
                     )}

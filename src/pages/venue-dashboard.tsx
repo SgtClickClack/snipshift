@@ -840,7 +840,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
           recycle={false}
           numberOfPieces={300}
           gravity={0.3}
-          colors={['#BAFF39', '#84cc16', '#22c55e', '#10b981', '#ffffff', '#fbbf24']}
+          colors={['hsl(81,85%,58%)', '#84cc16', '#22c55e', '#10b981', '#ffffff', '#fbbf24']}
           confettiSource={{ x: windowSize.width / 2, y: windowSize.height / 3, w: 0, h: 0 }}
         />
       )}
@@ -870,8 +870,8 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
         />
       </div>
 
-      {/* Dashboard Header - MOBILE FIX: Reduced padding on mobile */}
-      <div className="bg-card/95 backdrop-blur-sm shadow-lg border-b-2 border-border/50">
+      {/* Dashboard Header - Unified glassmorphism with Navbar */}
+      <div className="glass-header bg-card/95 shadow-lg">
         <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
@@ -881,7 +881,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                 {/* Xero Status Pill - High visibility for investor demo */}
                 {isXeroConnected && (
                   <Badge 
-                    className="flex items-center gap-1.5 px-3 py-1 border-2 border-[#BAFF39] bg-[#BAFF39]/10 text-[#BAFF39] font-semibold shadow-[0_0_10px_rgba(186,255,57,0.3)] hover:shadow-[0_0_15px_rgba(186,255,57,0.4)] transition-shadow"
+                    className="flex items-center gap-1.5 px-3 py-1 border-2 border-primary bg-primary/10 text-primary font-semibold shadow-[0_0_10px_hsl(var(--primary)/0.3)] hover:shadow-[0_0_15px_hsl(var(--primary)/0.4)] transition-shadow"
                     data-testid="xero-status-pill"
                   >
                     <XeroLogo className="h-3.5 w-3.5" />
@@ -902,7 +902,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 px-2 text-zinc-400 hover:text-[#BAFF39] hover:bg-white/5"
+                    className="h-8 px-2 text-zinc-400 hover:text-primary hover:bg-white/5"
                     onClick={() => navigate('/settings?category=integrations')}
                     data-testid="button-xero-quick-link"
                   >
@@ -1045,21 +1045,21 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
             {/* Payroll Readiness Widget - High visibility for Lucas during investor demo */}
             {isXeroConnected && payrollReadiness && (
               <Card 
-                className="group relative overflow-hidden bg-gradient-to-r from-[#BAFF39]/5 to-transparent border-2 border-[#BAFF39]/30 shadow-[0_0_20px_rgba(186,255,57,0.1)] hover:shadow-[0_0_30px_rgba(186,255,57,0.2)] transition-all duration-300 cursor-pointer"
+                className="group relative overflow-hidden bg-gradient-to-r from-primary/5 to-transparent border-2 border-primary/30 shadow-[0_0_20px_hsl(var(--primary)/0.1)] hover:shadow-[0_0_30px_hsl(var(--primary)/0.2)] transition-all duration-300 cursor-pointer"
                 onClick={() => navigate('/settings?category=integrations')}
                 data-testid="payroll-readiness-widget"
               >
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#BAFF39] via-[#BAFF39]/50 to-transparent" />
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-primary/50 to-transparent" />
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
-                      <div className="rounded-xl p-3 bg-[#BAFF39] border border-[#BAFF39] shadow-neon-realistic">
+                      <div className="rounded-xl p-3 bg-primary border border-primary shadow-neon-realistic">
                         <ShieldCheck className="h-6 w-6 text-black" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="text-lg font-bold text-foreground">Payroll Readiness</h3>
-                          <Badge className="bg-[#BAFF39]/20 text-[#BAFF39] border-[#BAFF39]/30 text-xs">
+                          <Badge className="bg-primary/20 text-primary border-primary/30 text-xs">
                             <XeroLogo className="h-3 w-3 mr-1" />
                             Xero
                           </Badge>
@@ -1071,7 +1071,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                     </div>
                     <div className="flex items-center gap-6">
                       <div className="text-center">
-                        <span className="text-4xl font-bold text-[#BAFF39] drop-shadow-[0_0_10px_rgba(186,255,57,0.5)]">
+                        <span className="text-4xl font-bold text-primary drop-shadow-[0_0_10px_hsl(var(--primary)/0.5)]">
                           {payrollReadiness.percentage}%
                         </span>
                         <p className="text-xs text-muted-foreground mt-1">Ready</p>
@@ -1087,7 +1087,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="text-[#BAFF39] hover:text-[#BAFF39] hover:bg-[#BAFF39]/10"
+                        className="text-primary hover:text-primary hover:bg-primary/10"
                       >
                         Ready to Sync
                         <ArrowRight className="h-4 w-4 ml-1" />
@@ -1108,13 +1108,13 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                   {isXeroConnected && recentXeroSyncLogs.length > 0 && recentXeroSyncLogs.map((log) => (
                     <div 
                       key={`xero-${log.id}`}
-                      className="flex items-center justify-between p-3 bg-[#BAFF39]/5 border border-[#BAFF39]/20 rounded-lg cursor-pointer hover:bg-[#BAFF39]/10 transition-colors"
+                      className="flex items-center justify-between p-3 bg-primary/5 border border-primary/20 rounded-lg cursor-pointer hover:bg-primary/10 transition-colors"
                       onClick={() => navigate('/settings?category=integrations')}
                       data-testid={`xero-sync-log-${log.id}`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="rounded-full p-2 bg-[#BAFF39]/20">
-                          <ShieldCheck className="h-4 w-4 text-[#BAFF39]" />
+                        <div className="rounded-full p-2 bg-primary/20">
+                          <ShieldCheck className="h-4 w-4 text-primary" />
                         </div>
                         <div>
                           <h4 className="font-medium flex items-center gap-2">
@@ -1125,7 +1125,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                                 log.status === 'success' 
                                   ? 'bg-success/20 text-success border-success/30' 
                                   : log.status === 'partial'
-                                  ? 'bg-[#BAFF39]/20 text-[#BAFF39] border-[#BAFF39]/30'
+                                  ? 'bg-primary/20 text-primary border-primary/30'
                                   : 'bg-red-500/20 text-red-500 border-red-500/30'
                               }`}
                             >
@@ -1157,7 +1157,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                         </p>
                       </div>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        job.status === 'open' ? 'bg-[#BAFF39]/20 text-[#BAFF39]' : 'bg-muted text-muted-foreground'
+                        job.status === 'open' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
                       }`}>
                         {job.status}
                       </span>
@@ -1191,7 +1191,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                     variant={statusFilter === 'open' ? 'default' : 'outline'}
                     onClick={() => setStatusFilter('open')}
                     size="sm"
-                    className={statusFilter === 'open' ? 'bg-[#BAFF39] text-black hover:bg-[#BAFF39]/90' : ''}
+                    className={statusFilter === 'open' ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}
                   >
                     Open
                   </Button>
@@ -1366,7 +1366,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                           label: "Post Your First Shift",
                           onClick: () => setShowForm(true),
                           variant: "default",
-                          className: "bg-[#BAFF39] hover:bg-[#BAFF39]/90 text-black font-semibold shadow-[0_0_15px_rgba(186,255,57,0.3)]"
+                          className: "bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-neon-realistic"
                         } : undefined}
                       />
                     ) : (
@@ -1677,7 +1677,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                       label: "Post a Shift to Attract Talent",
                       onClick: () => setActiveView('jobs'),
                       variant: "default",
-                      className: "bg-[#BAFF39] hover:bg-[#BAFF39]/90 text-black font-semibold shadow-[0_0_15px_rgba(186,255,57,0.3)]"
+                      className: "bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-neon-realistic"
                     }}
                   />
                 ) : (
@@ -1978,8 +1978,8 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
         <button
           onClick={() => navigate('/admin/cto-dashboard')}
           className="fixed z-[var(--z-floating)] flex items-center gap-3 px-4 py-2.5 rounded-lg 
-                     bg-transparent border border-[#BAFF39]/50
-                     hover:border-[#BAFF39] hover:shadow-[0_0_15px_rgba(186,255,57,0.2)]
+                     bg-transparent border border-primary/50
+                     hover:border-primary hover:shadow-[0_0_15px_hsl(var(--primary)/0.2)]
                      transition-all duration-300 cursor-pointer group"
           style={{ 
             fontFamily: 'Urbanist, sans-serif', 
@@ -1991,11 +1991,11 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
         >
           {/* Subtle Pulse Dot - Small pulsing indicator */}
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#BAFF39] opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#BAFF39] shadow-[0_0_6px_rgba(186,255,57,0.8)]"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.8)]"></span>
           </span>
-          <Brain className="h-4 w-4 text-[#BAFF39]/80 group-hover:text-[#BAFF39] transition-colors" />
-          <span className="text-[#BAFF39]/80 text-xs tracking-wider uppercase group-hover:text-[#BAFF39] transition-colors">
+          <Brain className="h-4 w-4 text-primary/80 group-hover:text-primary transition-colors" />
+          <span className="text-primary/80 text-xs tracking-wider uppercase group-hover:text-primary transition-colors">
             ARCHITECT PORTAL
           </span>
         </button>

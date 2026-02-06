@@ -103,9 +103,9 @@ const categories = [
     title: 'Getting Started',
     description: 'New to HospoGo? Start here',
     icon: BookOpen,
-    color: 'text-[#BAFF39]',
-    bgColor: 'bg-[#BAFF39]/10',
-    borderColor: 'border-[#BAFF39]/30',
+    color: 'text-primary',
+    bgColor: 'bg-primary/10',
+    borderColor: 'border-primary/30',
   },
   {
     id: 'rostering',
@@ -159,9 +159,9 @@ const categories = [
     title: 'Reputation & Conduct',
     description: 'Demerit strikes, Clean Streak & ratings',
     icon: ShieldCheck,
-    color: 'text-[#BAFF39]',
-    bgColor: 'bg-[#BAFF39]/10',
-    borderColor: 'border-[#BAFF39]/30',
+    color: 'text-primary',
+    bgColor: 'bg-primary/10',
+    borderColor: 'border-primary/30',
     badge: 'For Professionals',
   },
   {
@@ -169,9 +169,9 @@ const categories = [
     title: 'Standby & Emergencies',
     description: 'Gap shifts, premium rates & Running Late',
     icon: Zap,
-    color: 'text-[#BAFF39]',
-    bgColor: 'bg-[#BAFF39]/10',
-    borderColor: 'border-[#BAFF39]/30',
+    color: 'text-primary',
+    bgColor: 'bg-primary/10',
+    borderColor: 'border-primary/30',
     badge: 'For Professionals',
   },
 ];
@@ -222,7 +222,7 @@ export default function HelpCenter() {
         
         <div className="relative max-w-4xl mx-auto px-4 py-16 sm:py-20">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#BAFF39]/10 border border-[#BAFF39]/30 text-[#BAFF39] text-sm font-medium mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary text-sm font-medium mb-4">
               <HelpCircle className="h-4 w-4" />
               <span>Help Center</span>
             </div>
@@ -245,7 +245,7 @@ export default function HelpCenter() {
                 setSearchQuery(e.target.value);
                 if (e.target.value) setSelectedCategory(null);
               }}
-              className="pl-12 pr-4 py-6 text-lg bg-steel-800/50 border-steel-700 focus:border-[#BAFF39]/50 focus:ring-[#BAFF39]/20 rounded-2xl backdrop-blur-sm"
+              className="pl-12 pr-4 py-6 text-lg bg-steel-800/50 border-steel-700 focus:border-primary/50 focus:ring-primary/20 rounded-2xl backdrop-blur-sm"
             />
             {searchQuery && (
               <button
@@ -263,7 +263,7 @@ export default function HelpCenter() {
               <button
                 key={item.label}
                 onClick={() => setSearchQuery(item.label)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-sm text-gray-300 hover:border-[#BAFF39]/50 hover:text-[#BAFF39] transition-all"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-sm text-gray-300 hover:border-primary/50 hover:text-primary transition-all"
               >
                 <item.icon className="h-3.5 w-3.5" />
                 {item.label}
@@ -296,21 +296,21 @@ export default function HelpCenter() {
                   return (
                     <Card 
                       key={topic.id}
-                      className="bg-card/50 border-border/50 hover:border-[#BAFF39]/30 hover:bg-card/80 transition-all cursor-pointer group"
+                      className="bg-card/50 border-border/50 hover:border-primary/30 hover:bg-card/80 transition-all cursor-pointer group"
                     >
                       <CardContent className="p-4 flex items-center gap-4">
                         <div className={`p-2 rounded-lg ${category?.bgColor || 'bg-muted'}`}>
                           {category?.icon && <category.icon className={`h-5 w-5 ${category?.color || 'text-muted-foreground'}`} />}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-foreground group-hover:text-[#BAFF39] transition-colors">
+                          <h3 className="font-medium text-foreground group-hover:text-primary transition-colors">
                             {topic.title}
                           </h3>
                           <p className="text-sm text-muted-foreground truncate">
                             {topic.description}
                           </p>
                         </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-[#BAFF39] transition-colors" />
+                        <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                       </CardContent>
                     </Card>
                   );
@@ -327,7 +327,7 @@ export default function HelpCenter() {
                   <Button 
                     variant="outline" 
                     onClick={() => setSearchQuery('')}
-                    className="border-[#BAFF39]/30 text-[#BAFF39] hover:bg-[#BAFF39]/10"
+                    className="border-primary/30 text-primary hover:bg-primary/10"
                   >
                     Browse Categories
                   </Button>
@@ -371,19 +371,19 @@ export default function HelpCenter() {
                     {filteredTopics.map((topic) => (
                       <Card 
                         key={topic.id}
-                        className="bg-card/50 border-border/50 hover:border-[#BAFF39]/30 hover:bg-card/80 transition-all cursor-pointer group"
+                        className="bg-card/50 border-border/50 hover:border-primary/30 hover:bg-card/80 transition-all cursor-pointer group"
                       >
                         <CardContent className="p-4 flex items-center gap-4">
                           <FileText className={`h-5 w-5 ${category.color}`} />
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-medium text-foreground group-hover:text-[#BAFF39] transition-colors">
+                            <h3 className="font-medium text-foreground group-hover:text-primary transition-colors">
                               {topic.title}
                             </h3>
                             <p className="text-sm text-muted-foreground">
                               {topic.description}
                             </p>
                           </div>
-                          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-[#BAFF39] transition-colors" />
+                          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                         </CardContent>
                       </Card>
                     ))}
@@ -407,7 +407,7 @@ export default function HelpCenter() {
                   <Card 
                     key={category.id}
                     onClick={() => setSelectedCategory(category.id)}
-                    className={`bg-card/50 ${category.borderColor} border hover:border-[#BAFF39]/50 hover:shadow-[0_0_20px_rgba(186,255,57,0.1)] transition-all cursor-pointer group`}
+                    className={`bg-card/50 ${category.borderColor} border hover:border-primary/50 hover:shadow-[0_0_20px_rgba(186,255,57,0.1)] transition-all cursor-pointer group`}
                   >
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
@@ -416,7 +416,7 @@ export default function HelpCenter() {
                         </div>
                         <div className="flex flex-col items-end gap-1">
                           {('badge' in category && category.badge) && (
-                            <Badge className="text-xs bg-[#BAFF39]/20 text-[#BAFF39] border-[#BAFF39]/30">
+                            <Badge className="text-xs bg-primary/20 text-primary border-primary/30">
                               {category.badge}
                             </Badge>
                           )}
@@ -427,13 +427,13 @@ export default function HelpCenter() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <CardTitle className="text-lg mb-1 group-hover:text-[#BAFF39] transition-colors">
+                      <CardTitle className="text-lg mb-1 group-hover:text-primary transition-colors">
                         {category.title}
                       </CardTitle>
                       <CardDescription>
                         {category.description}
                       </CardDescription>
-                      <div className="flex items-center gap-1 mt-3 text-sm text-muted-foreground group-hover:text-[#BAFF39] transition-colors">
+                      <div className="flex items-center gap-1 mt-3 text-sm text-muted-foreground group-hover:text-primary transition-colors">
                         <span>Explore</span>
                         <ChevronRight className="h-4 w-4" />
                       </div>
@@ -444,11 +444,11 @@ export default function HelpCenter() {
             </div>
             
             {/* AI Support CTA - Primary Chat Trigger */}
-            <Card className="bg-gradient-to-r from-[#BAFF39]/5 to-[#BAFF39]/10 border-[#BAFF39]/30">
+            <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/30">
               <CardContent className="p-6 sm:p-8">
                 <div className="flex flex-col sm:flex-row items-center gap-6">
-                  <div className="p-4 rounded-2xl bg-[#BAFF39]/20">
-                    <Sparkles className="h-8 w-8 text-[#BAFF39]" />
+                  <div className="p-4 rounded-2xl bg-primary/20">
+                    <Sparkles className="h-8 w-8 text-primary" />
                   </div>
                   <div className="flex-1 text-center sm:text-left">
                     <h3 className="text-xl font-bold text-foreground mb-2">
@@ -459,7 +459,7 @@ export default function HelpCenter() {
                     </p>
                     <Button
                       onClick={() => window.dispatchEvent(new CustomEvent('open-support-chat'))}
-                      className="bg-[#BAFF39] text-black hover:bg-[#BAFF39]/90 shadow-[0_0_15px_rgba(186,255,57,0.3)] hover:shadow-[0_0_25px_rgba(186,255,57,0.5)] transition-all"
+                      className="bg-primary text-black hover:bg-primary/90 shadow-[0_0_15px_rgba(186,255,57,0.3)] hover:shadow-[0_0_25px_rgba(186,255,57,0.5)] transition-all"
                     >
                       <Sparkles className="h-4 w-4 mr-2" />
                       Chat with AI Support
@@ -475,21 +475,21 @@ export default function HelpCenter() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <a 
                   href="mailto:support@hospogo.com"
-                  className="flex items-center gap-3 p-4 rounded-lg bg-card/30 border border-border/50 hover:border-[#BAFF39]/30 transition-colors group"
+                  className="flex items-center gap-3 p-4 rounded-lg bg-card/30 border border-border/50 hover:border-primary/30 transition-colors group"
                 >
-                  <MessageCircleQuestion className="h-5 w-5 text-muted-foreground group-hover:text-[#BAFF39]" />
+                  <MessageCircleQuestion className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
                   <div>
-                    <div className="font-medium text-foreground group-hover:text-[#BAFF39]">Email Support</div>
+                    <div className="font-medium text-foreground group-hover:text-primary">Email Support</div>
                     <div className="text-sm text-muted-foreground">support@hospogo.com</div>
                   </div>
                 </a>
                 <Link 
                   to="/venue-guide"
-                  className="flex items-center gap-3 p-4 rounded-lg bg-card/30 border border-border/50 hover:border-[#BAFF39]/30 transition-colors group"
+                  className="flex items-center gap-3 p-4 rounded-lg bg-card/30 border border-border/50 hover:border-primary/30 transition-colors group"
                 >
-                  <BookOpen className="h-5 w-5 text-muted-foreground group-hover:text-[#BAFF39]" />
+                  <BookOpen className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
                   <div>
-                    <div className="font-medium text-foreground group-hover:text-[#BAFF39]">Venue Guide</div>
+                    <div className="font-medium text-foreground group-hover:text-primary">Venue Guide</div>
                     <div className="text-sm text-muted-foreground">Getting started as a venue</div>
                   </div>
                 </Link>
@@ -497,11 +497,11 @@ export default function HelpCenter() {
                   href="https://status.hospogo.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-4 rounded-lg bg-card/30 border border-border/50 hover:border-[#BAFF39]/30 transition-colors group"
+                  className="flex items-center gap-3 p-4 rounded-lg bg-card/30 border border-border/50 hover:border-primary/30 transition-colors group"
                 >
-                  <ExternalLink className="h-5 w-5 text-muted-foreground group-hover:text-[#BAFF39]" />
+                  <ExternalLink className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
                   <div>
-                    <div className="font-medium text-foreground group-hover:text-[#BAFF39]">System Status</div>
+                    <div className="font-medium text-foreground group-hover:text-primary">System Status</div>
                     <div className="text-sm text-muted-foreground">Check service health</div>
                   </div>
                 </a>

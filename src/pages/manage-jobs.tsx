@@ -43,7 +43,7 @@ function getStatusBadge(status: MyJob['status']) {
   switch (status) {
     case 'open':
       return (
-        <Badge className="bg-[#BAFF39]/10 text-[#BAFF39] border-[#BAFF39]/30">
+        <Badge className="bg-primary/10 text-primary border-primary/30">
           Open
         </Badge>
       );
@@ -254,7 +254,7 @@ export default function ManageJobsPage() {
                         {job.payRate && (
                           <div className="flex items-center gap-2">
                             <DollarSign className="h-4 w-4 flex-shrink-0" />
-                            <span className="font-semibold text-[#BAFF39]">{job.payRate}</span>
+                            <span className="font-semibold text-primary">{job.payRate}</span>
                           </div>
                         )}
                         <div className="flex items-center gap-2">

@@ -116,7 +116,7 @@ function SlotToggle({ slot, isAvailable, onToggle, disabled }: SlotToggleProps) 
         'flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200',
         'min-w-[60px] h-[60px] touch-manipulation',
         isAvailable
-          ? 'bg-[#BAFF39] text-black shadow-md shadow-[#BAFF39]/30'
+          ? 'bg-primary text-black shadow-md shadow-primary/30'
           : 'bg-muted/50 text-muted-foreground hover:bg-muted',
         disabled && 'opacity-50 cursor-not-allowed'
       )}
@@ -152,16 +152,16 @@ function DayCard({ date, availability, onToggleSlot, disabled, isSelected }: Day
     <div 
       className={cn(
         'flex-shrink-0 w-[100px] p-3 rounded-xl border transition-all duration-200',
-        'bg-card hover:border-[#BAFF39]/50',
-        isSelected && 'border-[#BAFF39] ring-2 ring-[#BAFF39]/20',
-        isToday(date) && 'border-[#BAFF39]/30'
+        'bg-card hover:border-primary/50',
+        isSelected && 'border-primary ring-2 ring-primary/20',
+        isToday(date) && 'border-primary/30'
       )}
     >
       {/* Day Header */}
       <div className="text-center mb-3">
         <div className={cn(
           'text-xs font-medium',
-          isToday(date) ? 'text-[#BAFF39]' : 'text-muted-foreground'
+          isToday(date) ? 'text-primary' : 'text-muted-foreground'
         )}>
           {dayLabel}
         </div>
@@ -185,7 +185,7 @@ function DayCard({ date, availability, onToggleSlot, disabled, isSelected }: Day
       {/* Available indicator */}
       {availableCount > 0 && (
         <div className="mt-2 text-center">
-          <span className="text-xs text-[#BAFF39] font-medium">
+          <span className="text-xs text-primary font-medium">
             {availableCount} slot{availableCount > 1 ? 's' : ''}
           </span>
         </div>
@@ -392,7 +392,7 @@ export function AvailabilityToggle({ className, onAvailabilityChange }: Availabi
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-[#BAFF39]" />
+              <Calendar className="h-5 w-5 text-primary" />
               My Availability
             </CardTitle>
             <CardDescription className="mt-1">
@@ -404,7 +404,7 @@ export function AvailabilityToggle({ className, onAvailabilityChange }: Availabi
           <div className="text-right">
             <div className={cn(
               'text-2xl font-bold',
-              totalAvailableSlots > 0 ? 'text-[#BAFF39]' : 'text-muted-foreground'
+              totalAvailableSlots > 0 ? 'text-primary' : 'text-muted-foreground'
             )}>
               {totalAvailableSlots}
             </div>
@@ -499,7 +499,7 @@ export function AvailabilityToggle({ className, onAvailabilityChange }: Availabi
             <Button
               onClick={handleSave}
               disabled={saveMutation.isPending}
-              className="w-full bg-[#BAFF39] hover:bg-[#BAFF39]/90 text-black"
+              className="w-full bg-primary hover:bg-primary/90 text-black"
             >
               {saveMutation.isPending ? (
                 <>

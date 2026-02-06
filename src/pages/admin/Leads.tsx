@@ -428,7 +428,7 @@ export default function AdminLeadsPage() {
                             className={
                               entry.role === 'venue'
                                 ? 'bg-blue-500/20 text-blue-400 border-blue-500/50'
-                                : 'bg-[#BAFF39]/20 text-[#BAFF39] border-[#BAFF39]/50'
+                                : 'bg-primary/20 text-primary border-primary/50'
                             }
                           >
                             {entry.role === 'venue' ? 'Venue' : 'Staff'}

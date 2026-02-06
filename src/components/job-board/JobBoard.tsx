@@ -98,7 +98,7 @@ function OpportunityCard({ shift, onApply, isApplying, hasApplied, applicationSt
             {isUrgent && (
               <Badge 
                 variant="outline" 
-                className="bg-[#BAFF39]/20 text-[#BAFF39] border-[#BAFF39]/50 animate-pulse shadow-[0_0_10px_rgba(186,255,57,0.4)]"
+                className="bg-primary/20 text-primary border-primary/50 animate-pulse shadow-[0_0_10px_hsl(var(--primary)/0.4)]"
               >
                 <Zap className="h-3 w-3 mr-1" />
                 Urgent
@@ -106,7 +106,7 @@ function OpportunityCard({ shift, onApply, isApplying, hasApplied, applicationSt
             )}
             <Badge 
               variant={shift.autoAccept ? 'default' : 'secondary'} 
-              className={`${shift.autoAccept ? 'bg-[#BAFF39] text-black shadow-[0_0_12px_rgba(186,255,57,0.35)]' : ''}`}
+              className={`${shift.autoAccept ? 'bg-primary text-primary-foreground shadow-[0_0_12px_hsl(var(--primary)/0.35)]' : ''}`}
             >
               {shift.autoAccept ? 'Instant' : 'Apply'}
             </Badge>
@@ -123,11 +123,11 @@ function OpportunityCard({ shift, onApply, isApplying, hasApplied, applicationSt
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-[#BAFF39]" />
+              <DollarSign className="h-5 w-5 text-primary" />
               <span className="text-lg font-semibold">${hourlyRate.toFixed(2)}/hr</span>
             </div>
             {hours && (
-              <span className="text-sm font-medium text-[#BAFF39]">
+              <span className="text-sm font-medium text-primary">
                 ${(hourlyRate * parseFloat(hours)).toFixed(0)} total
               </span>
             )}
@@ -138,10 +138,10 @@ function OpportunityCard({ shift, onApply, isApplying, hasApplied, applicationSt
             variant={hasApplied || applicationState === 'applied' ? 'outline' : 'default'}
             className={`w-full min-h-[44px] font-semibold transition-all duration-200 ${
               applicationState === 'idle' && !hasApplied
-                ? 'bg-[#BAFF39] text-black hover:bg-[#BAFF39]/90 shadow-[0_0_14px_rgba(186,255,57,0.4)] hover:shadow-[0_0_20px_rgba(186,255,57,0.5)]'
+                ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_14px_hsl(var(--primary)/0.4)] hover:shadow-[0_0_20px_hsl(var(--primary)/0.5)]'
                 : applicationState === 'pending'
-                ? 'bg-[#BAFF39]/60 text-black/70 cursor-wait'
-                : 'border-[#BAFF39]/40 text-[#BAFF39]'
+                ? 'bg-primary/60 text-primary-foreground/70 cursor-wait'
+                : 'border-primary/40 text-primary'
             }`}
           >
             {isApplying || applicationState === 'pending' ? (
@@ -151,7 +151,7 @@ function OpportunityCard({ shift, onApply, isApplying, hasApplied, applicationSt
               </>
             ) : hasApplied || applicationState === 'applied' ? (
               <>
-                <CheckCircle2 className="h-4 w-4 mr-2 text-[#BAFF39]" />
+                <CheckCircle2 className="h-4 w-4 mr-2 text-primary" />
                 Applied
               </>
             ) : (

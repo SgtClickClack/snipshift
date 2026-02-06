@@ -9,13 +9,13 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 font-bold uppercase tracking-wide",
+        default: "bg-primary text-primary-foreground hover:bg-primary-muted active:bg-primary-muted/90 font-bold uppercase tracking-wide",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         success:
           "bg-success text-success-foreground hover:bg-success/90 shadow-sm",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+          "border border-input bg-background hover:bg-primary-muted/10 hover:border-primary-muted active:bg-primary-muted/20",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
@@ -23,10 +23,10 @@ const buttonVariants = cva(
         accent:
           "bg-brand-neon text-brand-dark font-bold shadow-neon-realistic hover:bg-brand-neon/90 hover:-translate-y-0.5 border border-brand-neon/40 hover:shadow-[0_0_5px_rgba(186,255,57,1),0_0_20px_rgba(186,255,57,0.7),0_0_40px_rgba(186,255,57,0.4)]",
         // REFINED GLOW - Sophisticated/Premium Electric Lime style
-        // Transparent bg, 1px Electric Lime border, subtle text-shadow
-        // Hover: Scale 1.02x with soft outer glow
+        // Transparent bg, 1px primary border, subtle text-shadow
+        // Hover: Scale 1.02x with soft outer glow (uses primary token)
         "refined-glow":
-          "bg-transparent border border-[#BAFF39] text-[#BAFF39] font-semibold hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(186,255,57,0.3)] [text-shadow:0_0_8px_rgba(186,255,57,0.4)]",
+          "bg-transparent border border-primary text-primary font-semibold hover:scale-[1.02] hover:shadow-[0_0_15px_hsl(var(--primary)/0.3)] [text-shadow:0_0_8px_hsl(var(--primary)/0.4)]",
       },
       size: {
         default: "h-11 px-4 py-2",

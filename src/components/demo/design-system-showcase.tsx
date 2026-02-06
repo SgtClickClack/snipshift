@@ -22,9 +22,9 @@ export const DesignSystemShowcase = () => {
         {/* Header */}
         <div className="text-center space-y-4">
           <h1 className="text-4xl md:text-6xl font-black italic text-foreground tracking-tight">
-            HOSPO<span className="text-[#BAFF39]">GO</span> Design System
+            HOSPO<span className="text-primary">GO</span> Design System
           </h1>
-          <p className="text-xl text-[#BAFF39] font-urbanist-900">
+          <p className="text-xl text-primary font-urbanist-900">
             Calm Confidence — Premium Dark UI
           </p>
           <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
@@ -86,18 +86,18 @@ export const DesignSystemShowcase = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-foreground">
-                      <DollarSign className="h-5 w-5 text-[#BAFF39]" />
+                      <DollarSign className="h-5 w-5 text-primary" />
                       Revenue Metric
                     </CardTitle>
                     <CardDescription>Live financial tracking</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-3xl font-bold text-[#BAFF39] mb-2">$12,450</p>
+                    <p className="text-3xl font-bold text-primary mb-2">$12,450</p>
                     <p className="text-sm text-muted-foreground">
                       This week's projected revenue
                     </p>
                     <div className="flex gap-2 mt-4">
-                      <Badge className="bg-[#BAFF39]/20 text-[#BAFF39] border-[#BAFF39]/40">Live</Badge>
+                      <Badge className="bg-primary/20 text-primary border-primary/40">Live</Badge>
                       <Badge className="bg-success/20 text-success border-success/30">+12%</Badge>
                     </div>
                   </CardContent>
@@ -108,7 +108,7 @@ export const DesignSystemShowcase = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-foreground">
-                      <Calendar className="h-5 w-5 text-[#BAFF39]" />
+                      <Calendar className="h-5 w-5 text-primary" />
                       Shift Overview
                     </CardTitle>
                     <CardDescription>Weekly capacity dashboard</CardDescription>
@@ -119,8 +119,8 @@ export const DesignSystemShowcase = () => {
                       Shifts filled this week
                     </p>
                     <div className="mt-4 flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-[#BAFF39]" />
-                      <span className="text-sm text-[#BAFF39] font-medium">87.5% fill rate</span>
+                      <TrendingUp className="h-4 w-4 text-primary" />
+                      <span className="text-sm text-primary font-medium">87.5% fill rate</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -130,7 +130,7 @@ export const DesignSystemShowcase = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-foreground">
-                      <Crown className="h-5 w-5 text-[#BAFF39]" />
+                      <Crown className="h-5 w-5 text-primary" />
                       Reliability Crown
                     </CardTitle>
                     <CardDescription>Elite professional status</CardDescription>
@@ -139,9 +139,9 @@ export const DesignSystemShowcase = () => {
                     <p className="text-sm text-muted-foreground mb-4">
                       Awarded for 0 strikes and 10+ completed shifts
                     </p>
-                    <div className="flex items-center gap-2 p-3 rounded-lg bg-[#BAFF39]/10 border border-[#BAFF39]/30">
-                      <Shield className="h-5 w-5 text-[#BAFF39]" />
-                      <span className="text-sm font-semibold text-[#BAFF39]">Elite Status</span>
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/30">
+                      <Shield className="h-5 w-5 text-primary" />
+                      <span className="text-sm font-semibold text-primary">Elite Status</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -197,18 +197,18 @@ export const DesignSystemShowcase = () => {
           <Card>
             <CardContent className="pt-6 space-y-6">
               <div className="flex items-center gap-4">
-                <Calendar className="h-6 w-6 text-[#BAFF39]" />
+                <Calendar className="h-6 w-6 text-primary" />
                 <Users className="h-6 w-6 text-muted-foreground" />
-                <TrendingUp className="h-6 w-6 text-[#BAFF39]" />
+                <TrendingUp className="h-6 w-6 text-primary" />
                 <Shield className="h-6 w-6 text-muted-foreground" />
-                <Crown className="h-6 w-6 text-[#BAFF39]" />
+                <Crown className="h-6 w-6 text-primary" />
               </div>
               <div className="flex flex-wrap gap-3">
-                <Badge className="bg-[#BAFF39]/20 text-[#BAFF39] border-[#BAFF39]/40">Live</Badge>
+                <Badge className="bg-primary/20 text-primary border-primary/40">Live</Badge>
                 <Badge className="bg-success/20 text-success border-success/30">Confirmed</Badge>
-                <Badge className="bg-[#BAFF39]/10 text-[#BAFF39] border-[#BAFF39]/30">Featured</Badge>
+                <Badge className="bg-primary/10 text-primary border-primary/30">Featured</Badge>
                 <Badge variant="outline">Standard</Badge>
-                <Badge className="bg-[#BAFF39]/20 text-[#BAFF39] border-[#BAFF39]/40">Premium</Badge>
+                <Badge className="bg-primary/20 text-primary border-primary/40">Premium</Badge>
               </div>
             </CardContent>
           </Card>
@@ -227,7 +227,7 @@ export const DesignSystemShowcase = () => {
                 <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
                   PROJECTED ARR
                 </p>
-                <h1 className="text-4xl font-black italic text-[#BAFF39] font-urbanist-900">
+                <h1 className="text-4xl font-black italic text-primary font-urbanist-900">
                   $178,800
                 </h1>
               </div>
@@ -256,15 +256,15 @@ export const DesignSystemShowcase = () => {
         <section className="space-y-6">
           <div>
             <h2 className="text-2xl font-bold text-foreground mb-2">Color System</h2>
-            <p className="text-sm text-muted-foreground">Single source of truth: #BAFF39</p>
+            <p className="text-sm text-muted-foreground">Single source of truth: hsl(var(--primary))</p>
           </div>
           
           <Card>
             <CardContent className="pt-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <div className="h-20 rounded-lg bg-[#BAFF39]" />
-                  <p className="text-xs font-mono text-foreground">#BAFF39</p>
+                  <div className="h-20 rounded-lg bg-primary" />
+                  <p className="text-xs font-mono text-foreground">hsl(var(--primary))</p>
                   <p className="text-xs text-muted-foreground">Electric Lime</p>
                 </div>
                 <div className="space-y-2">
@@ -290,7 +290,7 @@ export const DesignSystemShowcase = () => {
         {/* Footer */}
         <div className="text-center py-8 border-t border-border">
           <p className="text-sm text-muted-foreground">
-            Designed for the <span className="text-[#BAFF39]">$168M Neighborhood Economy</span>
+            Designed for the <span className="text-primary">$168M Neighborhood Economy</span>
           </p>
         </div>
       </div>

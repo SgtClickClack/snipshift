@@ -3050,7 +3050,7 @@ function ProfessionalCalendarContent({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <Star className="h-5 w-5 text-[#BAFF39]" />
+              <Star className="h-5 w-5 text-primary" />
               Enable A-Team Automation
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">
@@ -3071,7 +3071,7 @@ function ProfessionalCalendarContent({
                 setShowEmptyFavoritesDialog(false);
                 window.location.href = '/venue/staff?filter=favorites';
               }}
-              className="bg-[#BAFF39] hover:bg-[#BAFF39]/90 text-black font-bold"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
             >
               <Star className="h-4 w-4 mr-2" />
               Build My A-Team

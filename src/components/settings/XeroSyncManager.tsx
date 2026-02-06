@@ -242,15 +242,15 @@ export default function XeroSyncManager() {
             recycle={false}
             numberOfPieces={150}
             gravity={0.4}
-            colors={['#BAFF39', '#84cc16', '#13b5ea', '#ffffff', '#fbbf24']}
+            colors={['hsl(81,85%,58%)', '#84cc16', '#13b5ea', '#ffffff', '#fbbf24']}
             confettiSource={{ x: windowSize.width / 2, y: windowSize.height / 3, w: 0, h: 0 }}
           />
           <div
             className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center"
             aria-hidden
           >
-            <div className="animate-pulse rounded-full bg-[#BAFF39]/30 p-8 scale-125">
-              <CheckCircle2 className="h-16 w-16 text-[#BAFF39]" />
+            <div className="animate-pulse rounded-full bg-primary/30 p-8 scale-125">
+              <CheckCircle2 className="h-16 w-16 text-primary" />
             </div>
           </div>
         </>
@@ -268,7 +268,7 @@ export default function XeroSyncManager() {
                   title="Learn about mutex sync protection"
                   aria-label="Help: Mutex sync explanation"
                 >
-                  <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-[#BAFF39]" />
+                  <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-primary" />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right" className="max-w-[300px] text-xs">
@@ -345,7 +345,7 @@ export default function XeroSyncManager() {
                   <div className="flex items-center justify-between">
                     <p className="font-medium text-sm">Last sync result</p>
                     {lastResult.synced.length > 0 && lastResult.failed.length > 0 && (
-                      <span className="text-xs font-semibold px-2 py-1 rounded-full bg-[#BAFF39]/20 text-[#BAFF39] border border-[#BAFF39]/30">
+                      <span className="text-xs font-semibold px-2 py-1 rounded-full bg-primary/20 text-primary border border-primary/30">
                         Partial Success
                       </span>
                     )}
@@ -382,17 +382,17 @@ export default function XeroSyncManager() {
                         </span>
                       </div>
                       
-                      {/* Detailed list of failed employees with #BAFF39 highlighting and Fix Mapping CTA */}
+                      {/* Detailed list of failed employees with primary highlighting and Fix Mapping CTA */}
                       <div className="ml-6 space-y-1.5">
                         {lastResult.failed.map((failed, idx) => (
                           <div 
                             key={failed.employeeId || idx}
-                            className="flex items-center justify-between p-2 rounded-md bg-[#BAFF39]/10 border-2 border-[#BAFF39]/40 shadow-[0_0_8px_rgba(186,255,57,0.15)]"
+                            className="flex items-center justify-between p-2 rounded-md bg-primary/10 border-2 border-primary/40 shadow-[0_0_8px_rgba(186,255,57,0.15)]"
                             data-testid={`xero-failed-row-${failed.employeeId}`}
                           >
                             <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-[#BAFF39] animate-pulse" />
-                              <span className="text-sm font-semibold text-[#BAFF39]">
+                              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                              <span className="text-sm font-semibold text-primary">
                                 {failed.employeeName || `Employee ${failed.employeeId.slice(0, 8)}...`}
                               </span>
                             </div>
@@ -404,7 +404,7 @@ export default function XeroSyncManager() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-6 px-2 text-xs font-bold bg-[#BAFF39] text-black hover:bg-[#BAFF39]/80 rounded-full shadow-md"
+                                className="h-6 px-2 text-xs font-bold bg-primary text-black hover:bg-primary/80 rounded-full shadow-md"
                                 onClick={() => {
                                   // Navigate to team settings with employee ID
                                   window.location.href = `/settings?category=team&highlight=${failed.employeeId}`;
@@ -445,7 +445,7 @@ export default function XeroSyncManager() {
               <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={isSyncing} className="flex-1 sm:flex-none border-zinc-700 text-zinc-300 hover:bg-zinc-800">
                 Cancel
               </Button>
-              <Button onClick={handleConfirmSync} disabled={isSyncing} className="flex-1 sm:flex-none gap-2 bg-[#BAFF39] text-zinc-900 hover:bg-[#BAFF39]/90" data-testid="xero-confirm-sync">
+              <Button onClick={handleConfirmSync} disabled={isSyncing} className="flex-1 sm:flex-none gap-2 bg-primary text-zinc-900 hover:bg-primary/90" data-testid="xero-confirm-sync">
                 {isSyncing ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : null}
@@ -456,7 +456,7 @@ export default function XeroSyncManager() {
           {/* HOSPO-GO Branding Footer */}
           <div className="pt-3 border-t border-zinc-800 flex justify-center">
             <span className="text-[10px] text-zinc-600 tracking-wider">
-              Powered by <span className="font-black italic">HOSPO<span className="text-[#BAFF39]">GO</span></span>
+              Powered by <span className="font-black italic">HOSPO<span className="text-primary">GO</span></span>
             </span>
           </div>
         </DialogContent>

@@ -254,7 +254,7 @@ export function VenueAnalyticsDashboard({ className }: VenueAnalyticsDashboardPr
           </Card>
 
           {/* Fill Rate */}
-          <Card className="border-2 border-[#BAFF39]/20 bg-gradient-to-br from-[#BAFF39]/5 to-[#BAFF39]/10">
+          <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
             <CardHeader className="pb-3">
               <CardDescription className="text-sm font-medium">Fill Rate</CardDescription>
             </CardHeader>
@@ -266,13 +266,13 @@ export function VenueAnalyticsDashboard({ className }: VenueAnalyticsDashboardPr
                   </p>
                   <div className="flex items-center gap-1 mt-2">
                     {fillRateChange.isPositive ? (
-                      <TrendingUp className="h-4 w-4 text-[#BAFF39]" />
+                      <TrendingUp className="h-4 w-4 text-primary" />
                     ) : (
                       <TrendingDown className="h-4 w-4 text-destructive" />
                     )}
                     <span
                       className={`text-sm font-medium ${
-                        fillRateChange.isPositive ? 'text-[#BAFF39]' : 'text-destructive'
+                        fillRateChange.isPositive ? 'text-primary' : 'text-destructive'
                       }`}
                     >
                       {fillRateChange.value}
@@ -283,8 +283,8 @@ export function VenueAnalyticsDashboard({ className }: VenueAnalyticsDashboardPr
                     {metrics.filledOrCompletedShifts} of {metrics.totalShifts} shifts filled
                   </p>
                 </div>
-                <div className="rounded-full bg-[#BAFF39]/20 p-3">
-                  <Target className="h-6 w-6 text-[#BAFF39]" />
+                <div className="rounded-full bg-primary/20 p-3">
+                  <Target className="h-6 w-6 text-primary" />
                 </div>
               </div>
             </CardContent>
@@ -303,13 +303,13 @@ export function VenueAnalyticsDashboard({ className }: VenueAnalyticsDashboardPr
                   </p>
                   <div className="flex items-center gap-1 mt-2">
                     {reliabilityChange.isPositive ? (
-                      <TrendingUp className="h-4 w-4 text-[#BAFF39]" />
+                      <TrendingUp className="h-4 w-4 text-primary" />
                     ) : (
                       <TrendingDown className="h-4 w-4 text-destructive" />
                     )}
                     <span
                       className={`text-sm font-medium ${
-                        reliabilityChange.isPositive ? 'text-[#BAFF39]' : 'text-destructive'
+                        reliabilityChange.isPositive ? 'text-primary' : 'text-destructive'
                       }`}
                     >
                       {reliabilityChange.value}

@@ -29,10 +29,10 @@ interface ReputationStats {
 const STRIKE_STATES = {
   0: {
     label: 'Elite Professional',
-    color: '#BAFF39', // Lime/neon green
+    color: 'hsl(var(--primary))', // Brand primary
     subtext: 'You have a perfect reliability record!',
-    bgClass: 'from-[#BAFF39]/20 to-[#84cc16]/10',
-    borderClass: 'border-[#BAFF39]/50',
+    bgClass: 'from-primary/20 to-[#84cc16]/10',
+    borderClass: 'border-primary/50',
     textClass: 'text-[#84cc16]',
     icon: Trophy,
   },
@@ -97,7 +97,7 @@ function SuspensionCountdown({ suspendedUntil }: { suspendedUntil: string }) {
   if (isExpired) {
     return (
       <div className="text-center">
-        <p className="text-[#BAFF39] text-lg font-semibold">Suspension period has ended!</p>
+        <p className="text-primary text-lg font-semibold">Suspension period has ended!</p>
         <p className="text-muted-foreground text-sm mt-1">Refresh the page to access your account.</p>
       </div>
     );
@@ -243,13 +243,13 @@ function StrikeRecoveryProgress({
       <div className="flex items-center justify-between text-sm mb-3">
         <div className="flex items-center gap-2">
           <div className="relative">
-            <TrendingUp className="h-4 w-4 text-[#BAFF39]" />
+            <TrendingUp className="h-4 w-4 text-primary" />
             {/* Glow effect */}
-            <div className="absolute inset-0 blur-sm bg-[#BAFF39]/30 rounded-full" />
+            <div className="absolute inset-0 blur-sm bg-primary/30 rounded-full" />
           </div>
-          <span className="font-semibold text-[#BAFF39]">Clean Streak</span>
+          <span className="font-semibold text-primary">Clean Streak</span>
         </div>
-        <span className="font-bold text-white bg-[#BAFF39]/20 px-2 py-0.5 rounded-full text-xs">
+        <span className="font-bold text-white bg-primary/20 px-2 py-0.5 rounded-full text-xs">
           {recoveryProgress} / 5 shifts
         </span>
       </div>
@@ -258,7 +258,7 @@ function StrikeRecoveryProgress({
       <div className="relative">
         <Progress 
           value={progress} 
-          className="h-3 bg-zinc-800/50 rounded-full overflow-hidden [&>div]:bg-gradient-to-r [&>div]:from-[#84cc16] [&>div]:to-[#BAFF39] [&>div]:shadow-[0_0_10px_rgba(186,255,57,0.5)]" 
+          className="h-3 bg-zinc-800/50 rounded-full overflow-hidden [&>div]:bg-gradient-to-r [&>div]:from-[#84cc16] [&>div]:to-primary [&>div]:shadow-[0_0_10px_hsl(var(--primary)/0.5)]" 
         />
         {/* Progress markers */}
         <div className="absolute top-0 left-0 right-0 h-full flex justify-between px-0.5 pointer-events-none">
@@ -275,19 +275,19 @@ function StrikeRecoveryProgress({
       </div>
 
       {/* Motivational Message */}
-      <div className="mt-3 p-2 rounded-lg bg-[#BAFF39]/5 border border-[#BAFF39]/20">
+      <div className="mt-3 p-2 rounded-lg bg-primary/5 border border-primary/20">
         <p className="text-xs text-center">
           {shiftsRemaining === 0 ? (
-            <span className="text-[#BAFF39] font-medium">
+            <span className="text-primary font-medium">
               🎉 You've earned strike removal! It will be applied after admin review.
             </span>
           ) : shiftsRemaining === 1 ? (
-            <span className="text-[#BAFF39]">
+            <span className="text-primary">
               <span className="font-semibold">Almost there!</span> Complete 1 more shift with 4.5+ stars to remove a strike.
             </span>
           ) : (
             <span className="text-muted-foreground">
-              Complete <span className="text-[#BAFF39] font-semibold">{shiftsRemaining}</span> more shifts with 4.5+ stars to remove a strike.
+              Complete <span className="text-primary font-semibold">{shiftsRemaining}</span> more shifts with 4.5+ stars to remove a strike.
             </span>
           )}
         </p>
@@ -358,7 +358,7 @@ export function ProReliabilityTracker() {
             <div 
               className={cn(
                 'flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center',
-                strikes === 0 ? 'bg-[#BAFF39]/30' : strikes === 1 ? 'bg-amber-500/30' : 'bg-red-500/30'
+                strikes === 0 ? 'bg-primary/30' : strikes === 1 ? 'bg-amber-500/30' : 'bg-red-500/30'
               )}
             >
               <Icon 
@@ -381,7 +381,7 @@ export function ProReliabilityTracker() {
                 {strikes === 0 && completedShiftCount >= 10 && (
                   <div className="relative">
                     <Crown 
-                      className="h-6 w-6 text-[#BAFF39] drop-shadow-[0_0_8px_rgba(186,255,57,0.8)] animate-pulse" 
+                      className="h-6 w-6 text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.8)] animate-pulse" 
                       style={{ filter: 'drop-shadow(0 0 12px rgba(186,255,57,0.6))' }}
                     />
                   </div>

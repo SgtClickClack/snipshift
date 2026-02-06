@@ -9,7 +9,7 @@
  * Features verification status badges:
  * - Missing (Red Pulse)
  * - Pending (Amber)
- * - Verified (Electric Lime #BAFF39)
+ * - Verified (brand primary)
  */
 
 import React, { useState } from 'react';
@@ -126,7 +126,7 @@ function StatusBadge({ status }: { status: VerificationStatus }) {
     },
     verified: {
       label: 'Verified',
-      className: 'bg-[#BAFF39]/10 text-[#BAFF39] border-[#BAFF39]/20',
+      className: 'bg-primary/10 text-primary border-primary/20',
       icon: CheckCircle2,
     },
   };
@@ -253,7 +253,7 @@ function UploadModal({ document, currentStatus, onUpload, isUploading }: UploadM
         <Button 
           variant={currentStatus === 'verified' ? 'outline' : 'default'}
           size="sm"
-          className={currentStatus === 'missing' ? 'bg-[#BAFF39] hover:bg-[#BAFF39]/90 text-black' : ''}
+          className={currentStatus === 'missing' ? 'bg-primary hover:bg-primary/90 text-black' : ''}
         >
           <Upload className="h-4 w-4 mr-2" />
           {currentStatus === 'verified' ? 'Update' : 'Upload'}
@@ -262,7 +262,7 @@ function UploadModal({ document, currentStatus, onUpload, isUploading }: UploadM
       <DialogContent className="sm:max-w-md mx-4">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Icon className="h-5 w-5 text-[#BAFF39]" />
+            <Icon className="h-5 w-5 text-primary" />
             Upload {document.name}
           </DialogTitle>
           <DialogDescription>
@@ -307,7 +307,7 @@ function UploadModal({ document, currentStatus, onUpload, isUploading }: UploadM
           <Button
             onClick={handleUpload}
             disabled={!selectedFile || isUploading}
-            className="w-full bg-[#BAFF39] hover:bg-[#BAFF39]/90 text-black"
+            className="w-full bg-primary hover:bg-primary/90 text-black"
           >
             {isUploading ? (
               <>
@@ -361,10 +361,10 @@ function DVSCertificateModal({ document, isOpen, onClose, documentUrl }: DVSCert
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg mx-4 bg-gradient-to-b from-zinc-900 to-zinc-950 border-[#BAFF39]/30">
+      <DialogContent className="sm:max-w-lg mx-4 bg-gradient-to-b from-zinc-900 to-zinc-950 border-primary/30">
         <DialogHeader className="text-center pb-4 border-b border-zinc-800">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-[#BAFF39]/10 flex items-center justify-center mb-4">
-            <BadgeCheck className="h-8 w-8 text-[#BAFF39]" />
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+            <BadgeCheck className="h-8 w-8 text-primary" />
           </div>
           <DialogTitle className="text-xl font-bold text-white">
             DVS Verification Certificate
@@ -377,11 +377,11 @@ function DVSCertificateModal({ document, isOpen, onClose, documentUrl }: DVSCert
         <div className="py-6 space-y-6">
           {/* Document Type Badge */}
           <div className="flex items-center justify-center gap-3">
-            <div className="p-2 rounded-lg bg-[#BAFF39]/10">
-              <Icon className="h-5 w-5 text-[#BAFF39]" />
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Icon className="h-5 w-5 text-primary" />
             </div>
             <span className="text-white font-medium">{document.name}</span>
-            <span className="px-2 py-1 rounded-full bg-[#BAFF39]/20 text-[#BAFF39] text-xs font-bold">
+            <span className="px-2 py-1 rounded-full bg-primary/20 text-primary text-xs font-bold">
               VERIFIED
             </span>
           </div>
@@ -389,15 +389,15 @@ function DVSCertificateModal({ document, isOpen, onClose, documentUrl }: DVSCert
           {/* DVS Handshake ID - Government-Grade Display */}
           <div className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
             <div className="flex items-center gap-2 mb-3">
-              <Fingerprint className="h-4 w-4 text-[#BAFF39]" />
+              <Fingerprint className="h-4 w-4 text-primary" />
               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em]">
                 DVS Handshake ID
               </span>
-              <span className="ml-auto text-[9px] px-2 py-0.5 rounded bg-[#BAFF39]/20 text-[#BAFF39] font-bold">
+              <span className="ml-auto text-[9px] px-2 py-0.5 rounded bg-primary/20 text-primary font-bold">
                 VERIFIED
               </span>
             </div>
-            <code className="text-xl font-mono text-[#BAFF39] block break-all tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.15em' }}>
+            <code className="text-xl font-mono text-primary block break-all tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.15em' }}>
               {dvsHandshakeId}
             </code>
             <p className="text-[10px] text-zinc-500 mt-2 tracking-wide">
@@ -428,7 +428,7 @@ function DVSCertificateModal({ document, isOpen, onClose, documentUrl }: DVSCert
           </div>
 
           {/* Compliance Statement */}
-          <div className="bg-[#BAFF39]/5 border border-[#BAFF39]/20 rounded-xl p-4">
+          <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
             <p className="text-sm text-zinc-300 leading-relaxed">
               This document has been verified against the Australian Government Document Verification Service (DVS). 
               The holder has completed identity verification meeting enterprise compliance standards.
@@ -451,7 +451,7 @@ function DVSCertificateModal({ document, isOpen, onClose, documentUrl }: DVSCert
           )}
           <Button
             onClick={onClose}
-            className="flex-1 bg-[#BAFF39] hover:bg-[#BAFF39]/90 text-black font-semibold"
+            className="flex-1 bg-primary hover:bg-primary/90 text-black font-semibold"
           >
             Close Certificate
           </Button>
@@ -460,7 +460,7 @@ function DVSCertificateModal({ document, isOpen, onClose, documentUrl }: DVSCert
         {/* HOSPO-GO Branding Footer */}
         <div className="pt-3 mt-4 border-t border-zinc-800 flex justify-center">
           <span className="text-[10px] text-zinc-600 tracking-wider">
-            Verified by <span className="font-black italic">HOSPO<span className="text-[#BAFF39]">GO</span></span> Compliance Engine
+            Verified by <span className="font-black italic">HOSPO<span className="text-primary">GO</span></span> Compliance Engine
           </span>
         </div>
       </DialogContent>
@@ -510,13 +510,13 @@ function DocumentRow({
         <div className={cn(
           'p-2 rounded-lg',
           isExpiringSoon ? 'bg-amber-500/10' :
-          status === 'verified' ? 'bg-[#BAFF39]/10' : 
+          status === 'verified' ? 'bg-primary/10' : 
           status === 'pending' ? 'bg-amber-500/10' : 'bg-red-500/10'
         )}>
           <Icon className={cn(
             'h-5 w-5',
             isExpiringSoon ? 'text-amber-400' :
-            status === 'verified' ? 'text-[#BAFF39]' : 
+            status === 'verified' ? 'text-primary' : 
             status === 'pending' ? 'text-amber-500' : 'text-red-500'
           )} />
         </div>
@@ -557,7 +557,7 @@ function DocumentRow({
             onClick={onViewCertificate}
             title="View DVS Certificate"
             aria-label="View DVS verification certificate"
-            className="text-[#BAFF39] hover:text-[#BAFF39] hover:bg-[#BAFF39]/10"
+            className="text-primary hover:text-primary hover:bg-primary/10"
           >
             <BadgeCheck className="h-4 w-4" />
           </Button>
@@ -720,7 +720,7 @@ export function ProVaultManager({ className }: ProVaultManagerProps) {
         toast({
           title: 'Document Verified! ✓',
           description: `DVS handshake complete. Your document has been automatically verified (${Math.round((data.ocrConfidence ?? 0.92) * 100)}% confidence).`,
-          className: 'border-[#BAFF39]/50 bg-[#BAFF39]/10',
+          className: 'border-primary/50 bg-primary/10',
         });
       } else {
         toast({
@@ -835,7 +835,7 @@ export function ProVaultManager({ className }: ProVaultManagerProps) {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-[#BAFF39]" />
+              <Shield className="h-5 w-5 text-primary" />
               Compliance Vault
             </CardTitle>
             <CardDescription className="mt-1">
@@ -847,7 +847,7 @@ export function ProVaultManager({ className }: ProVaultManagerProps) {
           <div className="text-right">
             <div className={cn(
               'text-2xl font-bold',
-              compliancePercentage === 100 ? 'text-[#BAFF39]' : 
+              compliancePercentage === 100 ? 'text-primary' : 
               compliancePercentage >= 50 ? 'text-amber-500' : 'text-red-500'
             )}>
               {compliancePercentage}%

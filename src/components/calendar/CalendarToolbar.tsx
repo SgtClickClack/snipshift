@@ -99,18 +99,18 @@ function SyncToXeroMenuItem({ isConnected }: { isConnected: boolean }) {
       className={cn(
         "flex items-center gap-2",
         isConnected 
-          ? "bg-[#BAFF39]/10 hover:bg-[#BAFF39]/20 text-[#BAFF39] border-l-2 border-[#BAFF39]" 
+          ? "bg-primary/10 hover:bg-primary/20 text-primary border-l-2 border-primary" 
           : ""
       )}
     >
       {isConnected ? (
-        <XeroLogo className="h-4 w-4 shrink-0 text-[#BAFF39]" />
+        <XeroLogo className="h-4 w-4 shrink-0 text-primary" />
       ) : (
         <RefreshCw className="h-4 w-4 shrink-0 text-muted-foreground" />
       )}
       <span className={isConnected ? "font-medium" : ""}>Sync to Xero Payroll</span>
       {isConnected ? (
-        <span className="text-[10px] bg-[#BAFF39]/30 text-[#BAFF39] px-1.5 rounded font-bold shrink-0">
+        <span className="text-[10px] bg-primary/30 text-primary px-1.5 rounded font-bold shrink-0">
           Connected
         </span>
       ) : (
@@ -222,9 +222,9 @@ export function CalendarToolbar({
                   <PopoverTrigger asChild>
                     <button
                       className={cn(
-                        "flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#BAFF39]/10 dark:bg-[#BAFF39]/20 text-[#BAFF39] dark:text-[#BAFF39] text-sm font-medium",
+                        "flex items-center gap-1.5 px-2 py-1 rounded-md bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary text-sm font-medium",
                         "min-w-[180px] max-w-full", // Reserved width to prevent CLS
-                        "hover:bg-[#BAFF39]/20 hover:shadow-[0_0_10px_rgba(186,255,57,0.2)] transition-all cursor-pointer",
+                        "hover:bg-primary/20 hover:shadow-[0_0_10px_hsl(var(--primary)/0.2)] transition-all cursor-pointer",
                         !isSyncedToXero && rosterTotals && "animate-pulse"
                       )}
                       data-testid="est-wage-cost"
@@ -233,19 +233,19 @@ export function CalendarToolbar({
                       {rosterTotals !== undefined ? (
                         <span>Est. Wage Cost: {formatCurrency(rosterTotals.totalCost, rosterTotals.currency)}</span>
                       ) : (
-                        <Skeleton className="h-4 w-24 bg-[#BAFF39]/20" />
+                        <Skeleton className="h-4 w-24 bg-primary/20" />
                       )}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent 
                     side="bottom" 
                     align="end"
-                    className="w-[min(320px,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] bg-zinc-900 border-[#BAFF39]/30 shadow-[0_0_20px_rgba(186,255,57,0.15)] p-0"
+                    className="w-[min(320px,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] bg-zinc-900 border-primary/30 shadow-[0_0_20px_hsl(var(--primary)/0.15)] p-0"
                   >
                     <div className="p-4 space-y-4">
                       {/* Header */}
                       <div className="flex items-center gap-2 pb-2 border-b border-zinc-700">
-                        <DollarSign className="h-5 w-5 text-[#BAFF39]" />
+                        <DollarSign className="h-5 w-5 text-primary" />
                         <span className="font-bold text-white">Wage Cost Breakdown</span>
                       </div>
                       
@@ -278,9 +278,9 @@ export function CalendarToolbar({
                           </div>
                           
                           {/* Total */}
-                          <div className="flex justify-between items-center pt-2 border-t border-[#BAFF39]/30">
+                          <div className="flex justify-between items-center pt-2 border-t border-primary/30">
                             <span className="font-bold text-white">Total Estimated</span>
-                            <span className="font-mono font-black text-xl text-[#BAFF39]">
+                            <span className="font-mono font-black text-xl text-primary">
                               {formatCurrency(rosterTotals.totalCost, rosterTotals.currency)}
                             </span>
                           </div>
@@ -300,7 +300,7 @@ export function CalendarToolbar({
                       {/* HOSPO-GO Branding Footer */}
                       <div className="pt-2 border-t border-zinc-800 flex justify-center">
                         <span className="text-[10px] text-zinc-600 tracking-wider">
-                          Powered by <span className="font-black italic">HOSPO<span className="text-[#BAFF39]">GO</span></span>
+                          Powered by <span className="font-black italic">HOSPO<span className="text-primary">GO</span></span>
                         </span>
                       </div>
                     </div>
@@ -314,7 +314,7 @@ export function CalendarToolbar({
                       title="Learn about estimated wage cost"
                       aria-label="Help: Estimated wage cost explanation"
                     >
-                      <HelpCircle className="h-3.5 w-3.5 text-muted-foreground hover:text-[#BAFF39]" />
+                      <HelpCircle className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="max-w-[280px] text-xs">
@@ -365,7 +365,7 @@ export function CalendarToolbar({
                       )}
                       <span>{isInvitingATeam ? 'Sending Invitations...' : 'Invite A-Team'}</span>
                       {!isInvitingATeam && (
-                        <span className="text-[10px] bg-green-500/20 text-green-600 dark:text-green-400 px-1.5 rounded font-medium shrink-0">
+                        <span className="text-[10px] bg-success/20 text-success px-1.5 rounded font-medium shrink-0">
                           Favorites
                         </span>
                       )}
@@ -479,10 +479,10 @@ export function CalendarToolbar({
             data-testid="status-legend"
           >
             <div 
-              className="flex items-center gap-1.5 cursor-help whitespace-nowrap shrink-0 px-2 py-1 rounded-md bg-green-500/10 sm:bg-transparent sm:px-0 sm:py-0" 
-              title="100% Confirmed — All required staff have confirmed attendance"
+            className="flex items-center gap-1.5 cursor-help whitespace-nowrap shrink-0 px-2 py-1 rounded-md bg-success/10 sm:bg-transparent sm:px-0 sm:py-0" 
+            title="100% Confirmed — All required staff have confirmed attendance"
             >
-              <div className="w-3.5 h-3.5 rounded bg-green-500 border-2 border-green-600 shrink-0"></div>
+              <div className="w-3.5 h-3.5 rounded bg-success border-2 border-success shrink-0"></div>
               <span className="text-muted-foreground font-medium">100% Confirmed</span>
             </div>
             <div 

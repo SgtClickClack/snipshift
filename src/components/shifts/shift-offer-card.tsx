@@ -30,7 +30,7 @@ export function ShiftOfferCard({
   const estimatedTotalPay = durationHours * hourlyRate;
 
   return (
-    <Card className="border-2 border-[#BAFF39]/30 hover:border-[#BAFF39]/50 transition-colors">
+    <Card className="border-2 border-primary/30 hover:border-primary/50 transition-colors">
       <CardHeader className="pb-4">
         <div className="flex items-start gap-4">
           {/* Business Logo */}
@@ -40,12 +40,12 @@ export function ShiftOfferCard({
                 src={offer.businessLogo}
                 alt={offer.businessName}
                 fallbackType="image"
-                className="w-16 h-16 rounded-lg object-cover border-2 border-[#BAFF39]/40"
+                className="w-16 h-16 rounded-lg object-cover border-2 border-primary/40"
                 containerClassName="rounded-lg"
               />
             ) : (
-              <div className="w-16 h-16 rounded-lg bg-[#BAFF39]/10 flex items-center justify-center border-2 border-[#BAFF39]/40">
-                <Building2 className="w-8 h-8 text-[#BAFF39]" />
+              <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center border-2 border-primary/40">
+                <Building2 className="w-8 h-8 text-primary" />
               </div>
             )}
           </div>
@@ -58,7 +58,7 @@ export function ShiftOfferCard({
             <h4 className="text-lg sm:text-xl font-bold text-foreground mb-2 line-clamp-2">
               {offer.title}
             </h4>
-            <Badge variant="outline" className="border-[#BAFF39] text-[#BAFF39]">
+            <Badge variant="outline" className="border-primary text-primary">
               Job Request
             </Badge>
           </div>
@@ -101,7 +101,7 @@ export function ShiftOfferCard({
           </div>
           <div className="flex items-baseline justify-between sm:block sm:text-right">
             <div className="text-xs sm:text-sm text-muted-foreground">Total Pay</div>
-            <div className="text-2xl sm:text-3xl font-bold text-[#BAFF39]">
+            <div className="text-2xl sm:text-3xl font-bold text-primary">
               ${estimatedTotalPay.toFixed(2)}
             </div>
           </div>

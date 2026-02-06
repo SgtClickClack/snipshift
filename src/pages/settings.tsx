@@ -343,28 +343,28 @@ export default function SettingsPage() {
                             ? isATeam 
                               ? 'bg-yellow-500 text-white'
                               : isIntegrations
-                                ? 'bg-[#BAFF39] text-black'
+                                ? 'bg-primary text-primary-foreground'
                                 : 'bg-primary text-primary-foreground'
                             : isATeam
                               ? 'text-yellow-600 dark:text-yellow-400 hover:bg-yellow-500/10'
                               : isIntegrations
-                                ? 'text-[#BAFF39] hover:bg-[#BAFF39]/10 border border-[#BAFF39]/30'
+                                ? 'text-primary hover:bg-primary/10 border border-primary/30'
                                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                         } ${
                           needsSetup && activeCategory !== category.id
-                            ? 'border-2 border-[#BAFF39] animate-pulse shadow-[0_0_8px_rgba(186,255,57,0.4)]'
+                            ? 'border-2 border-primary animate-pulse shadow-[0_0_8px_hsl(var(--primary)/0.4)]'
                             : ''
                         }`}
                       >
-                        <Icon className={`h-5 w-5 ${isATeam ? (activeCategory === category.id ? 'fill-current' : 'fill-yellow-500/30') : ''} ${isIntegrations && activeCategory !== category.id ? 'text-[#BAFF39]' : ''}`} />
+                        <Icon className={`h-5 w-5 ${isATeam ? (activeCategory === category.id ? 'fill-current' : 'fill-yellow-500/30') : ''} ${isIntegrations && activeCategory !== category.id ? 'text-primary' : ''}`} />
                         <span className="flex-1 text-left">{category.label}</span>
                         {isIntegrations && activeCategory !== category.id && (
-                          <span className="text-[10px] px-1.5 py-0.5 bg-[#BAFF39]/20 text-[#BAFF39] rounded font-bold">
+                          <span className="text-[10px] px-1.5 py-0.5 bg-primary/20 text-primary rounded font-bold">
                             Xero
                           </span>
                         )}
                         {isATeam && needsSetup && activeCategory !== category.id && (
-                          <span className="text-[10px] px-1.5 py-0.5 bg-[#BAFF39]/20 text-[#BAFF39] rounded font-bold animate-pulse">
+                          <span className="text-[10px] px-1.5 py-0.5 bg-primary/20 text-primary rounded font-bold animate-pulse">
                             Setup
                           </span>
                         )}

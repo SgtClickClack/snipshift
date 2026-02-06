@@ -62,7 +62,7 @@ function HighPerformanceConfetti({
         x: Math.random() * 100,
         delay: Math.random() * 0.5,
         duration: 2.5 + Math.random() * 1.5,
-        color: ['#BAFF39', '#FFD700', '#FF6B6B', '#4ECDC4', '#9B59B6', '#FF69B4'][Math.floor(Math.random() * 6)],
+        color: ['hsl(var(--primary))', '#FFD700', '#FF6B6B', '#4ECDC4', '#9B59B6', '#FF69B4'][Math.floor(Math.random() * 6)],
         size: 6 + Math.random() * 10,
         rotation: Math.random() * 360,
       }));
@@ -125,12 +125,12 @@ function HighPerformanceConfetti({
  */
 function EarningsLockedBadge({ amount }: { amount: number }) {
   return (
-    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[#BAFF39]/20 to-[#BAFF39]/10 border border-[#BAFF39]/30 animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-[#BAFF39]/30">
-        <BadgeCheck className="w-4 h-4 text-[#BAFF39]" />
+    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/30 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/30">
+        <BadgeCheck className="w-4 h-4 text-primary" />
       </div>
       <span className="text-sm font-semibold text-white">Earnings Locked In</span>
-      <span className="text-sm font-black text-[#BAFF39]">${amount.toFixed(0)}</span>
+      <span className="text-sm font-black text-primary">${amount.toFixed(0)}</span>
     </div>
   );
 }
@@ -313,7 +313,7 @@ export default function InvitationDashboard() {
       toast({
         title: '🎉 All Shifts Accepted!',
         description: `You've locked in $${earnings.toFixed(0)} in earnings!`,
-        className: 'border-[#BAFF39]/50 bg-[#BAFF39]/10',
+        className: 'border-primary/50 bg-primary/10',
       });
     },
     onError: (error: any) => {
@@ -387,9 +387,9 @@ export default function InvitationDashboard() {
       <div className="space-y-6 max-w-lg mx-auto p-4">
         {/* Success State with Earnings Locked Badge */}
         {showSuccessState && lockedEarnings !== null && (
-          <div className="flex flex-col items-center justify-center p-8 rounded-[40px] border border-[#BAFF39]/30 bg-gradient-to-b from-[#BAFF39]/10 to-transparent text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="w-20 h-20 rounded-full bg-[#BAFF39]/20 flex items-center justify-center mb-6 animate-bounce">
-              <Wallet className="w-10 h-10 text-[#BAFF39]" />
+          <div className="flex flex-col items-center justify-center p-8 rounded-[40px] border border-primary/30 bg-gradient-to-b from-primary/10 to-transparent text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mb-6 animate-bounce">
+              <Wallet className="w-10 h-10 text-primary" />
             </div>
             <h2 className="text-2xl font-black text-white mb-4">You're All Set!</h2>
             <EarningsLockedBadge amount={lockedEarnings} />
@@ -415,9 +415,9 @@ export default function InvitationDashboard() {
             
             {/* Potential earnings badge */}
             {totalPotentialEarnings > 0 && (
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#BAFF39]/10 border border-[#BAFF39]/20 mb-6">
-                <DollarSign className="w-4 h-4 text-[#BAFF39]" />
-                <span className="text-sm font-semibold text-[#BAFF39]">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-6">
+                <DollarSign className="w-4 h-4 text-primary" />
+                <span className="text-sm font-semibold text-primary">
                   ${totalPotentialEarnings.toFixed(0)} potential
                 </span>
               </div>

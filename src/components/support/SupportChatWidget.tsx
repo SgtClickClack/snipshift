@@ -4,12 +4,12 @@
  * A floating glassmorphism-style chat widget for logged-in users featuring:
  * - HospoGo Support Specialist AI assistant powered by Gemini
  * - Quick question chips for common inquiries
- * - Electric Lime (#BAFF39) "AI is Thinking" pulse animation
+ * - Brand primary "AI is Thinking" pulse animation
  * - Smooth expand/collapse animations
  * - LifeBuoy icon to distinguish from Investor Bot
  * 
  * Brand Colors:
- * - Neon: #BAFF39 (brand-neon)
+ * - Primary: hsl(var(--primary))
  * - Dark BG: #0a0a0a
  */
 
@@ -232,13 +232,13 @@ export default function SupportChatWidget() {
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-white/10 bg-black/50">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#BAFF39]/20 flex items-center justify-center">
-                  <LifeBuoy className="w-5 h-5 text-[#BAFF39]" />
+                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                  <LifeBuoy className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
                     <h3 className="text-white font-bold text-sm">Support Specialist</h3>
-                    <span className="w-2 h-2 rounded-full bg-[#BAFF39] animate-pulse" title="Online" />
+                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" title="Online" />
                   </div>
                   <p className="text-gray-500 text-xs">AI-Powered • 24/7 Support</p>
                 </div>
@@ -274,13 +274,13 @@ export default function SupportChatWidget() {
                     className={`w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center ${
                       message.role === 'user' 
                         ? 'bg-white/10' 
-                        : 'bg-[#BAFF39]/20'
+                        : 'bg-primary/20'
                     }`}
                   >
                     {message.role === 'user' ? (
                       <User className="w-4 h-4 text-white" />
                     ) : (
-                      <Bot className="w-4 h-4 text-[#BAFF39]" />
+                      <Bot className="w-4 h-4 text-primary" />
                     )}
                   </div>
                   
@@ -288,7 +288,7 @@ export default function SupportChatWidget() {
                   <div 
                     className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                       message.role === 'user'
-                        ? 'bg-[#BAFF39] text-black rounded-tr-sm'
+                        ? 'bg-primary text-black rounded-tr-sm'
                         : 'bg-white/5 text-gray-200 rounded-tl-sm border border-white/5'
                     }`}
                   >
@@ -302,22 +302,22 @@ export default function SupportChatWidget() {
               {/* Thinking Indicator */}
               {queryMutation.isPending && (
                 <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#BAFF39]/20 flex items-center justify-center">
-                    <Sparkles className="w-4 h-4 text-[#BAFF39] animate-pulse" />
+                  <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 text-primary animate-pulse" />
                   </div>
                   <div className="bg-white/5 rounded-2xl rounded-tl-sm px-4 py-3 border border-white/5">
                     <div className="flex items-center gap-2">
                       <div className="flex gap-1">
                         <span 
-                          className="w-2 h-2 bg-[#BAFF39] rounded-full animate-bounce" 
+                          className="w-2 h-2 bg-primary rounded-full animate-bounce" 
                           style={{ animationDelay: '0ms' }} 
                         />
                         <span 
-                          className="w-2 h-2 bg-[#BAFF39] rounded-full animate-bounce" 
+                          className="w-2 h-2 bg-primary rounded-full animate-bounce" 
                           style={{ animationDelay: '150ms' }} 
                         />
                         <span 
-                          className="w-2 h-2 bg-[#BAFF39] rounded-full animate-bounce" 
+                          className="w-2 h-2 bg-primary rounded-full animate-bounce" 
                           style={{ animationDelay: '300ms' }} 
                         />
                       </div>
@@ -339,7 +339,7 @@ export default function SupportChatWidget() {
                     <button
                       key={i}
                       onClick={() => handleQuickQuestion(q)}
-                      className="px-2.5 py-1 rounded-full text-xs font-medium bg-white/5 text-gray-300 border border-white/10 hover:border-[#BAFF39]/50 hover:text-[#BAFF39] transition-all"
+                      className="px-2.5 py-1 rounded-full text-xs font-medium bg-white/5 text-gray-300 border border-white/10 hover:border-primary/50 hover:text-primary transition-all"
                     >
                       {q.label}
                     </button>
@@ -352,7 +352,7 @@ export default function SupportChatWidget() {
             <div className="px-4 pb-2">
               <Link 
                 to="/help"
-                className="flex items-center justify-center gap-1.5 text-xs text-gray-500 hover:text-[#BAFF39] transition-colors"
+                className="flex items-center justify-center gap-1.5 text-xs text-gray-500 hover:text-primary transition-colors"
               >
                 <HelpCircle className="w-3.5 h-3.5" />
                 <span>Browse Help Center</span>
@@ -371,12 +371,12 @@ export default function SupportChatWidget() {
                   onKeyDown={handleKeyPress}
                   placeholder="Ask a question..."
                   disabled={queryMutation.isPending}
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#BAFF39]/50 transition-colors disabled:opacity-50"
+                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-primary/50 transition-colors disabled:opacity-50"
                 />
                 <Button
                   onClick={() => handleSend()}
                   disabled={!inputValue.trim() || queryMutation.isPending}
-                  className="px-3 py-2.5 rounded-xl bg-[#BAFF39] text-black hover:bg-[#BAFF39]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  className="px-3 py-2.5 rounded-xl bg-primary text-black hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   <Send className="w-4 h-4" />
                 </Button>
@@ -389,7 +389,7 @@ export default function SupportChatWidget() {
         {!isOpen && (
           <button
             onClick={() => setIsOpen(true)}
-            className="group relative w-14 h-14 rounded-full bg-[#BAFF39] text-black flex items-center justify-center shadow-[0_4px_30px_rgba(186,255,57,0.4)] hover:shadow-[0_4px_40px_rgba(186,255,57,0.6)] transition-all duration-300 hover:scale-105"
+            className="group relative w-14 h-14 rounded-full bg-primary text-black flex items-center justify-center shadow-[0_4px_30px_rgba(186,255,57,0.4)] hover:shadow-[0_4px_40px_rgba(186,255,57,0.6)] transition-all duration-300 hover:scale-105"
             aria-label="Open support chat"
             style={{ animation: 'supportButtonPulse 3s ease-in-out infinite' }}
           >
@@ -397,7 +397,7 @@ export default function SupportChatWidget() {
             
             {/* Help Badge */}
             <span className="absolute -top-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md">
-              <HelpCircle className="w-3 h-3 text-[#BAFF39]" />
+              <HelpCircle className="w-3 h-3 text-primary" />
             </span>
           </button>
         )}
@@ -436,7 +436,7 @@ export default function SupportChatWidget() {
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #BAFF39;
+          background: primary;
         }
       `}</style>
     </>

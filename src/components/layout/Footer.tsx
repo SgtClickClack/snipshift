@@ -47,8 +47,8 @@ function SystemHealthTicker() {
       <span 
         className={`w-2 h-2 rounded-full shadow-[0_0_8px_rgba(186,255,57,0.6)] ${
           isXeroSyncing 
-            ? 'bg-[#BAFF39] animate-ping' 
-            : 'bg-[#BAFF39]'
+            ? 'bg-primary animate-ping' 
+            : 'bg-primary'
         }`}
         style={{
           animation: isXeroSyncing ? 'pulse 0.5s ease-in-out infinite' : 'pulse 2s ease-in-out infinite',
@@ -56,18 +56,18 @@ function SystemHealthTicker() {
         }}
       />
       <span className="uppercase whitespace-nowrap overflow-hidden">
-        <span className="text-[#BAFF39] font-semibold">ENGINE STATUS:</span> OPTIMAL
+        <span className="text-primary font-semibold">ENGINE STATUS:</span> OPTIMAL
         <span className="mx-2 text-zinc-600">|</span>
-        <span className="text-[#BAFF39] font-semibold">XERO MUTEX:</span>{' '}
+        <span className="text-primary font-semibold">XERO MUTEX:</span>{' '}
         {isXeroSyncing ? (
-          <span className="text-[#BAFF39] animate-pulse font-bold">SYNCING</span>
+          <span className="text-primary animate-pulse font-bold">SYNCING</span>
         ) : (
           'ACTIVE'
         )}
         <span className="mx-2 text-zinc-600">|</span>
-        <span className="text-[#BAFF39] font-semibold">DVS API:</span> VERIFIED
+        <span className="text-primary font-semibold">DVS API:</span> VERIFIED
         <span className="mx-2 text-zinc-600">|</span>
-        <span className="text-[#BAFF39] font-semibold">{SYSTEM_HEALTH_CONSTANTS.AUDITS_PASSING}/{SYSTEM_HEALTH_CONSTANTS.AUDITS_TOTAL}</span> AUDITS PASSING
+        <span className="text-primary font-semibold">{SYSTEM_HEALTH_CONSTANTS.AUDITS_PASSING}/{SYSTEM_HEALTH_CONSTANTS.AUDITS_TOTAL}</span> AUDITS PASSING
       </span>
     </div>
   );
@@ -166,7 +166,7 @@ export function Footer() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsFeedbackOpen(true)}
-                  className="p-0 h-auto text-steel-400 hover:text-[#BAFF39] transition-colors text-sm flex items-center gap-1.5 font-normal"
+                  className="p-0 h-auto text-steel-400 hover:text-primary transition-colors text-sm flex items-center gap-1.5 font-normal"
                   data-testid="button-open-feedback-footer"
                 >
                   <MessageSquare size={14} />
@@ -196,7 +196,7 @@ export function Footer() {
             <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
               <Link
                 to="/investorportal"
-                className="text-steel-500 hover:text-[#BAFF39] transition-colors text-sm flex items-center gap-1.5">
+                className="text-steel-500 hover:text-primary transition-colors text-sm flex items-center gap-1.5">
                 <ShieldCheck size={14} className="opacity-60" />
                 Private Investor Briefing
               </Link>

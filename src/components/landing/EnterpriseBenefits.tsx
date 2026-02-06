@@ -42,7 +42,7 @@ export default function EnterpriseBenefits() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#BAFF39]/10 border border-[#BAFF39]/20 rounded-full text-[#BAFF39] text-xs font-semibold mb-4">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-full text-primary text-xs font-semibold mb-4">
           <Sparkles className="w-3.5 h-3.5" />
           WHY ENTERPRISE
         </div>
@@ -58,7 +58,7 @@ export default function EnterpriseBenefits() {
       <div className="flex items-center justify-between py-4 px-6 bg-zinc-900/50 border border-zinc-800 rounded-2xl">
         {stats.map((stat, index) => (
           <div key={index} className="text-center">
-            <div className="text-2xl font-black text-[#BAFF39]">{stat.value}</div>
+            <div className="text-2xl font-black text-primary">{stat.value}</div>
             <div className="text-xs text-zinc-500 uppercase tracking-wider">{stat.label}</div>
           </div>
         ))}
@@ -69,10 +69,10 @@ export default function EnterpriseBenefits() {
         {benefits.map((benefit, index) => (
           <div 
             key={index}
-            className="group flex items-start gap-4 p-5 rounded-2xl bg-zinc-900/50 border border-zinc-800/50 hover:border-[#BAFF39]/30 hover:bg-zinc-900 transition-all duration-300"
+            className="group flex items-start gap-4 p-5 rounded-2xl bg-zinc-900/50 border border-zinc-800/50 hover:border-primary/30 hover:bg-zinc-900 transition-all duration-300"
           >
-            <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-[#BAFF39]/10 flex items-center justify-center group-hover:bg-[#BAFF39]/20 transition-colors">
-              <benefit.icon className="w-6 h-6 text-[#BAFF39]" />
+            <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+              <benefit.icon className="w-6 h-6 text-primary" />
             </div>
             <div>
               <h4 className="font-bold text-white mb-1">{benefit.title}</h4>
@@ -85,7 +85,7 @@ export default function EnterpriseBenefits() {
       {/* Trust badges */}
       <div className="pt-6 border-t border-zinc-800">
         <div className="flex items-center gap-2 text-zinc-500 text-xs mb-4">
-          <BadgeCheck className="w-4 h-4 text-[#BAFF39]" />
+          <BadgeCheck className="w-4 h-4 text-primary" />
           <span>Trusted by leading hospitality groups</span>
         </div>
         <div className="flex items-center gap-6 opacity-60">
@@ -98,7 +98,7 @@ export default function EnterpriseBenefits() {
 
       {/* Quick response promise */}
       <div className="flex items-center gap-3 p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl">
-        <Clock className="w-5 h-5 text-[#BAFF39] flex-shrink-0" />
+        <Clock className="w-5 h-5 text-primary flex-shrink-0" />
         <span className="text-zinc-400 text-sm">
           We respond to all inquiries within <span className="text-white font-semibold">24 hours</span>
         </span>

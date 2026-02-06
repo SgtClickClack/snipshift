@@ -130,10 +130,10 @@ export function ShiftBucketPill({ bucket, onClick, className }: ShiftBucketPillP
         className
       )}
     >
-      {/* Label in white, count in Electric Lime (#BAFF39) for high visibility */}
+      {/* Label in white, count in brand primary for high visibility */}
       <span className="text-xs font-black truncate flex-1" style={{ fontFamily: 'Urbanist, sans-serif' }}>
         {label}:{' '}
-        <span style={{ color: '#BAFF39' }}>
+        <span className="text-primary">
           {filledCount}/{requiredCount}
         </span>
       </span>

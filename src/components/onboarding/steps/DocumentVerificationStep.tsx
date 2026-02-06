@@ -26,10 +26,10 @@ export const DocumentVerificationStep = ({
       </p>
     </div>
 
-    <div className="p-4 rounded-lg bg-[#BAFF39]/5 border border-[#BAFF39]/20">
+    <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
       <div className="flex items-start gap-3">
-        <div className="rounded-full bg-[#BAFF39]/20 p-2">
-          <Sparkles className="h-4 w-4 text-[#BAFF39]" />
+        <div className="rounded-full bg-primary/20 p-2">
+          <Sparkles className="h-4 w-4 text-primary" />
         </div>
         <div>
           <h3 className="text-sm font-semibold text-white">Automated DVS Verification</h3>
