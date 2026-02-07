@@ -1,6 +1,62 @@
 # Development Tracking Part 02
 <!-- markdownlint-disable-file -->
 
+#### 2026-02-08: Optimize Hydration Speed & Eliminate Post-Login Redirects
+
+**Core Components**
+- `src/lib/queryClient.ts` — Auth handshake stall initialization
+- `src/contexts/AuthContext.tsx` — Auth state machine, hydration, cached session fast path
+- `src/components/auth/google-auth-button.tsx` — Google popup auth flow
+
+**Key Features**
+- **Handshake stall fix:** `AUTH_HANDSHAKE_STATE` initialization now creates a proper `completionPromise` when no cached session exists, so `waitForAuthHandshake()` actually blocks API requests during initial auth. Previously `completionPromise: null` caused requests to slip through and get 401s.
+- **Cached session bypass:** When `sessionStorage` has a cached user, handshake starts with `isInProgress=false` — no stall needed, RQ cache warmed from sessionStorage.
+- **RQ cache warm-up:** `AuthProvider` now sets `queryClient.setQueryData` for CURRENT_USER and CURRENT_VENUE from sessionStorage on mount, preventing dashboard components from firing API requests before Firebase initializes.
+- **Cached session fast path:** `onAuthStateChanged` activates refresh mode when cached UID matches Firebase UID, skipping `isSystemReady(false)` and 200ms debounce to eliminate skeleton flash for returning users.
+- **Triple navigation fix:** Removed duplicate `!isInitialAuthCheck` navigation block that always routed to `/dashboard` regardless of role (venue users need `/venue/dashboard`). Removed hardcoded `navigate('/onboarding')` in GoogleAuthButton. Hydration now sole authority for post-login routing.
+- **500ms delay removal:** Removed artificial DB replication delay in GoogleAuthButton (bootstrap has retry logic).
+
+**Integration Points**
+- `queryClient.ts` IIFE reads `sessionStorage('hospogo_session_user')` at module load
+- `AuthProvider` warms RQ cache via `useRef` guard before first render
+- `onAuthStateChanged` checks sessionStorage UID match to activate fast path
+
+**File Paths**
+- `src/lib/queryClient.ts`
+- `src/contexts/AuthContext.tsx`
+- `src/components/auth/google-auth-button.tsx`
+
+**Code Organization & Quality**
+- Removed unused `useNavigate` / `react-router-dom` import from GoogleAuthButton
+- Removed stale `completeAuthHandshake()` mount effect (now handled at module level)
+- No new dependencies added
+
+**Next Priority Task**
+- Manual test returning user (cached session): dashboard renders instantly, no skeleton flash
+- Manual test new popup login: venue user lands on `/venue/dashboard`, professional on `/dashboard`
+- Console check: `Handshake-to-Unlock` < 500ms for cached sessions
+
+---
+
+#### 2026-02-07: Post-Onboarding Hydration Deadlock Fix
+
+**Core Components**
+- `src/contexts/AuthContext.tsx` — Auth state machine, hydration, refresh flow
+
+**Key Features**
+- **Root cause:** `refreshUser()` triggered a 200ms skeleton flash and auth handshake stall when transitioning from onboarding to dashboard, because hydration treated the refresh as a fresh auth event
+- **Fix:** Added `isRefreshModeRef` to AuthContext that signals hydration to: (1) skip `isSystemReady` debounce (immediate true / no-op false), (2) skip `setIsTransitioning(true)`, (3) skip Handshake-to-Unlock timer restart
+- Moved `setIsTransitioning(true)` removal from `refreshUser()` and added `completeAuthHandshake()` safety call in finally block
+
+**File Paths**
+- `src/contexts/AuthContext.tsx`
+
+**Code Organization & Quality**
+- Scoped to AuthContext only; no external API or component changes
+- Eliminates race condition between refresh hydration and transition state
+
+---
+
 #### 2026-02-07: Fix Onboarding-to-Dashboard Transition (Skeleton Stuck)
 
 **Core Components**

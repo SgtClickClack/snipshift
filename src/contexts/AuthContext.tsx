@@ -252,6 +252,19 @@ function cacheSession(user: User | null, venue?: unknown) {
 export function AuthProvider({ children }: AuthProviderProps) {
   // TAB RECOVERY: Initialize from cached session for instant mount
   const cachedSession = getCachedSession();
+
+  // HYDRATION SPEED: Warm React Query cache from sessionStorage exactly once.
+  // This ensures dashboard components find data immediately without firing API requests
+  // that may 401 before Firebase initializes.
+  const cacheWarmedRef = useRef(false);
+  if (!cacheWarmedRef.current && cachedSession.user) {
+    cacheWarmedRef.current = true;
+    queryClient.setQueryData(QUERY_KEYS.CURRENT_USER, cachedSession.user);
+    if (cachedSession.venue) {
+      queryClient.setQueryData(QUERY_KEYS.CURRENT_VENUE, cachedSession.venue);
+    }
+  }
+
   const [user, setUser] = useState<User | null>(cachedSession.user);
   const [token, setToken] = useState<string | null>(null);
   // TAB RECOVERY: If we have cached user, start with loading=false for instant render
@@ -285,20 +298,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
       clearTimeout(systemReadyDebounceRef.current);
       systemReadyDebounceRef.current = null;
     }
-    
+
     if (value === false) {
+      // In refresh mode, don't reset isSystemReady — system is already ready
+      if (isRefreshModeRef.current) return;
       // Immediately set to false - block quickly when auth state becomes uncertain
       setIsSystemReadyDebounced(false);
       // Signal API interceptor to start stalling requests
       startAuthHandshake();
     } else {
-      // Debounce setting to true - wait 200ms for stability before unlocking
-      systemReadyDebounceRef.current = setTimeout(() => {
+      // In refresh mode, skip debounce — set immediately to prevent dashboard skeleton flash
+      if (isRefreshModeRef.current) {
         setIsSystemReadyDebounced(true);
-        // Signal API interceptor that handshake is complete - release stalled requests
         completeAuthHandshake();
-        systemReadyDebounceRef.current = null;
-      }, SYSTEM_READY_DEBOUNCE_MS);
+      } else {
+        // Debounce setting to true - wait 200ms for stability before unlocking
+        systemReadyDebounceRef.current = setTimeout(() => {
+          setIsSystemReadyDebounced(true);
+          // Signal API interceptor that handshake is complete - release stalled requests
+          completeAuthHandshake();
+          systemReadyDebounceRef.current = null;
+        }, SYSTEM_READY_DEBOUNCE_MS);
+      }
     }
   }, []);
   
@@ -311,16 +332,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, []);
   
-  // Signal API interceptor on initial mount with cached session
-  // If we have a cached user, the system is ready immediately
-  useEffect(() => {
-    if (cachedSession.user) {
-      // We have a cached session - signal handshake complete immediately
-      completeAuthHandshake();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only on mount
-  
+  // Cached session handshake bypass: handled in queryClient.ts IIFE initialization
+  // (AUTH_HANDSHAKE_STATE.isInProgress = false when sessionStorage has cached user)
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -331,7 +345,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Sync with isVenueMissing state so redirect logic can read it in the same tick
   const isVenueMissingRef = useRef<boolean>(false);
   const venueCacheRef = useRef<{ userId: string; cachedAt: number; hasVenue: boolean } | null>(null);
-  
+
+  // REFRESH MODE: Flag to indicate hydration is triggered by refreshUser(), not initial auth.
+  // In refresh mode, skip isSystemReady debounce and auth handshake stall to prevent dashboard skeleton flash.
+  const isRefreshModeRef = useRef(false);
+
   // PERFORMANCE: Deduplication ref to prevent multiple concurrent hydration calls
   // This prevents the 4-5 duplicate "Hydrating user from Firebase" logs seen in production
   const isHydratingRef = useRef<boolean>(false);
@@ -477,27 +495,32 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
     
     // PROGRESSIVE UNLOCK: High-precision timer to verify TTI < 500ms
-    // Timer starts AFTER guard checks pass to avoid orphaned timers on deduplication
-    console.time('Handshake-to-Unlock');
-    handshakeTimerEndedRef.current = false; // Reset flag for new hydration cycle
-    
-    // Safety timeout: Ensure timer ends after 1.5 seconds if Firebase fails to respond
-    // Reduced from 3s to 1.5s for snappier dashboard feel when Firebase lags
-    handshakeTimeoutRef.current = setTimeout(() => {
-      if (!handshakeTimerEndedRef.current) {
-        handshakeTimerEndedRef.current = true;
-        console.timeEnd('Handshake-to-Unlock');
-      }
-      handshakeTimeoutRef.current = null;
-    }, 1500);
-    
+    // Skip in refresh mode — timer is only meaningful for initial auth hydration
+    if (!isRefreshModeRef.current) {
+      console.time('Handshake-to-Unlock');
+      handshakeTimerEndedRef.current = false; // Reset flag for new hydration cycle
+
+      // Safety timeout: Ensure timer ends after 1.5 seconds if Firebase fails to respond
+      // Reduced from 3s to 1.5s for snappier dashboard feel when Firebase lags
+      handshakeTimeoutRef.current = setTimeout(() => {
+        if (!handshakeTimerEndedRef.current) {
+          handshakeTimerEndedRef.current = true;
+          console.timeEnd('Handshake-to-Unlock');
+        }
+        handshakeTimeoutRef.current = null;
+      }, 1500);
+    }
+
     // Mark hydration as started - this ref prevents the duplicate calls
     isHydratingRef.current = true;
     hydrationMountRef.current = true;
 
     // Mark transition start - UI should show stable loading state
-    setIsTransitioning(true);
-    setIsSystemReady(false); // Reset until all checks complete
+    // Skip in refresh mode — caller's UI (e.g. hub.tsx submit spinner) handles loading state
+    if (!isRefreshModeRef.current) {
+      setIsTransitioning(true);
+    }
+    setIsSystemReady(false); // No-op in refresh mode (ref check in setter skips it)
 
     const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
     if (currentPath.startsWith('/signup') || currentPath.startsWith('/onboarding')) {
@@ -831,14 +854,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
     
     // Clear onboarding mode flag if we're not on signup/onboarding route
     isOnboardingModeRef.current = false;
-    
+
     // Explicit refresh - reset deduplication and navigation lock guard to allow re-hydration
     isHydratingRef.current = false;
     lastHydratedUidRef.current = null;
     navigationLockReleasedRef.current = false; // Allow lock to be released again after hydration
-    
+
+    // REFRESH MODE: Signal hydration to skip isSystemReady debounce and transitioning state.
+    // During refreshUser(), the system is already ready — we're just refreshing data.
+    // Without this, the 200ms debounce on isSystemReady causes a skeleton flash on dashboard.
+    isRefreshModeRef.current = true;
+
     setRedirecting(true);
-    setIsTransitioning(true);
+    // NOTE: setIsTransitioning(true) removed — in refresh mode, ProtectedRoute should NOT
+    // show LoadingScreen. The caller's UI (e.g. hub.tsx submit spinner) handles loading state.
     try {
       await hydrateFromFirebaseUser(firebaseUser);
       return { venueReady: !isVenueMissingRef.current };
@@ -848,8 +877,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Don't let a failed refresh kick out an authenticated user
       return { venueReady: false };
     } finally {
+      isRefreshModeRef.current = false;
       setRedirecting(false);
       setIsTransitioning(false);
+      // Safety: ensure auth handshake stall is released after any refresh path
+      completeAuthHandshake();
     }
   }, [hydrateFromFirebaseUser]);
 
@@ -949,27 +981,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 setIsSystemReady(true); // No Firebase user - system ready for landing/login
               } else {
                 const hydrate = hydrateRef.current;
-                if (hydrate) await hydrate(firebaseUser);
-
-                // CRITICAL: Immediate navigation for popup flow results
-                // This ensures navigation happens inside the popup promise resolution,
-                // bypassing Chrome's bounce tracking mitigations
-                // Only navigate if we're on auth pages and user is authenticated
-                if (!isInitialAuthCheck) {
-                  const currentPath = window.location.pathname;
-                  if (currentPath === '/login') {
-                    const target = isVenueMissingRef.current ? '/onboarding/hub' : '/dashboard';
-                    const nav = navigateRef.current;
-                    if (nav) {
-                      if (window.location.pathname === target) {
-                        setRedirecting(false);
-                      } else {
-                        setRedirecting(true);
-                        nav(target, { replace: true });
+                if (hydrate) {
+                  // Cached session fast path: if sessionStorage has matching UID,
+                  // use refresh mode to skip isSystemReady(false) and debounce,
+                  // eliminating skeleton flash for returning users.
+                  let activatedCachedFastPath = false;
+                  try {
+                    const cachedStr = sessionStorage.getItem('hospogo_session_user');
+                    if (cachedStr) {
+                      const cached = JSON.parse(cachedStr);
+                      if (cached?.uid === firebaseUser.uid) {
+                        isRefreshModeRef.current = true;
+                        activatedCachedFastPath = true;
                       }
                     }
+                  } catch { /* ignore parse errors */ }
+
+                  await hydrate(firebaseUser);
+
+                  if (activatedCachedFastPath) {
+                    isRefreshModeRef.current = false;
                   }
                 }
+                // Post-login navigation is handled by hydrateFromFirebaseUser (role-aware routing).
+                // Removed duplicate !isInitialAuthCheck block that always routed to /dashboard
+                // regardless of user role (venue users need /venue/dashboard).
               }
               } catch (error) {
               logger.error('AuthContext', 'Auth hydration failed', error);

@@ -5,7 +5,6 @@ import { signInWithGoogleDevAware } from "@/lib/auth";
 import { Chrome } from "lucide-react";
 import { logger } from "@/lib/logger";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
 import { trackSignup, trackLogin } from "@/lib/analytics";
 
 interface GoogleAuthButtonProps {
@@ -17,7 +16,6 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { refreshUser } = useAuth();
-  const navigate = useNavigate();
   // Prevent double-click/double-fire in Strict Mode
   const isAuthInProgress = useRef(false);
 
@@ -128,10 +126,6 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
       // This prevents race conditions where /api/me fails because user doesn't exist yet
       await ensureUserInDatabase(firebaseUser);
       
-      // Add cooldown to allow DB replication if using a distributed database
-      // This ensures the user record is available when /api/me is called
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
       // Step 3: Show success toast with HospoGo brand neon green styling
       toast({
         title: "Welcome!",
@@ -165,12 +159,9 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
         logger.debug('GoogleAuthButton', 'refreshUser failed, navigating to dashboard', refreshError);
       }
       
-      // Step 5: Navigate to onboarding after popup success
-      // INVESTOR BRIEFING FIX: New users must go through onboarding - never bypass to dashboard
-      // AuthContext will redirect onboarded users from /onboarding to the appropriate dashboard
-      logger.debug('GoogleAuthButton', 'Popup auth successful, navigating to onboarding');
-      navigate('/onboarding', { replace: true });
-      
+      // Step 5: Navigation handled by AuthContext hydration (role-aware routing)
+      // hydrateFromFirebaseUser navigates to the correct dashboard based on role and onboarding status
+
       // Call onSuccess if provided (for custom handling)
       if (onSuccess) {
         onSuccess();

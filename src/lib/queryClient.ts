@@ -27,15 +27,46 @@ interface HandshakeState {
   stallTimeout: NodeJS.Timeout | null;
 }
 
-const AUTH_HANDSHAKE_STATE: HandshakeState = {
-  isInProgress: true, // Start as true - assume handshake in progress on load
-  completionPromise: null,
-  resolveCompletion: null,
-  stallTimeout: null,
-};
-
 /** Maximum time to stall a request waiting for auth handshake (ms) */
 const MAX_HANDSHAKE_STALL_MS = 5000;
+
+const AUTH_HANDSHAKE_STATE: HandshakeState = (() => {
+  // Check if we have a cached session — if so, no stall needed (data is already available)
+  let hasCachedSession = false;
+  try {
+    if (typeof window !== 'undefined') {
+      hasCachedSession = !!sessionStorage.getItem('hospogo_session_user');
+    }
+  } catch { /* ignore storage errors */ }
+
+  if (hasCachedSession) {
+    // Cached session: skip stall — RQ cache will be warmed from sessionStorage
+    return {
+      isInProgress: false,
+      completionPromise: null,
+      resolveCompletion: null,
+      stallTimeout: null,
+    };
+  }
+
+  // No cached session: stall requests until auth handshake completes
+  // Must create the Promise properly so waitForAuthHandshake() actually blocks
+  const state: HandshakeState = {
+    isInProgress: true,
+    completionPromise: null,
+    resolveCompletion: null,
+    stallTimeout: null,
+  };
+  state.completionPromise = new Promise<void>((resolve) => {
+    state.resolveCompletion = resolve;
+  });
+  // Safety timeout: release stalled requests after MAX_HANDSHAKE_STALL_MS
+  state.stallTimeout = setTimeout(() => {
+    logger.warn('queryClient', `Initial auth handshake stall timeout (${MAX_HANDSHAKE_STALL_MS}ms) - releasing requests`);
+    completeAuthHandshake();
+  }, MAX_HANDSHAKE_STALL_MS);
+  return state;
+})();
 
 /**
  * Signal that auth handshake has started.
