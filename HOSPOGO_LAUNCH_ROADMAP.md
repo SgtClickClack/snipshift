@@ -8,6 +8,21 @@
 
 ---
 
+### Update: 2026-02-07 - Dependabot Alert #29 (lodash-es Prototype Pollution)
+
+**Status:** ✅ **COMPLETE**
+
+**Action Taken:**
+- Added `lodash-es: ^4.17.23` to package.json overrides to fix CVE-2025-13465 / GHSA-xxjr-mmjv-4gpg
+- Vulnerability propagated through mermaid → langium → chevrotain → lodash-es
+- npm install: 0 vulnerabilities; build verified clean
+
+**Impact:**
+- Dependabot alert #29 resolved without downgrading mermaid
+- Prototype Pollution in `_.unset`/`_.omit` patched
+
+---
+
 ### Update: 2026-02-07 - Google Auth Popup Shrunk UI Fix (v1.1.24)
 
 **Status:** ✅ **COMPLETE**

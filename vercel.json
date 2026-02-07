@@ -20,6 +20,12 @@
       ]
     },
     {
+      "source": "/__/auth/(.*)",
+      "headers": [
+        { "key": "Cross-Origin-Opener-Policy", "value": "unsafe-none" }
+      ]
+    },
+    {
       "source": "/api/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "no-store, must-revalidate" },

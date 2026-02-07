@@ -1,6 +1,32 @@
 # Development Tracking Part 02
 <!-- markdownlint-disable-file -->
 
+#### 2026-02-07: Dependabot Alert #29 — lodash-es Prototype Pollution Fix
+
+**Core Components**
+- `package.json` — Added `"lodash-es": "^4.17.23"` to overrides
+
+**Key Features**
+- **CVE-2025-13465 / GHSA-xxjr-mmjv-4gpg:** Prototype Pollution in lodash-es `_.unset` and `_.omit` (4.0.0–4.17.22)
+- Lodash-es propagates through mermaid → @mermaid-js/parser → langium → chevrotain
+- Override forces all transitive dependencies to use patched 4.17.23+
+
+**Integration Points**
+- npm install deduplicates to lodash-es 4.17.23; no breaking changes to mermaid
+
+**File Paths**
+- `package.json` (overrides.lodash-es)
+
+**Next Priority Task**
+- Push changes; Dependabot should auto-dismiss alert #29 after merge
+- Deploy with `vercel --prod --force` for production
+
+**Code Organization & Quality**
+- Config-only; no code changes
+- npm audit: 0 vulnerabilities; build verified clean (23.85s)
+
+---
+
 #### 2026-02-07: Google Auth Popup — Shrunk UI Fix (v1.1.24)
 
 **Core Components**

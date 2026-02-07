@@ -1,5 +1,6 @@
 // Temporary compatibility shim: prefer useAuth from contexts/AuthContext
 import type { User } from '@shared/firebase-schema';
+import { POPUP_AUTH_SIGNAL_KEY } from '@/components/auth/PopupGuard';
 
 let currentUser: User | null = null;
 
@@ -84,9 +85,18 @@ export async function signInWithGoogleLocalDevPopup() {
 
   try {
     await setPersistence(auth, browserLocalPersistence);
+
+    // Signal PopupGuard that a popup auth flow is starting.
+    // PopupGuard uses this as a fallback to detect the popup window when
+    // COOP breaks window.opener after the Google cross-origin redirect.
+    try { localStorage.setItem(POPUP_AUTH_SIGNAL_KEY, Date.now().toString()); } catch { /* storage blocked */ }
+
     // Popup flow with same-origin authDomain (hospogo.com) — no cross-origin issues.
     // onAuthStateChanged in AuthContext fires immediately on success and handles hydration + navigation.
     const result = await signInWithPopup(auth, googleProvider);
+
+    // Clear popup signal on success
+    try { localStorage.removeItem(POPUP_AUTH_SIGNAL_KEY); } catch { /* storage blocked */ }
 
     return result.user;
   } catch (error) {
@@ -111,6 +121,11 @@ export async function signInWithGoogleLocalDevPopup() {
     // Don't log user-cancelled popups - this is expected behavior
     if (code !== 'auth/popup-closed-by-user') {
       console.error('[Auth] Google popup sign-in error:', error);
+    }
+
+    // Clear popup signal on any terminal error (not redirect fallback — that still uses popup)
+    if (code !== 'auth/popup-blocked') {
+      try { localStorage.removeItem(POPUP_AUTH_SIGNAL_KEY); } catch { /* storage blocked */ }
     }
 
     if (isHttp400StyleAuthFailure(error)) {

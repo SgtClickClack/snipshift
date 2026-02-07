@@ -1,23 +1,60 @@
 import { useEffect, type ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 
 /**
- * PopupGuard — Fixes shrunk UI in Google Auth popups
+ * PopupGuard — Prevents our SPA from rendering inside Google Auth popups
  *
- * When Firebase's signInWithPopup redirects the popup to our app (e.g. /signup) instead of
- * closing—due to proxy failure, authDomain misconfiguration, or continueUrl—the popup would
- * load our full SPA with mobile-first layout in a tiny window, causing a "shrunk" signup screen.
+ * When Firebase's signInWithPopup flow fails to close the popup (due to proxy
+ * failure, COOP header breaking window.opener, or authDomain misconfiguration),
+ * the popup can load our full SPA. This guard detects that state and renders
+ * minimal recovery UI instead, then auto-closes the popup.
  *
- * This guard detects that state (popup + non-auth route) and renders a minimal "Completing
- * sign-in..." UI instead, then closes the popup. The parent window remains on the auth
- * trigger page so the user can retry.
- *
- * v1.1.25: Catches ALL non-auth paths in popup context, not just a hardcoded list.
- * Firebase's `/__/auth/*` paths are the only legitimate popup destinations.
+ * v1.1.26: Three critical fixes:
+ *  1. Uses useLocation() so route changes (e.g. /__/auth/ → /login) trigger re-render
+ *  2. Detects popup via localStorage signal (set by auth.ts before signInWithPopup)
+ *     as fallback when COOP breaks window.opener after Google cross-origin redirect
+ *  3. Firebase's `/__/auth/*` paths are the only legitimate popup destinations
  */
+
+/** Key used by auth.ts to signal an active popup auth flow */
+export const POPUP_AUTH_SIGNAL_KEY = 'hospogo_popup_auth_pending';
+
+/**
+ * Detect whether this window is a popup opened for auth.
+ * Primary: window.opener (works when COOP doesn't break the reference)
+ * Fallback: localStorage signal + small window heuristic (for when COOP
+ *   breaks window.opener after Google cross-origin redirect)
+ */
+function detectPopupContext(): boolean {
+  if (typeof window === 'undefined') return false;
+
+  // Primary: window.opener exists (same-origin popup that hasn't navigated cross-origin)
+  if (window.opener) return true;
+
+  // Fallback: auth.ts sets a localStorage signal before signInWithPopup.
+  // If that signal exists AND this window has popup characteristics (short
+  // history, small size), it's almost certainly the auth popup.
+  try {
+    const signal = localStorage.getItem(POPUP_AUTH_SIGNAL_KEY);
+    if (signal) {
+      const signalAge = Date.now() - Number(signal);
+      // Signal is fresh (< 2 minutes) AND window looks like a popup
+      const isFreshSignal = signalAge > 0 && signalAge < 120_000;
+      const isSmallWindow = window.innerWidth < 800 && window.innerHeight < 800;
+      const isShortHistory = window.history.length <= 3;
+      if (isFreshSignal && isSmallWindow && isShortHistory) return true;
+    }
+  } catch {
+    // localStorage may be blocked
+  }
+
+  return false;
+}
+
 export function PopupGuard({ children }: { children: ReactNode }) {
-  const isPopup = typeof window !== 'undefined' && !!window.opener;
-  const path = typeof window !== 'undefined' ? window.location.pathname : '';
-  const isAuthHandlerPath = path.startsWith('/__/auth/');
+  const location = useLocation();
+  const isPopup = detectPopupContext();
+  const isAuthHandlerPath = location.pathname.startsWith('/__/auth/');
   const isWrongPopupPath = isPopup && !isAuthHandlerPath;
 
   useEffect(() => {
