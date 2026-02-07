@@ -795,8 +795,10 @@ function AuthGate({ children, splashHandled }: { children: React.ReactNode; spla
     return () => clearTimeout(timer);
   }, [isSystemReady]);
 
+  // POLISHED LANDING (v1.1.14): Landing (/) is NOT bypassed during auth init.
+  // If we allowed / to bypass, logged-in users would see a flash of landing before redirect to /onboarding.
+  // Only bypass splash for routes that truly never need auth (status, waitlist, investor portal, auth flows).
   const isPublicRoute = 
-    location.pathname === '/' || 
     location.pathname === '/status' || 
     location.pathname === '/waitlist' ||
     location.pathname.startsWith('/investorportal') ||
@@ -807,7 +809,7 @@ function AuthGate({ children, splashHandled }: { children: React.ReactNode; spla
     location.pathname === '/oauth/callback' ||
     location.pathname === '/__/auth/handler';
 
-  // Logic: Proceed if auth is ready, if we are on a public route, OR if the 3s fail-safe triggered.
+  // Logic: Proceed if auth is ready, if we are on a public route (excluding /), OR if the 3s fail-safe triggered.
   const shouldShowSplash = (!isSystemReady || user === undefined) && !isPublicRoute && !timedOut && splashHandled;
 
   if (shouldShowSplash) {
