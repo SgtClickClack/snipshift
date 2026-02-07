@@ -8,7 +8,8 @@
   "rewrites": [
     { "source": "/assets/(.*)", "destination": "/assets/$1" },
     { "source": "/sounds/(.*)", "destination": "/sounds/$1" },
-    { "source": "/__/auth/(.*)", "destination": "https://snipshift-75b04.firebaseapp.com/__/auth/$1" },
+    { "source": "/__/auth/handler", "destination": "/__/auth/handler.html" },
+    { "source": "/__/auth/:path*", "destination": "/__/auth/:path*" },
     { "source": "/api/(.*)", "destination": "/api" },
     { "source": "/(.*)", "destination": "/" }
   ],

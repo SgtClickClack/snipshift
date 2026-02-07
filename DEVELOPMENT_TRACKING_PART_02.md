@@ -1,6 +1,36 @@
 # Development Tracking Part 02
 <!-- markdownlint-disable-file -->
 
+#### 2026-02-07: Auth Loop Fix — Restore Firebase Handlers + Self-Host
+
+**Core Components**
+- `public/__/auth/handler.html` — Firebase auth handler (self-hosted, `{{POST_BODY}}` replaced with empty string)
+- `public/__/auth/handler.js` — Firebase auth helper JS (from snipshift-75b04.firebaseapp.com)
+- `public/__/auth/experiments.js` — Firebase experiments (required by handler.html)
+- `vercel.json` — Replaced proxy rewrite with self-host: `/__/auth/handler` → `/__/auth/handler.html`; added `/__/auth/:path*` passthrough for handler.js, experiments.js
+
+**Key Features**
+- **Self-hosted handler:** Eliminates "Site can't be reached" when proxy to firebaseapp.com failed or timed out
+- **Middleware bypass:** `/__/auth/*` requests now serve static handler files instead of SPA or proxy
+- **Auth singleton verified:** `signInWithPopup` is only called from `handleGoogleAuth` (onClick) — not in useEffect or render
+
+**Integration Points**
+- Popup redirect to `hospogo.com/__/auth/handler?code=...` now serves handler.html; handler.js + experiments.js load from same origin
+- Firebase docs Option 4 (self-host helper code) — no proxy dependency
+
+**File Paths**
+- `public/__/auth/handler.html`, `handler.js`, `experiments.js`
+- `vercel.json` (rewrites)
+
+**Next Priority Task**
+- Deploy with `vercel --prod --force`; verify Google Sign-In popup completes without "Site can't be reached"
+
+**Code Organization & Quality**
+- No new source files; config + static assets only
+- Build verified: dist/__/auth/ contains all three files
+
+---
+
 #### 2026-02-07: Dependabot Alert #29 — lodash-es Prototype Pollution Fix
 
 **Core Components**

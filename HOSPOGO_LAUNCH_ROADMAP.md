@@ -8,6 +8,22 @@
 
 ---
 
+### Update: 2026-02-07 - Auth Loop Fix: Restore Firebase Handlers (Self-Host)
+
+**Status:** ✅ **COMPLETE**
+
+**Action Taken:**
+- Created `public/__/auth/` with Firebase handler.html, handler.js, experiments.js (downloaded from firebaseapp.com)
+- Replaced vercel.json proxy rewrite (which caused "Site can't be reached") with self-hosted static files
+- `/__/auth/handler` now serves handler.html; handler.js and experiments.js served from same origin
+- Verified signInWithPopup is only called from onClick (GoogleAuthButton) — not in useEffect/render
+
+**Impact:**
+- Eliminates auth popup "Site can't be reached" when proxy to firebaseapp.com failed
+- Firebase Option 4 (self-host) — no external proxy dependency for OAuth completion
+
+---
+
 ### Update: 2026-02-07 - Dependabot Alert #29 (lodash-es Prototype Pollution)
 
 **Status:** ✅ **COMPLETE**
