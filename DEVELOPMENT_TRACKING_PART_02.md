@@ -1,6 +1,48 @@
 # Development Tracking Part 02
 <!-- markdownlint-disable-file -->
 
+#### 2026-02-07: Fix Onboarding-to-Dashboard Transition (Skeleton Stuck)
+
+**Core Components**
+- `api/_src/routes/users.ts` — PUT /api/me handler and POST /api/onboarding/complete response
+
+**Key Features**
+- **Root cause (professionals):** `PUT /api/me` with `hasCompletedOnboarding: true` set `has_completed_onboarding` column but NOT `is_onboarded`. AuthContext reads `is_onboarded` for redirect decisions → professionals bounced back to `/onboarding` on next hydration
+- **Root cause (venues):** `POST /api/onboarding/complete` response omitted `isOnboarded` field → `login()` set user without `isOnboarded`, brief inconsistent state before `refreshUser` resolved
+- **Fix 1:** Sync `isOnboarded = hasCompletedOnboarding` in PUT /api/me handler
+- **Fix 2:** Include `isOnboarded: true` in onboarding/complete response body
+
+**Integration Points**
+- DB schema has TWO columns: `is_onboarded` (read by AuthContext) + `has_completed_onboarding` (legacy)
+- Professional flow: `handleComplete()` → PUT /api/me → now sets both columns
+- Venue flow: hub.tsx → POST /api/onboarding/complete → already set `is_onboarded`, now also returns it
+
+**File Paths**
+- `api/_src/routes/users.ts` (lines 1287, 1673)
+
+**Next Priority Task**
+- Consider migrating to single `is_onboarded` column and deprecating `has_completed_onboarding`
+
+**Code Organization & Quality**
+- 2-line fix + 5-line comment; minimal blast radius
+- TypeScript compilation verified clean
+
+---
+
+#### 2026-02-07: Fix Service Worker Interception of Auth Proxy
+
+**Core Components**
+- `vite.config.ts` — Workbox `navigateFallbackDenylist` configuration
+
+**Key Features**
+- **Root cause:** Workbox's `NavigationRoute` intercepted popup navigation to `/__/auth/handler` and served cached `index.html` instead of letting browser hit Vercel external proxy
+- **Fix:** Added `navigateFallbackDenylist: [/^\/__\/auth\//]` to skip auth handler paths in SW
+
+**File Paths**
+- `vite.config.ts` (workbox config)
+
+---
+
 #### 2026-02-07: Full Auth Infrastructure Audit & External Proxy Fix
 
 **Core Components**
