@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
+import { POPUP_AUTH_SIGNAL_KEY } from '@/components/auth/PopupGuard';
 import { Loader2 } from 'lucide-react';
 
 /**
@@ -66,12 +67,31 @@ export function OAuthCallback() {
     }
   }, [isLoading, hasFirebaseUser, hasUser]);
 
+  // Detect popup context using both window.opener AND localStorage signal fallback.
+  // COOP can break window.opener after Google's cross-origin redirect, so we also
+  // check the localStorage signal set by auth.ts before signInWithPopup (same logic
+  // as PopupGuard).
+  const isPopup = useRef<boolean>(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.opener) { isPopup.current = true; return; }
+    try {
+      const signal = localStorage.getItem(POPUP_AUTH_SIGNAL_KEY);
+      if (signal) {
+        const age = Date.now() - Number(signal);
+        const fresh = age > 0 && age < 120_000;
+        const small = window.innerWidth < 800 && window.innerHeight < 800;
+        const shortHistory = window.history.length <= 3;
+        if (fresh && small && shortHistory) isPopup.current = true;
+      }
+    } catch { /* localStorage blocked */ }
+  }, []);
+
   // POPUP FLOW: Close immediately when onAuthStateChanged fires (hasFirebaseUser)
   // Don't wait for user profile — parent window will handle the rest
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const isPopup = !!window.opener;
-    if (!isPopup) return;
+    if (!isPopup.current) return;
     if (hasRedirected.current) return;
     if (!hasFirebaseUser) return; // Wait for Firebase auth signal
 
@@ -80,12 +100,13 @@ export function OAuthCallback() {
       window.clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
+    try { localStorage.removeItem(POPUP_AUTH_SIGNAL_KEY); } catch { /* blocked */ }
     window.close();
   }, [hasFirebaseUser]);
 
   // REDIRECT FLOW: Navigate when user profile is ready (main window only)
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.opener) return; // Popup handled above
+    if (isPopup.current) return; // Popup handled above
     if (isLoading) return; // Wait for loading to complete
     if (hasRedirected.current) return;
 
