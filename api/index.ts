@@ -68,6 +68,12 @@ const pathNormalizeMiddleware = (req: express.Request, _res: express.Response, n
   // Paths that should NOT be prefixed (health checks, static assets)
   const skipPaths = ['/', '/favicon.ico', '/health'];
 
+  // Vercel sometimes passes the function path as /index when request was /api
+  if (rawPath === '/index' || rawPath === '/index.ts') {
+    req.url = '/api' + query;
+    return next();
+  }
+
   if (!rawPath.startsWith('/api') && !skipPaths.includes(rawPath)) {
     const normalizedUrl = '/api' + rawPath + query;
     console.log(`[PATH_NORM] ${rawPath} → ${normalizedUrl}`);
