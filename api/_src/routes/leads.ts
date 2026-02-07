@@ -7,6 +7,7 @@
 import { Router } from 'express';
 import { render } from '@react-email/render';
 import { asyncHandler } from '../middleware/errorHandler.js';
+import { rateLimitPublic } from '../middleware/auth.js';
 import { EnterpriseLeadSchema, GeneralContactSchema } from '../validation/schemas.js';
 import * as leadsRepo from '../repositories/leads.repository.js';
 import { resend, isEmailServiceAvailable } from '../lib/resend.js';
@@ -23,7 +24,7 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || process.env.RESEND_FROM_EMAIL || 
  * Submit an enterprise lead inquiry
  * Public endpoint - no authentication required
  */
-router.post('/enterprise', asyncHandler(async (req, res) => {
+router.post('/enterprise', rateLimitPublic, asyncHandler(async (req, res) => {
   // Validate request body
   const validationResult = EnterpriseLeadSchema.safeParse(req.body);
   if (!validationResult.success) {
@@ -154,7 +155,7 @@ router.post('/enterprise', asyncHandler(async (req, res) => {
  * Submit a general contact inquiry
  * Public endpoint - no authentication required
  */
-router.post('/general', asyncHandler(async (req, res) => {
+router.post('/general', rateLimitPublic, asyncHandler(async (req, res) => {
   // Validate request body
   const validationResult = GeneralContactSchema.safeParse(req.body);
   if (!validationResult.success) {

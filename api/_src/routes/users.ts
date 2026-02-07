@@ -10,6 +10,7 @@ import { isDatabaseComputeQuotaExceededError } from '../utils/dbErrors.js';
 import { normalizeParam } from '../utils/request-params.js';
 import { normalizeRole } from '../utils/normalizeRole.js';
 import { z } from 'zod';
+import { PayRateUpdateSchema, AvailabilitySchema } from '../validation/schemas.js';
 import { uploadProfileImages } from '../middleware/upload.js';
 import admin from 'firebase-admin';
 import { errorReporting } from '../services/error-reporting.service.js';
@@ -1032,21 +1033,23 @@ router.patch('/users/:id/pay-rate', authenticateUser, asyncHandler(async (req: A
     return;
   }
 
-  const { baseHourlyRate, currency } = req.body ?? {};
+  const validation = PayRateUpdateSchema.safeParse(req.body ?? {});
+  if (!validation.success) {
+    res.status(400).json({ message: validation.error.errors[0]?.message ?? 'Invalid input' });
+    return;
+  }
+
+  const { baseHourlyRate, currency } = validation.data;
   const updates: { baseHourlyRate?: number | string | null; currency?: string } = {};
   if (baseHourlyRate !== undefined) {
     if (baseHourlyRate === null || baseHourlyRate === '') {
       updates.baseHourlyRate = null;
     } else {
       const num = typeof baseHourlyRate === 'string' ? parseFloat(baseHourlyRate) : baseHourlyRate;
-      if (isNaN(num) || num < 0) {
-        res.status(400).json({ message: 'baseHourlyRate must be a non-negative number' });
-        return;
-      }
       updates.baseHourlyRate = num;
     }
   }
-  if (currency !== undefined && typeof currency === 'string' && currency.length <= 3) {
+  if (currency !== undefined) {
     updates.currency = currency;
   }
 
@@ -1747,28 +1750,13 @@ router.post('/me/availability', authenticateUser, asyncHandler(async (req: Authe
     return;
   }
 
-  const { availability } = req.body;
-
-  // Validate input
-  if (!Array.isArray(availability)) {
-    res.status(400).json({ message: 'availability must be an array' });
+  const validation = AvailabilitySchema.safeParse(req.body);
+  if (!validation.success) {
+    res.status(400).json({ message: validation.error.errors[0]?.message ?? 'Invalid input' });
     return;
   }
 
-  // Validate each availability entry
-  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-  for (const entry of availability) {
-    if (!entry.date || !dateRegex.test(entry.date)) {
-      res.status(400).json({ message: 'Each entry must have a valid date in YYYY-MM-DD format' });
-      return;
-    }
-    if (typeof entry.morning !== 'boolean' || 
-        typeof entry.lunch !== 'boolean' || 
-        typeof entry.dinner !== 'boolean') {
-      res.status(400).json({ message: 'morning, lunch, and dinner must be boolean values' });
-      return;
-    }
-  }
+  const { availability } = validation.data;
 
   // Import repository dynamically
   const workerAvailabilityRepo = await import('../repositories/worker-availability.repository.js');

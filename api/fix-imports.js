@@ -25,12 +25,12 @@ if (fs.existsSync(indexJsPath)) {
   let patched = false;
 
   // Fix bare _src/index imports that are missing the .js extension
-  // e.g. from './_src/index' → from './_src/index.js'
+  // e.g. from './_src/index' → from './_src/index.js' (preserves quote style)
   const fixedContent = content.replace(
-    /from\s+['"](\.\/(_src|src)\/index)(?!\.js)['"]/g,
-    (match, importPath) => {
+    /from\s+(['"])(\.\/(_src|src)\/index)(?!\.js)\1/g,
+    (match, quote, importPath) => {
       patched = true;
-      return `from '${importPath}.js'`;
+      return `from ${quote}${importPath}.js${quote}`;
     }
   );
 

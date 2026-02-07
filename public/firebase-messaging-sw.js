@@ -18,8 +18,8 @@ importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-comp
 // The authDomain can be configured via VITE_FIREBASE_AUTH_DOMAIN to show hospogo.com in auth popups.
 const firebaseConfig = {
   apiKey: 'AIzaSyAeEQ0qFLP_w_8wpD3I9x7SEK5qhxeu0_I',
-  // authDomain should match VITE_FIREBASE_AUTH_DOMAIN from main config (defaults to Firebase project domain)
-  authDomain: 'snipshift-75b04.firebaseapp.com',
+  // authDomain MUST match src/lib/firebase.ts — hospogo.com keeps storage first-party
+  authDomain: 'hospogo.com',
   projectId: 'snipshift-75b04', // Firebase project identifier (technical, not user-facing)
   storageBucket: 'snipshift-75b04.firebasestorage.app',
   messagingSenderId: '769818802438',

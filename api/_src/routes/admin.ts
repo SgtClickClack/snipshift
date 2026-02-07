@@ -13,6 +13,7 @@ import * as venuesRepo from '../repositories/venues.repository.js';
 import * as emailService from '../services/email.service.js';
 import * as notificationService from '../services/notification.service.js';
 import * as ctoAiService from '../services/ai-cto.service.js';
+import { TestEmailSchema } from '../validation/schemas.js';
 import { z } from 'zod';
 import { desc, eq, sql, and, inArray, isNull, SQL } from 'drizzle-orm';
 import { waitlist, users, venues, supportIntelligenceGaps } from '../db/schema.js';
@@ -1195,18 +1196,13 @@ router.get('/reports/launch-readiness', asyncHandler(async (req: AuthenticatedRe
 // I will move it here and assume the URL change is acceptable or I should map it.
 // If it's a test endpoint, it's probably fine.
 router.post('/test-email', asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { type, email } = req.body;
-
-  if (!type || !email) {
-    res.status(400).json({ message: 'type and email are required' });
+  const validation = TestEmailSchema.safeParse(req.body);
+  if (!validation.success) {
+    res.status(400).json({ message: validation.error.errors[0]?.message ?? 'Invalid input' });
     return;
   }
 
-  const validTypes = ['welcome', 'application-status', 'new-message', 'job-alert'];
-  if (!validTypes.includes(type)) {
-    res.status(400).json({ message: `type must be one of: ${validTypes.join(', ')}` });
-    return;
-  }
+  const { type, email } = validation.data;
 
   try {
     let success = false;

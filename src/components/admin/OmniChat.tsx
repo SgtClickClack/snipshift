@@ -12,6 +12,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import DOMPurify from 'dompurify';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
@@ -208,7 +209,7 @@ export default function OmniChat() {
     // Convert newlines to <br> (but not inside code blocks)
     formatted = formatted.replace(/\n(?![^<]*<\/pre>)/g, '<br />');
     
-    return formatted;
+    return DOMPurify.sanitize(formatted);
   };
 
   return (

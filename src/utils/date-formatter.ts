@@ -119,10 +119,10 @@ export function toISOStringSafe(date: unknown, fallback?: string): string {
  */
 export function toDateSafe(date: unknown): Date | null {
   if (!date) return null;
-  
+
   try {
     let dateObj: Date;
-    
+
     if (date instanceof Date) {
       dateObj = date;
     } else if (typeof date === 'string') {
@@ -132,14 +132,79 @@ export function toDateSafe(date: unknown): Date | null {
     } else {
       return null;
     }
-    
+
     // Check if date is valid
     if (isNaN(dateObj.getTime())) {
       return null;
     }
-    
+
     return dateObj;
   } catch {
     return null;
   }
+}
+
+/**
+ * Parse a YYYY-MM-DD date string as LOCAL midnight.
+ * `new Date('YYYY-MM-DD')` is parsed as UTC by browsers, which becomes
+ * 10:00/11:00 local time in AU. This function avoids that drift.
+ */
+export function parseLocalDateOnly(dateStr: string): Date | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day, 0, 0, 0, 0);
+}
+
+/** Check whether a string looks like an ISO 8601 datetime (has a T separator). */
+export function isIsoDateTimeString(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}T/.test(value);
+}
+
+/**
+ * Parse a date/datetime value with multiple fallback strategies.
+ * 1. ISO datetime string → native Date
+ * 2. YYYY-MM-DD → local midnight (avoids UTC drift)
+ * 3. Legacy formats → native Date fallback
+ */
+export function parseDateTime(dateOrDateTime: unknown): Date | null {
+  if (!dateOrDateTime) return null;
+  if (dateOrDateTime instanceof Date) return isNaN(dateOrDateTime.getTime()) ? null : dateOrDateTime;
+  if (typeof dateOrDateTime !== 'string') return null;
+
+  if (isIsoDateTimeString(dateOrDateTime)) {
+    const d = new Date(dateOrDateTime);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  const localDate = parseLocalDateOnly(dateOrDateTime);
+  if (localDate) return localDate;
+
+  const fallback = new Date(dateOrDateTime);
+  return isNaN(fallback.getTime()) ? null : fallback;
+}
+
+/**
+ * Combine a YYYY-MM-DD date string with an HH:mm or HH:mm:ss time string.
+ * Returns a local Date or null if inputs are invalid.
+ */
+export function combineDateAndTime(dateStr: unknown, timeStr: unknown): Date | null {
+  if (typeof dateStr !== 'string' || typeof timeStr !== 'string') return null;
+
+  const base = parseLocalDateOnly(dateStr);
+  if (!base) return null;
+
+  const match = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(timeStr);
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const seconds = match[3] ? Number(match[3]) : 0;
+  if (Number.isNaN(hours) || Number.isNaN(minutes) || Number.isNaN(seconds)) return null;
+
+  const d = new Date(base);
+  d.setHours(hours, minutes, seconds, 0);
+  return isNaN(d.getTime()) ? null : d;
 }

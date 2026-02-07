@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef, Component, ReactNode } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Calendar, dateFnsLocalizer, View, Event } from "react-big-calendar";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
@@ -60,7 +60,7 @@ import { ShiftBucketManagementModal, type BucketManagementData } from "./ShiftBu
 import { AssignStaffModal, Professional } from "./assign-staff-modal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
-import CalendarSettingsModal, { CalendarSettings, ShiftPattern } from "./calendar-settings-modal";
+import CalendarSettingsModal, { ShiftPattern } from "./calendar-settings-modal";
 import { SmartFillConfirmationModal, SmartMatch } from "./smart-fill-confirmation-modal";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
@@ -76,6 +76,10 @@ import { ShiftAssignmentModal } from "./shift-assignment-modal";
 import { CalendarToolbar } from "./CalendarToolbar";
 import { isBusinessRole } from "@/lib/roles";
 import { logger } from "@/lib/logger";
+import { CalendarErrorBoundary } from "./calendar-error-boundary";
+import { CurrentTimeIndicator } from "./current-time-indicator";
+import { useCalendarSettings } from "@/hooks/useCalendarSettings";
+import { parseDateTime, combineDateAndTime } from "@/utils/date-formatter";
 
 // Import react-big-calendar CSS
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -135,105 +139,6 @@ interface ProfessionalCalendarProps {
 }
 
 type JobStatus = "all" | "pending" | "confirmed" | "completed";
-
-// Error Boundary for Calendar Component
-interface CalendarErrorBoundaryState {
-  hasError: boolean;
-  error: Error | null;
-}
-
-class CalendarErrorBoundary extends Component<
-  { children: ReactNode },
-  CalendarErrorBoundaryState
-> {
-  constructor(props: { children: ReactNode }) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error: Error): CalendarErrorBoundaryState {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('[CALENDAR ERROR BOUNDARY] Caught error:', error);
-    console.error('[CALENDAR ERROR BOUNDARY] Error info:', errorInfo);
-    console.error('[CALENDAR ERROR BOUNDARY] Error stack:', error.stack);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div 
-          className="flex items-center justify-center h-full min-h-[600px]" 
-          data-testid="calendar-error-boundary"
-        >
-          <div className="text-muted-foreground">
-            Calendar render error: {this.state.error?.message || 'Unknown error'}
-          </div>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
-
-// Current Time Indicator Component - Red line like Google Calendar
-function CurrentTimeIndicator({
-  currentTime,
-  view,
-  currentDate,
-}: {
-  currentTime: Date;
-  view: View;
-  currentDate: Date;
-}) {
-  const isToday = isSameDay(currentTime, currentDate);
-  const isInCurrentWeek =
-    view === "week" &&
-    currentTime >= startOfWeek(currentDate, { weekStartsOn: 0 }) &&
-    currentTime <= endOfWeek(currentDate, { weekStartsOn: 0 });
-
-  if ((view === "week" && !isInCurrentWeek) || (view === "day" && !isToday)) {
-    return null;
-  }
-
-  const hours = currentTime.getHours();
-  const minutes = currentTime.getMinutes();
-  const totalMinutes = hours * 60 + minutes;
-  // Calculate position: calendar typically shows 6 AM to 11 PM (17 hours = 1020 minutes)
-  // Starting from 6 AM (360 minutes)
-  const startHour = 6;
-  const endHour = 23;
-  const startMinutes = startHour * 60;
-  const endMinutes = endHour * 60;
-  const totalRange = endMinutes - startMinutes;
-  const positionFromStart = totalMinutes - startMinutes;
-  const topPosition = Math.max(0, Math.min(100, (positionFromStart / totalRange) * 100));
-
-  return (
-    <div
-      className="absolute left-0 right-0 pointer-events-none"
-      style={{
-        top: `${topPosition}%`,
-        marginTop: "-1px",
-        zIndex: 30, // Above grid lines and events
-      }}
-    >
-      <div className="flex items-center h-0.5">
-        <div className="w-14 text-xs text-red-600 font-medium pr-2 pl-1 text-right bg-red-50 dark:bg-red-950/80 rounded-full border border-red-200 dark:border-red-900/50">
-          {format(currentTime, "h:mm a")}
-        </div>
-        <div className="flex-1 relative">
-          <div className="h-0.5 bg-red-600 relative">
-            <div className="absolute -left-1.5 -top-1.5 w-3 h-3 bg-red-600 rounded-full border-2 border-background"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function ProfessionalCalendar(props: ProfessionalCalendarProps) {
   const { user, isLoading } = useAuth();
@@ -362,324 +267,17 @@ function ProfessionalCalendarContent({
   const [autoFillPreview, setAutoFillPreview] = useState<{ estimatedCount: number; error?: string } | null>(null);
   const [isInvitingATeam, setIsInvitingATeam] = useState(false);
   const [showEmptyFavoritesDialog, setShowEmptyFavoritesDialog] = useState(false);
-  
-  // Calendar settings - stored in localStorage
-  const getSettingsKey = useCallback(() => {
-    return `calendar-settings-${user?.id || 'default'}`;
-  }, [user?.id]);
-  
-  // Helper function to convert business settings to calendar settings format
-  const convertBusinessSettingsToCalendarSettings = useCallback((businessSettings: any): CalendarSettings | null => {
-    if (!businessSettings || !businessSettings.openingHours) {
-      return null;
-    }
-    
-    // Convert shiftSplitType to shiftPattern
-    let shiftPattern: ShiftPattern = 'full-day';
-    if (businessSettings.shiftSplitType === 'halves') {
-      shiftPattern = 'half-day';
-    } else if (businessSettings.shiftSplitType === 'thirds') {
-      shiftPattern = 'thirds';
-    } else if (businessSettings.shiftSplitType === 'custom') {
-      shiftPattern = 'custom';
-    } else {
-      shiftPattern = 'full-day';
-    }
-    
-    return {
-      openingHours: businessSettings.openingHours,
-      shiftPattern,
-      defaultShiftLength: businessSettings.customShiftLength,
-    };
-  }, []);
-  
-  const [calendarSettings, setCalendarSettings] = useState<CalendarSettings | null>(null);
-  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
-  const normalizeCalendarSettingsForCompare = useCallback((settings: CalendarSettings | null) => {
-    if (!settings) return null;
+  // Calendar settings - extracted to custom hook
+  const { calendarSettings, isLoadingSettings, handleSaveSettings, getEarliestOpeningTime } = useCalendarSettings({
+    userId: user?.id,
+    currentRole: user?.currentRole,
+    businessSettings: user?.businessSettings,
+    isSystemReady,
+    isAuthLoading,
+    hasFirebaseUser,
+  });
 
-    // Ensure stable key order + presence for JSON comparisons (prevents render loops
-    // when upstream objects get recreated with the same values).
-    const openingHours = settings.openingHours || ({} as CalendarSettings['openingHours']);
-    const fallbackWeekday = { open: '09:00', close: '18:00', enabled: false };
-    const fallbackWeekend = { open: '09:00', close: '17:00', enabled: false };
-
-    return {
-      shiftPattern: settings.shiftPattern,
-      defaultShiftLength: settings.defaultShiftLength,
-      openingHours: {
-        monday: openingHours.monday || fallbackWeekday,
-        tuesday: openingHours.tuesday || fallbackWeekday,
-        wednesday: openingHours.wednesday || fallbackWeekday,
-        thursday: openingHours.thursday || fallbackWeekday,
-        friday: openingHours.friday || fallbackWeekday,
-        saturday: openingHours.saturday || fallbackWeekend,
-        sunday: openingHours.sunday || fallbackWeekend,
-      },
-    };
-  }, []);
-
-  const areCalendarSettingsEqual = useCallback(
-    (a: CalendarSettings | null, b: CalendarSettings | null) => {
-      return (
-        JSON.stringify(normalizeCalendarSettingsForCompare(a)) ===
-        JSON.stringify(normalizeCalendarSettingsForCompare(b))
-      );
-    },
-    [normalizeCalendarSettingsForCompare]
-  );
-  
-  // Save settings to database via API
-  const handleSaveSettings = useCallback(async (settings: CalendarSettings) => {
-    logger.debug('Calendar', '[CALENDAR] Saving settings:', settings);
-    // Ensure all days are present in openingHours
-    const completeSettings: CalendarSettings = {
-      ...settings,
-      openingHours: {
-        monday: settings.openingHours.monday || { open: '09:00', close: '18:00', enabled: false },
-        tuesday: settings.openingHours.tuesday || { open: '09:00', close: '18:00', enabled: false },
-        wednesday: settings.openingHours.wednesday || { open: '09:00', close: '18:00', enabled: false },
-        thursday: settings.openingHours.thursday || { open: '09:00', close: '18:00', enabled: false },
-        friday: settings.openingHours.friday || { open: '09:00', close: '18:00', enabled: false },
-        saturday: settings.openingHours.saturday || { open: '09:00', close: '17:00', enabled: false },
-        sunday: settings.openingHours.sunday || { open: '09:00', close: '17:00', enabled: false },
-      },
-    };
-    setCalendarSettings(completeSettings);
-    
-    try {
-      // Save opening hours to venue
-      if (isBusinessRole(user?.currentRole || '')) {
-        await apiRequest('POST', '/api/venues/settings/hours', {
-          openingHours: completeSettings.openingHours,
-        });
-      }
-      
-      // Save shift templates to user businessSettings
-      await apiRequest('POST', '/api/shifts/templates', {
-        shiftPattern: completeSettings.shiftPattern,
-        defaultShiftLength: completeSettings.defaultShiftLength,
-      });
-      
-      logger.debug('Calendar', '[CALENDAR] Settings saved to database');
-      toast({
-        title: 'Schedule saved',
-        description: 'Your opening hours and shift templates have been saved.',
-      });
-    } catch (error) {
-      console.error('[CALENDAR] Failed to save settings to database:', error);
-      toast({
-        title: 'Failed to save',
-        description: 'Could not save your settings. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  }, [getSettingsKey, user?.currentRole, toast]);
-  
-  // Initial load: Fetch settings from database on mount - with mounted check to prevent state updates after unmount
-  useEffect(() => {
-    let isMounted = true;
-    
-    if (!user?.id || !isBusinessRole(user?.currentRole || '') || !isSystemReady || isAuthLoading || !hasFirebaseUser) {
-      setIsLoadingSettings(false);
-      return;
-    }
-
-    const loadSettings = async () => {
-      if (!isMounted) return;
-      setIsLoadingSettings(true);
-      try {
-        // Fetch venue operating hours
-        let venueHours = null;
-        try {
-          const venueRes = await apiRequest('GET', '/api/venues/me');
-          if (venueRes.ok) {
-            const venueData = await venueRes.json();
-            venueHours = venueData.operatingHours;
-          }
-        } catch (error) {
-          console.error('[CALENDAR] Failed to fetch venue hours:', error);
-        }
-
-        // Check if still mounted after async call
-        if (!isMounted) return;
-
-        // Load from user.businessSettings (shift templates)
-        let settings: CalendarSettings | null = null;
-        if (user?.businessSettings) {
-          const converted = convertBusinessSettingsToCalendarSettings(user.businessSettings);
-          if (converted) {
-            settings = converted;
-          }
-        }
-
-        // Merge venue hours with business settings
-        if (venueHours && settings) {
-          // Convert venue format (closed: true) to calendar format (enabled: false)
-          const convertedHours: any = {};
-          const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-          for (const day of days) {
-            const hours = venueHours[day];
-            if (hours) {
-              if (hours.closed === true) {
-                convertedHours[day] = { ...settings.openingHours[day], enabled: false };
-              } else {
-                convertedHours[day] = {
-                  open: hours.open || settings.openingHours[day]?.open || '09:00',
-                  close: hours.close || settings.openingHours[day]?.close || '18:00',
-                  enabled: settings.openingHours[day]?.enabled !== false,
-                };
-              }
-            } else {
-              convertedHours[day] = settings.openingHours[day] || { open: '09:00', close: '18:00', enabled: false };
-            }
-          }
-          settings = { ...settings, openingHours: convertedHours };
-        } else if (venueHours) {
-          // Only venue hours available, create settings from them
-          const convertedHours: any = {};
-          const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-          for (const day of days) {
-            const hours = venueHours[day];
-            if (hours) {
-              if (hours.closed === true) {
-                convertedHours[day] = { open: '09:00', close: '18:00', enabled: false };
-              } else {
-                convertedHours[day] = {
-                  open: hours.open || '09:00',
-                  close: hours.close || '18:00',
-                  enabled: true,
-                };
-              }
-            } else {
-              convertedHours[day] = { open: '09:00', close: '18:00', enabled: false };
-            }
-          }
-          settings = {
-            openingHours: convertedHours,
-            shiftPattern: 'full-day',
-            defaultShiftLength: 8,
-          };
-        }
-
-        // Check if still mounted before updating state
-        if (!isMounted) return;
-
-        if (settings) {
-          setCalendarSettings((prev) => (areCalendarSettingsEqual(prev, settings) ? prev : settings));
-          logger.debug('Calendar', '[CALENDAR] Settings loaded from database:', settings);
-        } else {
-          // Fallback to localStorage if no database settings
-          const key = getSettingsKey();
-          const stored = localStorage.getItem(key);
-          if (stored) {
-            const parsed = JSON.parse(stored);
-            setCalendarSettings((prev) => (areCalendarSettingsEqual(prev, parsed) ? prev : parsed));
-            logger.debug('Calendar', '[CALENDAR] Settings loaded from localStorage fallback:', parsed);
-          }
-        }
-      } catch (error) {
-        console.error('[CALENDAR] Error loading settings:', error);
-        // Fallback to localStorage on error
-        if (isMounted) {
-          try {
-            const key = getSettingsKey();
-            const stored = localStorage.getItem(key);
-            if (stored) {
-              const parsed = JSON.parse(stored);
-              setCalendarSettings((prev) => (areCalendarSettingsEqual(prev, parsed) ? prev : parsed));
-            }
-          } catch (localError) {
-            console.error('[CALENDAR] Failed to load from localStorage:', localError);
-          }
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoadingSettings(false);
-        }
-      }
-    };
-
-    loadSettings();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [user?.id, user?.currentRole, user?.businessSettings, getSettingsKey, convertBusinessSettingsToCalendarSettings, areCalendarSettingsEqual]);
-  
-  // Listen for storage events and custom events to sync settings when they're updated from other components
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === getSettingsKey() && e.newValue) {
-        try {
-          const parsed = JSON.parse(e.newValue);
-          setCalendarSettings((prev) => (areCalendarSettingsEqual(prev, parsed) ? prev : parsed));
-          logger.debug('Calendar', '[CALENDAR] Settings synced from storage event:', parsed);
-        } catch (error) {
-          console.error('[CALENDAR] Failed to parse settings from storage event:', error);
-        }
-      }
-    };
-    
-    const handleCustomEvent = (e: CustomEvent) => {
-      if (e.detail?.settings) {
-        const nextSettings = e.detail.settings as CalendarSettings;
-        setCalendarSettings((prev) => (areCalendarSettingsEqual(prev, nextSettings) ? prev : nextSettings));
-        logger.debug('Calendar', '[CALENDAR] Settings synced from custom event:', e.detail.settings);
-      }
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('calendarSettingsUpdated', handleCustomEvent as EventListener);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('calendarSettingsUpdated', handleCustomEvent as EventListener);
-    };
-  }, [getSettingsKey, areCalendarSettingsEqual]);
-  
-  // Log when calendarSettings changes to verify re-renders
-  useEffect(() => {
-    if (calendarSettings) {
-      logger.debug('Calendar', '[CALENDAR] Settings updated, will regenerate events:', {
-        hasOpeningHours: !!calendarSettings.openingHours,
-        enabledDays: Object.entries(calendarSettings.openingHours || {})
-          .filter(([_, hours]) => hours?.enabled)
-          .map(([day]) => day),
-        shiftPattern: calendarSettings.shiftPattern,
-      });
-    }
-  }, [calendarSettings]);
-
-  // Calculate earliest opening time from calendar settings for minTime/scrollTime
-  const getEarliestOpeningTime = useCallback(() => {
-    if (!calendarSettings?.openingHours) {
-      // Default to 7:00 AM if no settings
-      return new Date(2020, 0, 1, 7, 0, 0);
-    }
-    
-    const openingHours = calendarSettings.openingHours;
-    let earliestHour = 7; // Default to 7:00 AM
-    let earliestMinute = 0;
-    
-    // Find the earliest opening time across all enabled days
-    Object.values(openingHours).forEach((hours) => {
-      if (hours?.enabled && hours?.open) {
-        const [hour, minute] = hours.open.split(':').map(Number);
-        const hourInMinutes = hour * 60 + minute;
-        const earliestInMinutes = earliestHour * 60 + earliestMinute;
-        
-        if (hourInMinutes < earliestInMinutes) {
-          earliestHour = hour;
-          earliestMinute = minute;
-        }
-      }
-    });
-    
-    return new Date(2020, 0, 1, earliestHour, earliestMinute, 0);
-  }, [calendarSettings]);
   const [pendingRecurringAction, setPendingRecurringAction] = useState<{
     type: 'delete' | 'move';
     event: CalendarEvent;
@@ -856,58 +454,7 @@ function ProfessionalCalendarContent({
     const optimisticEvents: CalendarEvent[] = optimisticShifts;
 
     try {
-      const parseLocalDateOnly = (dateStr: string): Date | null => {
-        // IMPORTANT: `new Date('YYYY-MM-DD')` is parsed as UTC by browsers, which becomes
-        // 10:00/11:00 local time in AU. We want a stable *local* date baseline.
-        const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
-        if (!match) return null;
-        const year = Number(match[1]);
-        const month = Number(match[2]);
-        const day = Number(match[3]);
-        if (!year || !month || !day) return null;
-        return new Date(year, month - 1, day, 0, 0, 0, 0);
-      };
-
-      const isIsoDateTimeString = (value: string) => /^\d{4}-\d{2}-\d{2}T/.test(value);
-
-      const parseDateTime = (dateOrDateTime: unknown): Date | null => {
-        if (!dateOrDateTime) return null;
-        if (dateOrDateTime instanceof Date) return isNaN(dateOrDateTime.getTime()) ? null : dateOrDateTime;
-        if (typeof dateOrDateTime !== 'string') return null;
-
-        // Prefer ISO datetime parsing.
-        if (isIsoDateTimeString(dateOrDateTime)) {
-          const d = new Date(dateOrDateTime);
-          return isNaN(d.getTime()) ? null : d;
-        }
-
-        // Date-only string: parse as LOCAL midnight to avoid UTC offset drift.
-        const localDate = parseLocalDateOnly(dateOrDateTime);
-        if (localDate) return localDate;
-
-        // Last resort: let Date parse it (can still be useful for legacy formats).
-        const fallback = new Date(dateOrDateTime);
-        return isNaN(fallback.getTime()) ? null : fallback;
-      };
-
-      const combineDateAndTime = (dateStr: unknown, timeStr: unknown): Date | null => {
-        if (typeof dateStr !== 'string' || typeof timeStr !== 'string') return null;
-
-        const base = parseLocalDateOnly(dateStr);
-        if (!base) return null;
-
-        // Accept "HH:mm" or "HH:mm:ss"
-        const match = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(timeStr);
-        if (!match) return null;
-        const hours = Number(match[1]);
-        const minutes = Number(match[2]);
-        const seconds = match[3] ? Number(match[3]) : 0;
-        if (Number.isNaN(hours) || Number.isNaN(minutes) || Number.isNaN(seconds)) return null;
-
-        const d = new Date(base);
-        d.setHours(hours, minutes, seconds, 0);
-        return isNaN(d.getTime()) ? null : d;
-      };
+      // Date parsing utilities imported from @/utils/date-formatter
 
       const bookingEvents = bookingsArray
         .map((booking: any) => {
@@ -1506,7 +1053,7 @@ function ProfessionalCalendarContent({
       const result = await response.json();
 
       // Invalidate queries to refresh the calendar using standardized keys
-      getShiftInvalidationKeys().forEach(key => 
+      getVenueShiftInvalidationKeys().forEach(key => 
         queryClient.invalidateQueries({ queryKey: [key] })
       );
 
@@ -1635,7 +1182,7 @@ function ProfessionalCalendarContent({
       });
 
       // Invalidate all shift-related queries using standardized keys
-      getShiftInvalidationKeys().forEach(key => 
+      getVenueShiftInvalidationKeys().forEach(key => 
         queryClient.invalidateQueries({ queryKey: [key] })
       );
 
@@ -2056,7 +1603,7 @@ function ProfessionalCalendarContent({
       setOptimisticShifts(prev => [...prev, optimisticEvent]);
 
       // Invalidate queries using standardized keys
-      getShiftInvalidationKeys().forEach(key => 
+      getVenueShiftInvalidationKeys().forEach(key => 
         queryClient.invalidateQueries({ queryKey: [key] })
       );
 
@@ -2163,7 +1710,7 @@ function ProfessionalCalendarContent({
       setOptimisticShifts(prev => [...prev, optimisticEvent]);
 
       // Invalidate queries using standardized keys
-      getShiftInvalidationKeys().forEach(key => 
+      getVenueShiftInvalidationKeys().forEach(key => 
         queryClient.invalidateQueries({ queryKey: [key] })
       );
 
@@ -2232,7 +1779,7 @@ function ProfessionalCalendarContent({
       setOptimisticShifts(prev => [...prev, optimisticEvent]);
 
       // Invalidate queries using standardized keys
-      getShiftInvalidationKeys().forEach(key => 
+      getVenueShiftInvalidationKeys().forEach(key => 
         queryClient.invalidateQueries({ queryKey: [key] })
       );
 

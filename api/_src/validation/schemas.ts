@@ -375,3 +375,48 @@ export const InvestorQuerySchema = z.object({
 });
 
 export type InvestorQueryInput = z.infer<typeof InvestorQuerySchema>;
+
+/**
+ * Schema for admin test-email endpoint
+ */
+export const TestEmailSchema = z.object({
+  type: z.enum(['welcome', 'application-status', 'new-message', 'job-alert'], {
+    errorMap: () => ({ message: 'type must be one of: welcome, application-status, new-message, job-alert' }),
+  }),
+  email: z.string().email('Valid email is required').max(255),
+});
+
+/**
+ * Schema for staff pay-rate updates
+ */
+export const PayRateUpdateSchema = z.object({
+  baseHourlyRate: z.union([
+    z.number().min(0, 'Hourly rate must be non-negative').max(500),
+    z.string().refine((val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0 && num <= 500;
+    }, 'Hourly rate must be between 0 and 500'),
+    z.null(),
+    z.literal(''),
+  ]).optional(),
+  currency: z.string().length(3, 'Currency must be a 3-letter ISO 4217 code').optional(),
+});
+
+/**
+ * Schema for worker availability updates
+ */
+export const AvailabilitySchema = z.object({
+  availability: z.array(z.object({
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+    morning: z.boolean(),
+    lunch: z.boolean(),
+    dinner: z.boolean(),
+  })),
+});
+
+/**
+ * Schema for community post comments
+ */
+export const CommentSchema = z.object({
+  content: z.string().min(1, 'Content is required').max(5000, 'Comment must be less than 5000 characters'),
+});

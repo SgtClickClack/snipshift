@@ -27,6 +27,12 @@ const buttonVariants = cva(
         // Hover: Scale 1.02x with soft outer glow (uses primary token)
         "refined-glow":
           "bg-transparent border border-primary text-primary font-semibold hover:scale-[1.02] hover:shadow-[0_0_15px_hsl(var(--primary)/0.3)] [text-shadow:0_0_8px_hsl(var(--primary)/0.4)]",
+        steel:
+          "bg-[hsl(220,13%,18%)] text-[hsl(0,0%,85%)] border border-[hsl(220,10%,25%)] hover:bg-[hsl(220,13%,22%)] hover:border-[hsl(220,10%,30%)]",
+        chrome:
+          "bg-gradient-to-b from-[hsl(220,10%,20%)] to-[hsl(220,10%,15%)] text-[hsl(0,0%,90%)] border border-[hsl(220,10%,28%)] hover:from-[hsl(220,10%,24%)] hover:to-[hsl(220,10%,18%)]",
+        charcoal:
+          "bg-[hsl(220,10%,12%)] text-[hsl(0,0%,80%)] border border-[hsl(220,8%,20%)] hover:bg-[hsl(220,10%,16%)]",
       },
       size: {
         default: "h-11 px-4 py-2",

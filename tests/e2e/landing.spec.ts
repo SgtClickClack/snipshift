@@ -142,65 +142,65 @@ test.describe('Landing Page Tests', () => {
 
   test.describe('FAQ Interaction', () => {
     test('should expand FAQ item and display answer when clicked', async ({ page }) => {
-      // Scroll to FAQ section
-      const faqSection = page.locator('text=Got Questions?').first();
+      // Scroll to FAQ section using data-testid (avoids collision with other page sections)
+      const faqSection = page.getByTestId('faq-section');
       await faqSection.scrollIntoViewIfNeeded();
       await page.waitForTimeout(500);
       
-      // The first FAQ item is "Is there a lock-in contract?"
+      // The first FAQ item is "What is the HospoGo Trinity?"
       // Note: By default, the first FAQ (index 0) is already open in the component
       // So we need to click a different FAQ item to test the expand behavior
       
-      // Find the second FAQ question: "How do you vet your staff?"
-      const faqQuestion = page.locator('button').filter({ hasText: 'How do you vet your staff?' });
+      // Find the second FAQ question scoped to FAQ section
+      const faqQuestion = faqSection.locator('button').filter({ hasText: 'How are staff verified?' });
       await expect(faqQuestion).toBeVisible();
       
       // Click to expand the FAQ item
       await faqQuestion.click();
       await page.waitForTimeout(300); // Wait for animation
       
-      // Assert that the answer text becomes visible
-      const answerText = page.locator('text=manual profile review');
-      await expect(answerText).toBeVisible();
+      // Assert that the second FAQ answer panel becomes visible
+      const secondAnswerPanel = page.getByTestId('faq-answer-1');
+      await expect(secondAnswerPanel).toBeVisible();
+      await expect(secondAnswerPanel).toContainText('manual profile reviews');
     });
 
     test('should display first FAQ answer by default', async ({ page }) => {
-      // Scroll to FAQ section
-      const faqSection = page.locator('text=Got Questions?').first();
+      // Scroll to FAQ section using data-testid
+      const faqSection = page.getByTestId('faq-section');
       await faqSection.scrollIntoViewIfNeeded();
       await page.waitForTimeout(500);
       
       // The first FAQ item is open by default (index 0)
-      // First question: "Is there a lock-in contract?"
-      const firstFaqQuestion = page.locator('button').filter({ hasText: 'Is there a lock-in contract?' });
+      const firstFaqQuestion = faqSection.locator('button').filter({ hasText: 'What is the HospoGo Trinity?' });
       await expect(firstFaqQuestion).toBeVisible();
       
-      // The answer should be visible by default
-      const firstAnswer = page.locator('text=No. All HospoGo plans are month-to-month');
-      await expect(firstAnswer).toBeVisible();
+      // The first answer panel should be visible by default
+      const firstAnswerPanel = page.getByTestId('faq-answer-0');
+      await expect(firstAnswerPanel).toBeVisible();
     });
 
     test('should collapse FAQ item when clicking on another', async ({ page }) => {
-      // Scroll to FAQ section
-      const faqSection = page.locator('text=Got Questions?').first();
+      // Scroll to FAQ section using data-testid
+      const faqSection = page.getByTestId('faq-section');
       await faqSection.scrollIntoViewIfNeeded();
       await page.waitForTimeout(500);
       
-      // First FAQ answer should be visible by default
-      const firstAnswer = page.locator('text=month-to-month');
-      await expect(firstAnswer).toBeVisible();
+      // First FAQ answer panel should be visible by default
+      const firstAnswerPanel = page.getByTestId('faq-answer-0');
+      await expect(firstAnswerPanel).toBeVisible();
       
       // Click on the second FAQ question
-      const secondFaqQuestion = page.locator('button').filter({ hasText: 'How do you vet your staff?' });
+      const secondFaqQuestion = faqSection.locator('button').filter({ hasText: 'How are staff verified?' });
       await secondFaqQuestion.click();
       await page.waitForTimeout(300); // Wait for animation
       
-      // The first answer should now be hidden
-      await expect(firstAnswer).not.toBeVisible();
+      // The first answer panel should be unmounted (collapsed)
+      await expect(firstAnswerPanel).toHaveCount(0);
       
-      // The second answer should now be visible
-      const secondAnswer = page.locator('text=manual profile review');
-      await expect(secondAnswer).toBeVisible();
+      // The second answer panel should now be visible
+      const secondAnswerPanel = page.getByTestId('faq-answer-1');
+      await expect(secondAnswerPanel).toBeVisible();
     });
   });
 });

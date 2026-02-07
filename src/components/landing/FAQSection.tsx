@@ -70,7 +70,7 @@ function FAQItem({ question, answer, isOpen, onClick, icon, id }: FAQItemProps) 
   );
 
   return (
-    <div className={`border-b transition-colors ${isOpen ? 'border-primary' : 'border-zinc-800'}`}>
+    <div className={`border-b transition-colors ${isOpen ? 'border-primary' : 'border-zinc-800'}`} data-testid={`faq-item-${id.replace('faq-', '')}`}>
       <button
         onClick={onClick}
         id={buttonId}
@@ -93,6 +93,7 @@ function FAQItem({ question, answer, isOpen, onClick, icon, id }: FAQItemProps) 
             id={panelId}
             role="region"
             aria-labelledby={buttonId}
+            data-testid={`faq-answer-${id.replace('faq-', '')}`}
           >
             <p className="pb-6 text-zinc-400 leading-relaxed max-w-2xl">
               {renderAnswer(answer)}
@@ -108,7 +109,7 @@ export default function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="bg-black py-24 px-4 sm:px-6">
+    <section className="bg-black py-24 px-4 sm:px-6" data-testid="faq-section">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-black tracking-tighter text-white mb-4">The Foundry FAQ</h2>

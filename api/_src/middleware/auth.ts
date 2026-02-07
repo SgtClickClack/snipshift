@@ -60,6 +60,55 @@ export function rateLimitRegisterAndMe(
   }
   next();
 }
+
+/**
+ * Generic rate limiter for public (unauthenticated) endpoints.
+ * Limits to `max` requests per IP per 60-second window.
+ * Apply to routes like /leads, /investors, /marketplace that don't require auth.
+ */
+const publicRateLimitStore = new Map<string, { count: number; resetAt: number }>();
+const PUBLIC_RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const PUBLIC_RATE_LIMIT_MAX = 20; // 20 req/min per IP
+
+export function rateLimitPublic(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  const now = Date.now();
+  const id = getClientId(req);
+  let entry = publicRateLimitStore.get(id);
+
+  if (!entry || now >= entry.resetAt) {
+    entry = { count: 1, resetAt: now + PUBLIC_RATE_LIMIT_WINDOW_MS };
+    publicRateLimitStore.set(id, entry);
+    next();
+    return;
+  }
+
+  entry.count += 1;
+  if (entry.count > PUBLIC_RATE_LIMIT_MAX) {
+    res.status(429).json({
+      message: 'Too many requests. Please try again in a minute.',
+      code: 'RATE_LIMIT_EXCEEDED',
+    });
+    return;
+  }
+  next();
+}
+
+// Periodic cleanup of expired rate-limit entries to prevent memory leaks
+// Runs every 5 minutes; safe for serverless (timers cleared on process exit)
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of rateLimitStore) {
+    if (now >= entry.resetAt) rateLimitStore.delete(key);
+  }
+  for (const [key, entry] of publicRateLimitStore) {
+    if (now >= entry.resetAt) publicRateLimitStore.delete(key);
+  }
+}, 5 * 60 * 1000).unref();
+
 import * as usersRepo from '../repositories/users.repository.js';
 import { getAuth, getFirebaseInitError } from '../config/firebase.js';
 import { isDatabaseComputeQuotaExceededError } from '../utils/dbErrors.js';

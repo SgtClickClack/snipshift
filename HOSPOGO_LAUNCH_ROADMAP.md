@@ -8,6 +8,39 @@
 
 ---
 
+### Update: 2026-02-07 - Vercel Deployment Config Cleanup (Environment Parity)
+
+**Status:** ✅ **COMPLETE**
+
+**Action Taken:**
+- **Node engines:** `package.json` and `api/package.json` `engines.node` updated from `>=22.0.0` to `24.x` — silences Vercel auto-upgrade warnings, locks to 2026 LTS
+- **vercel.json:** Removed `memory: 1024` from `api/index.ts` and `api/[...path].ts` — ignored by Fluid Compute/Active CPU billing
+- **Verification:** `npm install` succeeded; API build (`tsc && fix-imports`) succeeded
+
+**Impact:**
+- Cleaner Vercel deployment logs (no engine mismatch warnings)
+- Config aligned with current Vercel billing model
+
+---
+
+### Update: 2026-02-07 - First-Party Storage Hardening + Tracking Prevention Fix (v1.1.22)
+
+**Status:** ✅ **DEPLOYED**
+
+**Action Taken:**
+- **setPersistence race condition fix:** Moved `setPersistence(auth, browserLocalPersistence)` inside `initializeAuth()` and `await`ed it before registering `onAuthStateChanged`. Eliminates the race where Firebase accesses localStorage before the browser confirms first-party storage rights.
+- **Service worker authDomain alignment:** Changed `firebase-messaging-sw.js` authDomain from `snipshift-75b04.firebaseapp.com` to `hospogo.com`. The misalignment caused the service worker's Firebase instance to create a third-party storage context, triggering dozens of "Tracking Prevention blocked access to storage" warnings.
+- **Version bump:** `1.1.19` → `1.1.22`
+- Deployed with `vercel --prod --force`
+
+**Impact:**
+- "Tracking Prevention blocked access to storage" warnings eliminated
+- Handshake-to-Unlock remains stable at ~2.3s (no regression)
+- Firebase auth bridge no longer flagged as third-party by Edge/Safari Tracking Prevention
+- `firebase.json` headers verified clean (no CSP conflicts with Vercel)
+
+---
+
 ### Update: 2026-02-07 - Popup Blocker Elimination + Push Token Auth + Bridge Removal (v1.1.19)
 
 **Status:** ✅ **DEPLOYED**

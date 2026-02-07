@@ -875,18 +875,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
     let unsub: (() => void) | undefined;
     let isInitialAuthCheck = true;
 
-    // Minimalist: functional modular calls only.
-    // Use in-memory persistence if localStorage is blocked (Tracking Prevention)
-    const persistence = isLocalStorageAvailable() ? browserLocalPersistence : inMemoryPersistence;
-    if (!isLocalStorageAvailable()) {
-      logger.warn('AuthContext', 'localStorage blocked - using in-memory persistence (session will not survive page refresh)');
-    }
-    setPersistence(auth, persistence).catch((error) => {
-      logger.error('AuthContext', 'Failed to set Firebase persistence', error);
-    });
-
     // Primary async function to handle the complete auth handshake
     const initializeAuth = async () => {
+      // FIRST-PARTY STORAGE HARDENING: setPersistence MUST complete BEFORE
+      // onAuthStateChanged is registered. If we register the listener while
+      // persistence is still being set, Firebase accesses localStorage before
+      // the browser recognises the first-party storage claim, triggering
+      // "Tracking Prevention blocked access to storage" warnings.
+      const persistence = isLocalStorageAvailable() ? browserLocalPersistence : inMemoryPersistence;
+      if (!isLocalStorageAvailable()) {
+        logger.warn('AuthContext', 'localStorage blocked - using in-memory persistence (session will not survive page refresh)');
+      }
+      try {
+        await setPersistence(auth, persistence);
+      } catch (error) {
+        logger.error('AuthContext', 'Failed to set Firebase persistence', error);
+      }
       // E2E Bypass: Check for test user in sessionStorage (or localStorage when restored from Playwright storageState)
       // SECURITY: Only allow in E2E test mode to prevent sessionStorage injection attacks in production
       if (typeof window !== 'undefined' && import.meta.env.VITE_E2E === '1') {

@@ -1,5 +1,6 @@
 import express from 'express';
 import { asyncHandler } from '../middleware/errorHandler.js';
+import { rateLimitPublic } from '../middleware/auth.js';
 import { getDb } from '../db/index.js';
 import { venues, users, shifts } from '../db/schema.js';
 import { shiftStatusEnum } from '../db/schema/shifts.js';
@@ -13,7 +14,7 @@ const router = express.Router();
  * Public endpoint to fetch active venues for marketplace listing
  * Supports pagination and verification filter
  */
-router.get('/venues', asyncHandler(async (req, res) => {
+router.get('/venues', rateLimitPublic, asyncHandler(async (req, res) => {
   const db = getDb();
   if (!db) {
     res.status(500).json({ message: 'Database not available' });
@@ -200,7 +201,7 @@ router.get('/venues/:id', asyncHandler(async (req, res) => {
  * - offset: Pagination offset (default: 0)
  * - status: Shift status filter (default: 'open')
  */
-router.get('/shifts', asyncHandler(async (req, res) => {
+router.get('/shifts', rateLimitPublic, asyncHandler(async (req, res) => {
   const db = getDb();
   if (!db) {
     res.status(500).json({ message: 'Database not available' });

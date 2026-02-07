@@ -1,5 +1,6 @@
 import { apiRequest } from '../queryClient';
 import { toApiError, safeJson, authenticatedFormDataRequest } from './core';
+import type { Application } from './shared';
 // Re-export Application from shared to avoid duplicate type definitions
 export type { Application } from './shared';
 

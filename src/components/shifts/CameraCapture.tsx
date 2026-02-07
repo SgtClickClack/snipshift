@@ -93,6 +93,8 @@ export function CameraCapture({ onCapture, onCancel, className }: CameraCaptureP
               src={preview}
               alt="Proof photo preview"
               className="w-full h-auto max-h-96 object-contain"
+              loading="lazy"
+              decoding="async"
             />
           </div>
           <div className="flex gap-2">

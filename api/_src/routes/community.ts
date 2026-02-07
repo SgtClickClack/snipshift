@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authenticateUser, authenticateUserOptional, AuthenticatedRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
-import { PostSchema } from '../validation/schemas.js';
+import { PostSchema, CommentSchema } from '../validation/schemas.js';
 import * as postsRepo from '../repositories/posts.repository.js';
 import * as usersRepo from '../repositories/users.repository.js';
 import { normalizeParam } from '../utils/request-params.js';
@@ -124,22 +124,21 @@ router.post('/:postId/like', authenticateUser, asyncHandler(async (req: Authenti
 router.post('/:postId/comments', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
   const postId = normalizeParam(req.params.postId);
-  const { content } = req.body;
-
   if (!userId) {
     res.status(401).json({ message: 'Unauthorized' });
     return;
   }
 
-  if (!content || typeof content !== 'string' || content.trim().length === 0) {
-    res.status(400).json({ message: 'Content is required' });
+  const validation = CommentSchema.safeParse(req.body);
+  if (!validation.success) {
+    res.status(400).json({ message: validation.error.errors[0]?.message ?? 'Invalid input' });
     return;
   }
 
   const newComment = await postsRepo.createComment({
     postId,
     authorId: userId,
-    content: content.trim(),
+    content: validation.data.content.trim(),
   });
 
   if (!newComment) {

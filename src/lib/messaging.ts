@@ -1,8 +1,49 @@
 import { Chat, Message } from '@shared/firebase-schema';
 import { apiRequest } from '@/lib/queryClient';
 
+interface PendingMessage {
+  conversationId: string;
+  senderId: string;
+  receiverId: string;
+  content: string;
+  queuedAt: number;
+}
+
 export class MessagingService {
   private pollingIntervals: Map<string, NodeJS.Timeout> = new Map();
+  private offlineQueue: PendingMessage[] = [];
+  private flushInProgress = false;
+
+  constructor() {
+    // Flush queued messages when connectivity returns
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => this.flushOfflineQueue());
+    }
+  }
+
+  /** Drain the offline queue, sending each pending message in order. */
+  private async flushOfflineQueue(): Promise<void> {
+    if (this.flushInProgress || this.offlineQueue.length === 0) return;
+    this.flushInProgress = true;
+    try {
+      while (this.offlineQueue.length > 0) {
+        const pending = this.offlineQueue[0];
+        try {
+          await apiRequest('POST', '/api/messages', {
+            conversationId: pending.conversationId,
+            content: pending.content,
+          });
+          // Success — remove from queue
+          this.offlineQueue.shift();
+        } catch {
+          // Still failing — stop flushing, will retry on next 'online' event
+          break;
+        }
+      }
+    } finally {
+      this.flushInProgress = false;
+    }
+  }
 
   // Get or create a conversation between two users
   async getOrCreateChat(_currentUserId: string, otherUserId: string, _currentUserName: string, _otherUserName: string, _currentUserRole: string, _otherUserRole: string, jobId?: string): Promise<string> {
@@ -20,15 +61,35 @@ export class MessagingService {
     }
   }
 
-  // Send a message
+  // Send a message (queues locally if offline)
   async sendMessage(conversationId: string, _senderId: string, _receiverId: string, content: string): Promise<Message> {
+    // If offline, queue the message for later delivery
+    if (!navigator.onLine) {
+      const now = new Date().toISOString();
+      this.offlineQueue.push({
+        conversationId,
+        senderId: _senderId,
+        receiverId: _receiverId,
+        content,
+        queuedAt: Date.now(),
+      });
+      // Return an optimistic message so the UI updates immediately
+      return {
+        id: `pending-${Date.now()}`,
+        chatId: conversationId,
+        senderId: _senderId,
+        content,
+        timestamp: now,
+        read: false,
+      };
+    }
+
     try {
       const response = await apiRequest('POST', '/api/messages', {
         conversationId,
         content
       });
       const data = await response.json();
-      // Transform API response to Message format
       return {
         id: data.id,
         chatId: data.conversationId,
@@ -38,6 +99,25 @@ export class MessagingService {
         read: false,
       };
     } catch (error) {
+      // Network error during send — queue for retry
+      const msg = (error as any)?.message || '';
+      if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('Load failed')) {
+        this.offlineQueue.push({
+          conversationId,
+          senderId: _senderId,
+          receiverId: _receiverId,
+          content,
+          queuedAt: Date.now(),
+        });
+        return {
+          id: `pending-${Date.now()}`,
+          chatId: conversationId,
+          senderId: _senderId,
+          content,
+          timestamp: new Date().toISOString(),
+          read: false,
+        };
+      }
       console.error('Error sending message:', error);
       throw error;
     }

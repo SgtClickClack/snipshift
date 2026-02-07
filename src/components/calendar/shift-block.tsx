@@ -91,16 +91,16 @@ export function ShiftBlock({ event, onClick, isRecurring, className }: ShiftBloc
           "shift-block shift-block-unassigned",
           "w-full h-full rounded-lg",
           "bg-amber-500/15 dark:bg-amber-500/10 cursor-pointer",
-          "border-l-[3px] border-l-amber-500 border border-amber-500/20 dark:border-amber-500/15",
+          "border border-amber-500/20 dark:border-amber-500/15 border-l-[3px] border-l-amber-500",
           "flex items-center gap-1.5 px-2 py-1",
           "hover:bg-amber-500/25 dark:hover:bg-amber-500/20",
           "transition-all duration-200 ease-out",
           "text-amber-700 dark:text-amber-400 relative overflow-hidden",
           className
         )}
-        style={{ minHeight: '22px' }}
+        style={{ minHeight: '36px' }}
       >
-        <Clock className="h-3 w-3 flex-shrink-0 opacity-80" />
+        <Clock className="h-3.5 w-3.5 flex-shrink-0 opacity-80" />
         <span className="text-xs font-semibold truncate">{shiftLabel}</span>
         {showRecurring && (
           <Repeat className="h-2.5 w-2.5 absolute top-0.5 right-0.5 opacity-60" />
@@ -121,15 +121,15 @@ export function ShiftBlock({ event, onClick, isRecurring, className }: ShiftBloc
           "bg-zinc-100/50 dark:bg-zinc-800/30 cursor-pointer",
           "border-zinc-300/60 dark:border-zinc-700/50",
           "border-l-[3px] border-l-zinc-400 dark:border-l-zinc-500",
-          "flex items-center gap-1.5 px-2 py-1",
+          "flex items-center gap-1.5 px-2 py-1.5",
           "hover:bg-zinc-200/60 dark:hover:bg-zinc-700/40",
           "transition-all duration-200 ease-out",
           "text-zinc-500 dark:text-zinc-400 relative overflow-hidden",
           className
         )}
-        style={{ minHeight: '22px' }}
+        style={{ minHeight: '36px' }}
       >
-        <UserPlus className="h-3 w-3 flex-shrink-0 opacity-60" />
+        <UserPlus className="h-3.5 w-3.5 flex-shrink-0 opacity-60" />
         <span className="text-xs font-semibold truncate">Open</span>
         {showRecurring && (
           <Repeat className="h-2.5 w-2.5 absolute top-0.5 right-0.5 opacity-50" />
@@ -152,15 +152,15 @@ export function ShiftBlock({ event, onClick, isRecurring, className }: ShiftBloc
           "shift-block shift-block-invited",
           "w-full h-full rounded-lg",
           "bg-orange-500/15 dark:bg-orange-500/10",
-          "border-l-[3px] border-l-orange-500 border border-orange-500/20 dark:border-orange-500/15",
+          "border border-orange-500/20 dark:border-orange-500/15 border-l-[3px] border-l-orange-500",
           "cursor-pointer hover:bg-orange-500/25 dark:hover:bg-orange-500/20",
           "transition-all duration-200 ease-out",
           "flex items-center gap-1.5 px-2 py-1 relative overflow-hidden",
           className
         )}
-        style={{ minHeight: '22px' }}
+        style={{ minHeight: '36px' }}
       >
-        <Loader2 className="h-3 w-3 text-orange-500 dark:text-orange-400 animate-spin flex-shrink-0" />
+        <Loader2 className="h-3.5 w-3.5 text-orange-500 dark:text-orange-400 animate-spin flex-shrink-0" />
         <span className="text-orange-700 dark:text-orange-300 text-xs font-semibold truncate flex-1">
           {capacity > 1 ? `${filled}/${capacity} Filled` : firstName}
         </span>
@@ -182,16 +182,16 @@ export function ShiftBlock({ event, onClick, isRecurring, className }: ShiftBloc
           "shift-block shift-block-open",
           "w-full h-full rounded-lg",
           "bg-amber-500/15 dark:bg-amber-500/10",
-          "border-l-[3px] border-l-amber-500 border border-amber-500/20 dark:border-amber-500/15",
+          "border border-amber-500/20 dark:border-amber-500/15 border-l-[3px] border-l-amber-500",
           "cursor-pointer hover:bg-amber-500/25 dark:hover:bg-amber-500/20",
           "transition-all duration-200 ease-out",
           "flex items-center gap-1.5 px-2 py-1 relative overflow-hidden",
           "shadow-[0_0_8px_rgba(245,158,11,0.08)] dark:shadow-[0_0_12px_rgba(245,158,11,0.12)]",
           className
         )}
-        style={{ minHeight: '22px' }}
+        style={{ minHeight: '36px' }}
       >
-        <Clock className="h-3 w-3 text-amber-600 dark:text-amber-400 flex-shrink-0 opacity-80" />
+        <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0 opacity-80" />
         <span className="text-amber-700 dark:text-amber-300 text-xs font-semibold truncate flex-1">
           {openLabel}
         </span>
@@ -216,13 +216,13 @@ export function ShiftBlock({ event, onClick, isRecurring, className }: ShiftBloc
           "shift-block shift-block-confirmed",
           "w-full h-full rounded-lg",
           "bg-emerald-500/15 dark:bg-emerald-500/10",
-          "border-l-[3px] border-l-emerald-500 border border-emerald-500/20 dark:border-emerald-500/15",
+          "border border-emerald-500/20 dark:border-emerald-500/15 border-l-[3px] border-l-emerald-500",
           "cursor-pointer hover:bg-emerald-500/25 dark:hover:bg-emerald-500/20",
           "transition-all duration-200 ease-out",
           "flex items-center gap-1.5 px-2 py-1 relative overflow-hidden",
           className
         )}
-        style={{ minHeight: '22px' }}
+        style={{ minHeight: '36px' }}
       >
         <div className="flex items-center gap-0.5 flex-shrink-0">
           {avatarsToShow.map((s, i) => (
@@ -260,14 +260,14 @@ export function ShiftBlock({ event, onClick, isRecurring, className }: ShiftBloc
         "shift-block shift-block-default",
         "w-full h-full rounded-lg",
         "bg-zinc-200/50 dark:bg-zinc-800/40",
-        "border-l-[3px] border-l-zinc-400 dark:border-l-zinc-600 border border-zinc-300/40 dark:border-zinc-700/30",
+        "border border-zinc-300/40 dark:border-zinc-700/30 border-l-[3px] border-l-zinc-400 dark:border-l-zinc-600",
         "cursor-pointer hover:bg-zinc-300/50 dark:hover:bg-zinc-700/40",
         "transition-all duration-200 ease-out",
         "flex items-center gap-1.5 px-2 py-1 relative overflow-hidden",
         "text-zinc-600 dark:text-zinc-400 text-xs font-semibold",
         className
       )}
-      style={{ minHeight: '22px' }}
+      style={{ minHeight: '36px' }}
     >
       <span className="truncate">{shiftLabel}</span>
       {showRecurring && (

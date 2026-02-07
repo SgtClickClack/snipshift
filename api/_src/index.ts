@@ -24,14 +24,14 @@ import 'express-async-errors';
 
 import express from 'express';
 import cors from 'cors';
-import { JobSchema, ApplicationSchema, LoginSchema, ApplicationStatusSchema, PurchaseSchema, JobStatusUpdateSchema, ReviewSchema } from './validation/schemas.js';
+import { LoginSchema, ApplicationStatusSchema, PurchaseSchema, JobStatusUpdateSchema, ReviewSchema } from './validation/schemas.js';
 import { errorHandler, asyncHandler } from './middleware/errorHandler.js';
-import { authenticateUser, AuthenticatedRequest } from './middleware/auth.js';
+import { authenticateUser, AuthenticatedRequest, rateLimitRegisterAndMe, rateLimitPublic } from './middleware/auth.js';
+import helmet from 'helmet';
 import { correlationIdMiddleware } from './middleware/correlation-id.js';
 import * as jobsRepo from './repositories/jobs.repository.js';
 import * as applicationsRepo from './repositories/applications.repository.js';
 import * as usersRepo from './repositories/users.repository.js';
-import * as notificationsRepo from './repositories/notifications.repository.js';
 import { normalizeParam } from './utils/request-params.js';
 import * as reviewsRepo from './repositories/reviews.repository.js';
 import * as subscriptionsRepo from './repositories/subscriptions.repository.js';
@@ -79,6 +79,7 @@ import settlementsRouter from './routes/settlements.js';
 import xeroRouter from './routes/integrations/xero.js';
 import investorsRouter from './routes/investors.js';
 import supportRouter from './routes/support.js';
+import jobsLegacyRouter from './routes/jobs-legacy.js';
 import * as notificationService from './services/notification.service.js';
 import * as emailService from './services/email.service.js';
 import { initializePusher } from './services/pusher.service.js';
@@ -86,28 +87,6 @@ import { triggerConversationEvent } from './services/pusher.service.js';
 import * as pushNotificationService from './services/push-notification.service.js';
 import { stripe } from './lib/stripe.js';
 import type Stripe from 'stripe';
-
-type LegacyJobRole = 'barber' | 'hairdresser' | 'stylist' | 'other';
-
-/**
- * Normalize HospoGo-era role values into the legacy job role enum stored in the `jobs` table.
- *
- * The DB `job_role` enum (and repository types) are currently legacy-only. We keep the API
- * validation backwards-compatible but coerce hospitality roles to `other` for storage.
- */
-function toLegacyJobRole(role: unknown): LegacyJobRole {
-  if (!role) return 'barber'; // DB default enum value
-
-  switch (role) {
-    case 'barber': // DB enum values (legacy)
-    case 'hairdresser':
-    case 'stylist':
-    case 'other':
-      return role as LegacyJobRole;
-    default:
-      return 'other';
-  }
-}
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -200,6 +179,13 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'X-HospoGo-CSRF'],
 };
 
+// SECURITY: HTTP security headers (X-Content-Type-Options, X-Frame-Options, etc.)
+app.use(helmet({
+  // Vercel serves the SPA separately; only harden the API
+  contentSecurityPolicy: false,   // CSP managed by frontend/Vercel
+  crossOriginEmbedderPolicy: false, // Allow cross-origin resources (fonts, images)
+}));
+
 app.use(cors(corsOptions));
 
 // Stripe webhook route MUST be defined BEFORE express.json() middleware
@@ -212,6 +198,9 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // Correlation ID middleware - MUST be before request logging
 app.use(correlationIdMiddleware);
+
+// SECURITY: Rate limiting — auth-critical endpoints (40 req/min per IP)
+app.use(rateLimitRegisterAndMe);
 
 // Request logging middleware - log ALL incoming API requests AFTER body parsing
 app.use((req, res, next) => {
@@ -249,14 +238,15 @@ app.use('/api/social-posts', socialPostsRouter);
 app.use('/api/stripe-connect', stripeConnectRouter);
 app.use('/api/stripe', stripeRouter);
 app.use('/api/payments', paymentsRouter);
-app.use('/api/leads', leadsRouter);
+// SECURITY: Public endpoints rate-limited at 20 req/min per IP
+app.use('/api/leads', rateLimitPublic, leadsRouter);
 app.use('/api/appeals', appealsRouter);
-app.use('/api/waitlist', waitlistRouter);
+app.use('/api/waitlist', rateLimitPublic, waitlistRouter);
 app.use('/api/onboarding', onboardingRouter);
 app.use('/api/admin/reports', reportsRouter);
 app.use('/api/pusher', pusherRouter);
 app.use('/api/venues', venuesRouter);
-app.use('/api/marketplace', marketplaceRouter);
+app.use('/api/marketplace', rateLimitPublic, marketplaceRouter);
 app.use('/api/worker', workerRouter);
 app.use('/api/reviews', reviewsRouter);
 app.use('/api/push-tokens', pushTokensRouter);
@@ -265,8 +255,11 @@ app.use('/api/cron', cronWeeklyReportRouter);
 app.use('/api/cron', cronFinancialReconcileRouter);
 app.use('/api/settlements', settlementsRouter);
 app.use('/api/integrations/xero', xeroRouter);
-app.use('/api/investors', investorsRouter);
-app.use('/api/support', supportRouter);
+app.use('/api/investors', rateLimitPublic, investorsRouter);
+app.use('/api/support', rateLimitPublic, supportRouter);
+
+// Legacy jobs CRUD (deprecated — use /api/shifts instead)
+app.use('/api/jobs', jobsLegacyRouter);
 
 // Aliases for backward compatibility
 app.use('/api/training-content', trainingRouter); // Alias for /api/training/content if needed, or just route logic
@@ -461,16 +454,15 @@ app.post('/api/login', asyncHandler(async (req, res) => {
       return;
     }
 
-    // Mock credentials (temporary until proper auth is implemented)
-    if (email === 'business@example.com' && password === 'password123') {
-      // Try to get or create the mock business user in database
+    // Mock credentials — DEVELOPMENT ONLY
+    // Gated behind NODE_ENV to prevent production access via test creds
+    if (process.env.NODE_ENV === 'development' && email === 'business@example.com' && password === 'password123') {
       const dbUser = await usersRepo.getOrCreateMockBusinessUser();
-      
+
       const mockUser = {
         id: dbUser?.id || 'user-1',
         email: 'business@example.com',
         name: dbUser?.name || 'Test Business',
-        // In a real app, this would be a JWT
         token: 'mock-auth-token-12345',
       };
       res.status(200).json(mockUser);
@@ -488,509 +480,8 @@ app.post('/api/login', asyncHandler(async (req, res) => {
   }
 }));
 
-// GraphQL endpoint placeholder
-app.post('/graphql', (req, res) => {
-  res.status(200).json({ 
-    message: 'GraphQL endpoint - implementation needed'
-  });
-});
-
-// Handler for creating a job
-// [DEPRECATED] This endpoint is deprecated in favor of /api/shifts. 
-// The Hub Dashboard now posts to the Shifts API.
-// This route is maintained for legacy client compatibility only.
-app.post('/api/jobs', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  // Validate request body
-  const validationResult = JobSchema.safeParse(req.body);
-  if (!validationResult.success) {
-    res.status(400).json({ message: 'Validation error: ' + validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') });
-    return;
-  }
-
-  const userId = req.user?.id;
-  if (!userId) {
-    res.status(401).json({ message: 'Unauthorized' });
-    return;
-  }
-
-  const jobData = validationResult.data;
-  const payRate = typeof jobData.payRate === 'string' ? jobData.payRate : jobData.payRate.toString();
-
-  // Parse location string if provided (format: "address, city, state" or just "city, state")
-  let address = jobData.address;
-  let city = jobData.city;
-  let state = jobData.state;
-  let locationString = jobData.location;
-
-  if (jobData.location && !address) {
-    // Try to parse location string
-    const parts = jobData.location.split(',').map(p => p.trim());
-    if (parts.length >= 2) {
-      // Assume last part is state, second to last is city, rest is address
-      state = parts[parts.length - 1];
-      city = parts[parts.length - 2];
-      if (parts.length > 2) {
-        address = parts.slice(0, -2).join(', ');
-      }
-    } else if (parts.length === 1) {
-      // Just city name
-      city = parts[0];
-    }
-    locationString = jobData.location;
-  } else if (address || city || state) {
-    // Construct location string from parts
-    const locationParts = [address, city, state].filter(Boolean);
-    locationString = locationParts.join(', ');
-  }
-
-  // Default coordinates if not provided (use New York as default)
-  let lat = jobData.lat ? (typeof jobData.lat === 'string' ? parseFloat(jobData.lat) : jobData.lat) : undefined;
-  let lng = jobData.lng ? (typeof jobData.lng === 'string' ? parseFloat(jobData.lng) : jobData.lng) : undefined;
-
-  // If city is provided but no coordinates, use default city coordinates
-  if (!lat || !lng) {
-    if (city) {
-      // Simple city mapping (can be expanded later)
-      const cityCoords: Record<string, { lat: number; lng: number }> = {
-        'New York': { lat: 40.7128, lng: -74.0060 },
-        'Los Angeles': { lat: 34.0522, lng: -118.2437 },
-        'Chicago': { lat: 41.8781, lng: -87.6298 },
-        'Houston': { lat: 29.7604, lng: -95.3698 },
-        'Phoenix': { lat: 33.4484, lng: -112.0740 },
-      };
-      const coords = cityCoords[city];
-      if (coords) {
-        lat = coords.lat;
-        lng = coords.lng;
-      } else {
-        // Default to New York
-        lat = 40.7128;
-        lng = -74.0060;
-      }
-    } else {
-      // Default to New York
-      lat = 40.7128;
-      lng = -74.0060;
-    }
-  }
-
-  // Try to use database first
-  const newJob = await jobsRepo.createJob({
-    businessId: userId,
-    title: jobData.title,
-    payRate,
-    description: jobData.description!,
-    date: jobData.date!,
-    startTime: jobData.startTime!,
-    endTime: jobData.endTime!,
-    role: toLegacyJobRole(jobData.role),
-    shopName: jobData.shopName,
-    address,
-    city,
-    state,
-    lat: lat?.toString(),
-    lng: lng?.toString(),
-  });
-
-  if (newJob) {
-    // Transform database result to match frontend expectations
-    const locationParts = [newJob.address, newJob.city, newJob.state].filter(Boolean);
-    const location = locationParts.length > 0 ? locationParts.join(', ') : undefined;
-    
-    res.status(201).json({
-      id: newJob.id,
-      title: newJob.title,
-      shopName: newJob.shopName,
-      rate: newJob.payRate,
-      payRate: newJob.payRate,
-      description: newJob.description,
-      date: newJob.date,
-      lat: newJob.lat ? parseFloat(newJob.lat) : undefined,
-      lng: newJob.lng ? parseFloat(newJob.lng) : undefined,
-      location,
-      startTime: newJob.startTime,
-      endTime: newJob.endTime,
-      role: newJob.role,
-      hubId: newJob.businessId,
-      businessId: newJob.businessId,
-    });
-    return;
-  }
-
-  // Fallback to in-memory storage if database is not available
-  const fallbackJob = {
-    id: `job-${Math.floor(Math.random() * 10000)}`,
-    title: jobData.title,
-    shopName: jobData.shopName || 'TBD',
-    rate: payRate,
-    payRate,
-    description: jobData.description,
-    date: jobData.date,
-    lat: lat || 0,
-    lng: lng || 0,
-    location: locationString || 'Location TBD',
-    startTime: jobData.startTime,
-    endTime: jobData.endTime,
-  };
-  // Database is required for creating jobs
-  res.status(503).json({ message: 'Database not available. Cannot create job.' });
-}));
-
-/**
- * Geocode a city name to coordinates using OpenStreetMap Nominatim
- * Returns coordinates or null if geocoding fails
- */
-async function geocodeCity(cityName: string): Promise<{ lat: number; lng: number } | null> {
-  try {
-    // Use OpenStreetMap Nominatim API (free, no API key required)
-    const encodedCity = encodeURIComponent(cityName);
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodedCity}&format=json&limit=1&addressdetails=1`;
-    
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'HospoGo/1.0' // Required by Nominatim
-      }
-    });
-    
-    if (!response.ok) {
-      return null;
-    }
-    
-    const data: unknown = await response.json();
-    if (
-      Array.isArray(data) &&
-      data.length > 0 &&
-      typeof (data[0] as { lat?: unknown }).lat === 'string' &&
-      typeof (data[0] as { lon?: unknown }).lon === 'string'
-    ) {
-      const first = data[0] as { lat: string; lon: string };
-      return {
-        lat: parseFloat(first.lat),
-        lng: parseFloat(first.lon),
-      };
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('Geocoding error:', error);
-    return null;
-  }
-}
-
-// Handler for fetching jobs
-app.get('/api/jobs', asyncHandler(async (req, res) => {
-  // Parse query parameters for pagination and filtering
-  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
-  const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : undefined;
-  const businessId = req.query.businessId as string | undefined;
-  const status = req.query.status as 'open' | 'filled' | 'closed' | undefined;
-  let city = req.query.city as string | undefined;
-  const date = req.query.date as string | undefined;
-  
-  // Advanced filters
-  const search = req.query.search as string | undefined;
-  const role = req.query.role as 'barber' | 'hairdresser' | 'stylist' | 'other' | undefined; // DB enum values
-  const minRate = req.query.minRate ? parseFloat(req.query.minRate as string) : undefined;
-  const maxRate = req.query.maxRate ? parseFloat(req.query.maxRate as string) : undefined;
-  const startDate = req.query.startDate as string | undefined;
-  const endDate = req.query.endDate as string | undefined;
-  let radius = req.query.radius ? parseFloat(req.query.radius as string) : undefined;
-  let lat = req.query.lat ? parseFloat(req.query.lat as string) : undefined;
-  let lng = req.query.lng ? parseFloat(req.query.lng as string) : undefined;
-
-  // If city is provided but lat/lng are not, geocode the city name
-  if (city && !lat && !lng) {
-    const coords = await geocodeCity(city);
-    if (coords) {
-      lat = coords.lat;
-      lng = coords.lng;
-      // Default to 50km radius if not specified
-      if (!radius) {
-        radius = 50;
-      }
-      // Clear city filter since we're using radius-based search
-      city = undefined;
-    }
-    // If geocoding fails, we'll still use exact city name matching (city remains set)
-  }
-
-  // Try to use database first
-  const result = await jobsRepo.getJobs({
-    businessId,
-    status,
-    limit,
-    offset,
-    city, // Use city only if geocoding failed or wasn't attempted
-    date,
-    role,
-    search,
-    minRate,
-    maxRate,
-    startDate,
-    endDate,
-    radius,
-    lat,
-    lng,
-    excludeExpired: true, // Always exclude expired jobs by default
-  });
-
-  if (result) {
-    // Transform database results to match frontend expectations
-    const transformedJobs = result.data.map((job) => {
-      // Construct location string from address components
-      const locationParts = [job.address, job.city, job.state].filter(Boolean);
-      const location = locationParts.length > 0 ? locationParts.join(', ') : undefined;
-
-      return {
-        id: job.id,
-        title: job.title,
-        shopName: job.shopName,
-        rate: job.payRate,
-        date: job.date,
-        lat: job.lat ? parseFloat(job.lat) : undefined,
-        lng: job.lng ? parseFloat(job.lng) : undefined,
-        location,
-        // Include additional fields for compatibility
-        payRate: job.payRate,
-        description: job.description,
-        startTime: job.startTime,
-        endTime: job.endTime,
-        role: job.role,
-        hubId: job.businessId,
-        businessId: job.businessId,
-      };
-    });
-
-    // Include pagination metadata if pagination was requested
-    if (limit !== undefined || offset !== undefined) {
-      res.status(200).json({
-        data: transformedJobs,
-        total: result.total,
-        limit: result.limit,
-        offset: result.offset,
-      });
-    } else {
-      res.status(200).json(transformedJobs);
-    }
-    return;
-  }
-
-  // Fallback: return empty array if database is not available
-  res.status(200).json([]);
-}));
-
-// Handler for fetching a single job by ID
-app.get('/api/jobs/:id', asyncHandler(async (req, res) => {
-  const id = normalizeParam(req.params.id);
-
-  // Try to use database first
-  const job = await jobsRepo.getJobById(id);
-  if (job) {
-    // Transform database result to match frontend expectations
-    const locationParts = [job.address, job.city, job.state].filter(Boolean);
-    const location = locationParts.length > 0 ? locationParts.join(', ') : undefined;
-    
-    // Get business owner info
-    const businessOwner = await usersRepo.getUserById(job.businessId);
-    
-    res.status(200).json({
-      id: job.id,
-      title: job.title,
-      shopName: job.shopName,
-      rate: job.payRate,
-      payRate: job.payRate,
-      description: job.description,
-      date: job.date,
-      lat: job.lat ? parseFloat(job.lat) : undefined,
-      lng: job.lng ? parseFloat(job.lng) : undefined,
-      location,
-      startTime: job.startTime,
-      endTime: job.endTime,
-      role: job.role,
-      status: job.status,
-      businessId: job.businessId,
-      hubId: job.businessId,
-      businessName: businessOwner?.name || job.shopName || 'Business Owner',
-    });
-    return;
-  }
-
-  // Fallback: return 404 if database is not available
-  res.status(404).json({ message: 'Job not found' });
-}));
-
-// Handler for updating a job
-app.put('/api/jobs/:id', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const id = normalizeParam(req.params.id);
-  const userId = req.user?.id;
-
-  if (!userId) {
-    res.status(401).json({ message: 'Unauthorized' });
-    return;
-  }
-  
-  // Validate request body
-  const validationResult = JobSchema.safeParse(req.body);
-  if (!validationResult.success) {
-    res.status(400).json({ message: 'Validation error: ' + validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') });
-    return;
-  }
-
-  // Get job to verify ownership
-  // Try to use database first
-  const existingJob = await jobsRepo.getJobById(id);
-  
-  if (existingJob) {
-    if (existingJob.businessId !== userId) {
-      res.status(403).json({ message: 'Forbidden: You do not own this job' });
-      return;
-    }
-  } else {
-    // If not in DB, job doesn't exist
-    res.status(404).json({ message: 'Job not found' });
-    return;
-  }
-
-  const jobData = validationResult.data;
-  const payRate = typeof jobData.payRate === 'string' ? jobData.payRate : jobData.payRate.toString();
-
-  // Try to use database first
-  const updatedJob = await jobsRepo.updateJob(id, {
-    title: jobData.title,
-    payRate,
-    description: jobData.description!,
-    date: jobData.date!,
-    startTime: jobData.startTime!,
-    endTime: jobData.endTime!,
-    role: toLegacyJobRole(jobData.role),
-  });
-
-  if (updatedJob) {
-    // Transform database result to match frontend expectations
-    const locationParts = [updatedJob.address, updatedJob.city, updatedJob.state].filter(Boolean);
-    const location = locationParts.length > 0 ? locationParts.join(', ') : undefined;
-    
-    res.status(200).json({
-      id: updatedJob.id,
-      title: updatedJob.title,
-      shopName: updatedJob.shopName,
-      rate: updatedJob.payRate,
-      payRate: updatedJob.payRate,
-      description: updatedJob.description,
-      date: updatedJob.date,
-      lat: updatedJob.lat ? parseFloat(updatedJob.lat) : undefined,
-      lng: updatedJob.lng ? parseFloat(updatedJob.lng) : undefined,
-      location,
-      startTime: updatedJob.startTime,
-      endTime: updatedJob.endTime,
-      role: updatedJob.role,
-    });
-    return;
-  }
-
-  // Fallback: return 404 if database is not available
-  res.status(404).json({ message: 'Job not found' });
-}));
-
-// Handler for deleting a job
-app.delete('/api/jobs/:id', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const id = normalizeParam(req.params.id);
-  const userId = req.user?.id;
-
-  if (!userId) {
-    res.status(401).json({ message: 'Unauthorized' });
-    return;
-  }
-
-  // Get job to verify ownership
-  const existingJob = await jobsRepo.getJobById(id);
-  
-  if (existingJob) {
-    if (existingJob.businessId !== userId) {
-      res.status(403).json({ message: 'Forbidden: You do not own this job' });
-      return;
-    }
-  } else {
-    // If not in DB, job doesn't exist
-    res.status(404).json({ message: 'Job not found' });
-    return;
-  }
-
-  // Try to use database first
-  const deleted = await jobsRepo.deleteJob(id);
-  if (deleted) {
-    res.status(204).send(); // 204 No Content is standard for DELETE
-    return;
-  }
-
-  // Fallback: return 404 if database is not available
-  res.status(404).json({ message: 'Job not found' });
-}));
-
-// Handler for applying to a job
-app.post('/api/jobs/:id/apply', asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const jobId = normalizeParam(req.params.id);
-  
-  // Validate request body
-  const validationResult = ApplicationSchema.safeParse(req.body);
-  if (!validationResult.success) {
-    res.status(400).json({ message: 'Validation error: ' + validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') });
-    return;
-  }
-
-  const { name, email, coverLetter } = validationResult.data;
-  const userId = req.user?.id; // Get userId if authenticated
-
-  // Check if job exists
-  const job = await jobsRepo.getJobById(jobId);
-  
-  if (!job) {
-    res.status(404).json({ message: 'Job not found' });
-    return;
-  }
-
-  // Check for duplicate application (by userId if authenticated, otherwise by email)
-  const hasApplied = await applicationsRepo.hasUserAppliedToJob(jobId, userId, email);
-  if (hasApplied) {
-    res.status(409).json({ message: 'You have already applied to this job' });
-    return;
-  }
-
-  // Create application in database
-  const newApplication = await applicationsRepo.createApplication({
-    jobId,
-    userId,
-    name,
-    email,
-    coverLetter,
-  });
-
-  if (newApplication) {
-    // Notify job owner about new application
-    if (job) {
-      // Get job owner ID from job
-      const jobOwnerId = job.businessId;
-      if (jobOwnerId) {
-        await notificationService.notifyApplicationReceived(
-          jobOwnerId,
-          name,
-          job.title,
-          jobId
-        );
-      }
-    }
-
-    res.status(201).json({ 
-      message: 'Application submitted successfully!',
-      id: newApplication.id,
-    });
-    return;
-  }
-
-  // Fallback response if database is not available
-  res.status(201).json({ message: 'Application submitted successfully!' });
-}));
-
+// Legacy jobs CRUD routes extracted to routes/jobs-legacy.ts
+// (mounted above as /api/jobs)
 // Handler for fetching applications (for professional dashboard)
 // SECURITY: Requires authentication and enforces ownership - users can only view their own applications
 app.get('/api/applications', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {

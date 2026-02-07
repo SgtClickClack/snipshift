@@ -122,10 +122,10 @@ export function ShiftBucketPill({ bucket, onClick, className }: ShiftBucketPillP
       data-bucket-state={bucketStatus}
       className={cn(
         'shift-bucket-pill w-full h-full rounded-lg cursor-pointer',
-        'flex items-center gap-1.5 px-3 py-2 min-[768px]:px-2 min-[768px]:py-1',
+        'flex items-center gap-1.5 px-3 py-2 min-[1024px]:px-2 min-[1024px]:py-1',
         'transition-all duration-200 ease-out touch-manipulation',
-        // Mobile touch target: minimum 44px for accessibility
-        'min-h-[44px] min-[768px]:min-h-[28px]',
+        // Touch target: 44px minimum on mobile+tablet, relaxed on desktop
+        'min-h-[44px] min-[1024px]:min-h-[32px]',
         variantClass,
         className
       )}

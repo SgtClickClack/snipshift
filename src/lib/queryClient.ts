@@ -474,7 +474,18 @@ export const queryClient = new QueryClient({
       retry: false,
     },
     mutations: {
-      retry: false,
+      retry: (failureCount, error) => {
+        // Retry up to 3 times only for network errors (offline/connectivity issues)
+        if (failureCount >= 3) return false;
+        const msg = (error as any)?.message || '';
+        const isNetworkError =
+          msg.includes('Failed to fetch') ||
+          msg.includes('NetworkError') ||
+          msg.includes('Load failed') ||
+          !navigator.onLine;
+        return isNetworkError;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 15000),
     },
   },
 });

@@ -29,7 +29,7 @@ import { CompleteSetupBanner } from "@/components/onboarding/CompleteSetupBanner
 import DashboardStats from "@/components/dashboard/dashboard-stats";
 import { StripeConnectBanner } from "@/components/payments/StripeConnectBanner";
 import { DashboardStatsSkeleton, ApplicantCardSkeleton, ShiftListSkeleton } from "@/components/loading/skeleton-loaders";
-import { StaggerContainer, StaggerItem } from "@/components/ui/stagger-entry";
+import { StaggerContainer } from "@/components/ui/stagger-entry";
 import { VenueStatusCard } from "@/components/venues/VenueStatusCard";
 import { VenueAnalyticsDashboard } from "@/components/venues/VenueAnalyticsDashboard";
 import { VenueCandidatesDialog } from "@/components/venues/VenueCandidatesDialog";

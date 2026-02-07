@@ -1,6 +1,36 @@
 # Development Tracking Part 02
 <!-- markdownlint-disable-file -->
 
+#### 2026-02-07: Vercel Deployment Config Cleanup — Environment Parity
+
+**Core Components**
+- `package.json` — `engines.node` changed from `>=22.0.0` to `24.x`
+- `api/package.json` — `engines.node` changed from `>=22.0.0` to `24.x`
+- `vercel.json` — Removed `memory: 1024` from `api/index.ts` and `api/[...path].ts` function configs
+
+**Key Features**
+- **Node 24.x lock:** Silences Vercel auto-upgrade warnings; aligns with 2026 LTS
+- **Memory property removal:** Dropped from functions config (ignored by Fluid Compute/Active CPU billing)
+
+**Integration Points**
+- Root + API package.json engines aligned for Vercel build
+- vercel.json functions config simplified
+
+**File Paths**
+- `package.json` (engines.node: '24.x')
+- `api/package.json` (engines.node: '24.x')
+- `vercel.json` (memory removed from functions)
+
+**Next Priority Task**
+- Deploy with `vercel --prod --force`; verify no Vercel deployment warnings
+
+**Code Organization & Quality**
+- No code changes; config-only edits
+- API build verified: `tsc && fix-imports` succeeds
+- npm install completed successfully
+
+---
+
 #### 2026-02-07: Splash Shield — Flicker Fix + Logo Swap (v1.1.23)
 
 **Core Components**

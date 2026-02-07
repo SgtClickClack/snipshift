@@ -9,6 +9,7 @@
 
 import { Router } from 'express';
 import { asyncHandler } from '../middleware/errorHandler.js';
+import { rateLimitPublic } from '../middleware/auth.js';
 import { InvestorQuerySchema } from '../validation/schemas.js';
 import { 
   queryInvestorAssistant, 
@@ -53,7 +54,7 @@ async function logInvestorQuery(
  * Query the AI investor assistant (Foundry Agent)
  * Public endpoint - no authentication required
  */
-router.post('/query', asyncHandler(async (req, res) => {
+router.post('/query', rateLimitPublic, asyncHandler(async (req, res) => {
   const startTime = Date.now();
   
   // Validate request body
@@ -144,7 +145,7 @@ router.get('/status', asyncHandler(async (req, res) => {
  * Submit an RSVP for the investor briefing
  * Public endpoint - no authentication required
  */
-router.post('/rsvp', asyncHandler(async (req, res) => {
+router.post('/rsvp', rateLimitPublic, asyncHandler(async (req, res) => {
   const { email, name, timestamp } = req.body;
   
   // Log the RSVP

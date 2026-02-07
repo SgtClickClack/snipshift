@@ -34,7 +34,7 @@ export default function SignupPage() {
   // Prevent double execution in React Strict Mode
   const hasProcessedOAuthCallback = useRef(false);
   const hasShownConnectingToast = useRef(false);
-  const [isFinalizing, setIsFinalizing] = useState(false);
+  const [isFinalizing, _setIsFinalizing] = useState(false);
   const [showManualDashboardLink, setShowManualDashboardLink] = useState(false);
   const [showConnectionDelayedButton, setShowConnectionDelayedButton] = useState(false);
 
