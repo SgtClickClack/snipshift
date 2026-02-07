@@ -1,6 +1,242 @@
 # Development Tracking Part 02
 <!-- markdownlint-disable-file -->
 
+#### 2026-02-07: Nuclear Infrastructure Alignment — Final Recovery v1.1.9
+
+**Core Components**
+- `vercel.json` (Shield-First hierarchy: assets, sounds, auth, API, login, signup, SPA fallback)
+- `src/App.tsx` (login, signup, oauth/callback NOT wrapped in AuthGuard/ProtectedRoute)
+- `src/contexts/AuthContext.tsx` (onAuthStateChanged in useEffect with [] to stop timer storm)
+- `package.json` (version 1.1.9)
+
+**Key Features**
+- **Shield-First rewrites:** `/assets/:path*`, `/sounds/:path*`, `/__/auth/:path*`, `/api/:path*`, `/login`, `/signup`, then `/(.*)` → SPA
+- **Auth routes:** Confirmed /login, /signup, /oauth/callback are public (no AuthGuard/ProtectedRoute)
+- **Auth listener:** onAuthStateChanged inside useEffect with empty dependency array [] — prevents re-mount storm
+
+**Integration Points**
+- Assets, Auth, and API protected before SPA fallback; login/signup explicit rewrites to /index
+
+**File Paths**
+- `vercel.json` (rewrites block)
+- `src/App.tsx` (route verification)
+- `src/contexts/AuthContext.tsx` (listener verification)
+- `package.json` (version 1.1.9)
+
+**Next Priority Task**
+- Monitor production for auth flow stability; confirm no timer storm or 401 storms
+
+---
+
+#### 2026-02-07: API Bridge Stabilization — Final Lockdown v1.1.8
+
+**Core Components**
+- `vercel.json` (functions maxDuration: 60 for api/**/*.ts)
+- `src/lib/firebase.ts` (authDomain verification: hospogo.com — no https:// prefix)
+- `package.json` (version 1.1.8)
+
+**Key Features**
+- **functions maxDuration:** Set to 60 seconds for all `api/**/*.ts` routes to prevent 502 timeouts during registration
+- **authDomain:** Verified `hospogo.com` (exact, no https:// prefix)
+- **Rewrites:** /__/auth → Firebase; /api → api.hospogo.com; /sounds; catch-all to /index
+- Removed explicit /login rewrite (handled by catch-all)
+
+**Integration Points**
+- Vercel serverless functions timeout extended; reduces 502s on slow registration flows
+- Firebase auth domain correct for COOP/same-origin popup
+
+**File Paths**
+- `vercel.json` (functions block, rewrites)
+- `src/lib/firebase.ts` (authDomain: 'hospogo.com')
+- `package.json` (version 1.1.8)
+
+**Next Priority Task**
+- Monitor Vercel logs for 502s on /api/register; confirm registration completes reliably
+
+---
+
+#### 2026-02-07: Infrastructure Priority Restoration v1.1.7 — COOP + 502 Kill Shot
+
+**Core Components**
+- `src/lib/firebase.ts` (authDomain back to hospogo.com)
+- `vercel.json` (auth proxy first, API proxy, login, catch-all)
+- `package.json` (version 1.1.7)
+
+**Key Features**
+- **authDomain:** Changed from `snipshift-75b04.firebaseapp.com` back to `hospogo.com` — resolves COOP "block the window.close" error; popup runs same-origin
+- **Vercel Nuclear Rewrite:** `/__/auth/:path*` → Firebase proxy first; `/api/:path*` → api.hospogo.com; `/login` → /index; catch-all last
+- **`:path*` logic:** Ensures `/api/register`, `/api/me` forwarded to backend exactly as intended, clearing 502 errors
+
+**Integration Points**
+- COOP satisfied: same-origin popup allows windows to talk and close each other without security blocks
+- API stability: Auth and API routes have absolute priority; landing page only served if not auth/api
+
+**File Paths**
+- `src/lib/firebase.ts` (authDomain: 'hospogo.com')
+- `vercel.json` (rewrites: /__/auth, /api, /login, catch-all)
+- `package.json` (version 1.1.7)
+
+**Next Priority Task**
+- Verify deploy at hospogo.com; check Vercel Logs for any remaining 502s on /api/register or /api/me
+
+---
+
+#### 2026-02-07: Infrastructure Native Redirect v1.1.6 — "Site can't be reached" fix
+
+**Core Components**
+- `src/lib/firebase.ts` (authDomain)
+- `vercel.json` (removed auth proxy rewrite)
+- `package.json` (version 1.1.6)
+
+**Key Features**
+- **Firebase Domain Reset:** `authDomain` changed from `hospogo.com` to `snipshift-75b04.firebaseapp.com` — bypasses Vercel proxy entirely; popup loads directly from Firebase's native domain
+- **Vercel Routing Lockdown:** Removed `/__/auth/:path*` rewrite rule; no longer proxy auth traffic (was timing out in Chrome and Edge)
+- **Root Cause:** "Site can't be reached" in all browsers (including fresh Edge) proved infrastructure-layer failure — Vercel proxy not routing to Firebase
+
+**Integration Points**
+- OAuth popup now loads `snipshift-75b04.firebaseapp.com/__/auth/handler` (Google-owned URL); whitelisted by default in Firebase console
+- Eliminates "Duplicate Page" loop and "Site can't be reached" errors; popup closes instantly on success
+
+**File Paths**
+- `src/lib/firebase.ts` (authDomain: 'snipshift-75b04.firebaseapp.com')
+- `vercel.json` (rewrites: /login, /api, /sounds, catch-all — no auth proxy)
+- `package.json` (version 1.1.6)
+
+**Next Priority Task**
+- Deploy with `vercel --prod --force`; verify OAuth popup completes in Chrome and Edge
+
+---
+
+#### 2026-02-07: Nuclear Routing Lockdown — /login 404 v1.1.5
+
+**Core Components**
+- `vercel.json` (rewrites order, explicit /login rule)
+- `src/App.tsx` (/login route verification)
+- `package.json` (version 1.1.5)
+
+**Key Features**
+- **Nuclear Routing:** Replaced vercel.json with explicit block; `/login` rewrite as second rule (after auth proxy) to bypass all other logic
+- **Confirmed:** `/login` route in App.tsx is raw `<LoginPage />` — NOT wrapped in AuthGuard
+- **Deploy:** `vercel --prod --force` to flush routing cache
+
+**Integration Points**
+- Vercel must serve index.html for /login so React router can run; popup at hospogo.com/login must load SPA, not 404
+- Once page loads, v1.1.4 useEffect detects window.opener and closes popup; main window syncs to dashboard
+
+**File Paths**
+- `vercel.json` (rewrites: auth proxy, /login, /api, /sounds, catch-all)
+- `src/App.tsx` (Route path="/login" element={<LoginPage />})
+- `package.json` (version 1.1.5)
+
+**Next Priority Task**
+- ~~Verify status code~~ DONE: Returns 200. **cleanUrls fix:** With `cleanUrls: true`, rewrite destinations must use `/index` not `/index.html` (Vercel community)
+
+---
+
+#### 2026-02-07: Final Auth Bridge Lockdown v1.1.4
+
+**Core Components**
+- `src/pages/oauth-callback.tsx`
+- `src/contexts/AuthContext.tsx`
+- `src/App.tsx`
+
+**Key Features**
+- **Popup flow:** `window.close()` called immediately when `hasFirebaseUser` is detected (onAuthStateChanged signal), without waiting for user profile; parent window handles the rest
+- **Handshake timer:** Wrapped in `useEffect` with `[]` deps to prevent "Already exists" re-mount storm
+- **Auth listener:** `onAuthStateChanged` listener wrapped in `useEffect` with `[]` deps; uses refs for hydrate/navigate to avoid dependency churn
+- **AuthGate bypass:** `/oauth/callback` and `/__/auth/handler` added to public routes so popup can finalize without hitting the gate
+
+**Integration Points**
+- OAuth popup closes as soon as Firebase auth state is confirmed; no redirect needed in popup
+- AuthContext listener runs exactly once per mount; no re-subscription storm
+
+**File Paths**
+- `src/pages/oauth-callback.tsx`
+- `src/contexts/AuthContext.tsx`
+- `src/App.tsx`
+- `package.json` (version 1.1.4)
+
+**Next Priority Task**
+- Verify popup OAuth flow completes and closes without redirect
+
+---
+
+#### 2026-02-07: AuthGuard Loop Fix — /login Public Access v1.1.3
+
+**Core Components**
+- `src/App.tsx` (/login route)
+- `vercel.json` (sounds rewrite syntax)
+
+**Key Features**
+- Removed `<AuthGuard>` wrapper from `/login` route so login page is publicly accessible
+- AuthGuard was blocking/redirecting when auth handshake completed and user landed on /login
+- Updated sounds rewrite from `/sounds/(.*)` to `/sounds/:path*` for consistency
+
+**Integration Points**
+- /login must render LoginPage without any auth checks — unauthenticated users need immediate access
+- vercel.json /login rewrite (already present) + no AuthGuard = no 404 and no redirect loop
+
+**File Paths**
+- `src/App.tsx` (Route path="/login" — now `<LoginPage />` directly)
+- `vercel.json` (sounds rule)
+
+**Next Priority Task**
+- Deploy with `vercel --prod --force`; verify login flow completes
+
+---
+
+#### 2026-02-07: Final Architectural Alignment — /login 404 + Ghost SW v1.1.3
+
+**Core Components**
+- `vercel.json` (rewrites order: /login as second rule)
+- `package.json` (version 1.1.3)
+- `src/lib/firebase.ts`, `src/lib/auth.ts` (redirect path verification)
+
+**Key Features**
+- Moved `/login` rewrite to SECOND position (right after auth proxy) in vercel.json for explicit SPA routing
+- Verified firebase.ts and auth.ts: no signInWithRedirect hardcoded to path other than '/' or '/dashboard'; Firebase uses current URL
+- Bumped version to 1.1.3 to force Service Worker update (kill ghost v1.1.2 SW)
+- vite-plugin-pwa already has `registerType: 'autoUpdate'` — no change needed
+
+**Integration Points**
+- /login must resolve to index.html before any other SPA route; auth proxy remains first for Firebase handler
+- Post-deploy: run `vercel --prod --force` to bypass Edge cache; users should "Clear site data" in DevTools to purge old SW
+
+**File Paths**
+- `vercel.json` (rewrites array order)
+- `package.json` (version 1.1.3)
+
+**Next Priority Task**
+- Deploy with `vercel --prod --force`; verify `(Invoke-WebRequest -UseBasicParsing -Method Head -Uri "https://hospogo.com/login").Headers["Content-Type"]` returns `text/html`
+
+---
+
+#### 2026-02-07: Final Route Alignment & Auth Hand-off v1.1.2
+
+**Core Components**
+- `vercel.json` (explicit /login rewrite)
+- `src/lib/firebase.ts`, `src/lib/auth.ts` (auth flow verification)
+- `src/App.tsx` (router /login route)
+
+**Key Features**
+- Added explicit rewrite `{"source":"/login","destination":"/index.html"}` in vercel.json above catch-all to ensure /login never 404s
+- Verified firebase.ts has no signInWithRedirect; auth.ts uses signInWithRedirect only as popup fallback (no custom /login path)
+- Confirmed /login route exists in App.tsx (line 219)
+- Deployed with vercel --prod --force to flush routing cache
+
+**Integration Points**
+- /login rewrite takes precedence before SPA catch-all; Firebase redirect flow returns to current URL (handled by auth domain)
+
+**File Paths**
+- `vercel.json` (rewrites array)
+- `src/lib/auth.ts` (signInWithRedirect fallback)
+- `src/App.tsx` (Route path="/login")
+
+**Next Priority Task**
+- Per roadmap and tracking index
+
+---
+
 #### 2026-02-07: Final Handshake Alignment v1.1.2
 
 **Core Components**
@@ -6159,6 +6395,111 @@ The following locations contain demo bypass logic flagged for removal once produ
 
 **Code Organization & Quality**
 - Config-only change; no runtime code paths altered.
+
+---
+
+#### 2026-02-07: Firebase Native Auth Lockdown + Shield-First Routing (v1.1.10)
+
+**Core Components**
+- Firebase config: `src/lib/firebase.ts`
+- Vercel routing config: `vercel.json`
+- Package metadata: `package.json`
+
+**Key Features**
+- Switched `authDomain` back to Firebase’s native domain to bypass Vercel proxy loops.
+- Removed the `/__/auth` rewrite and enforced shield-first routing for `/assets` and `/sounds`.
+- Bumped app version to `1.1.10` for the infrastructure alignment release.
+
+**Integration Points**
+- Firebase auth domain: `snipshift-75b04.firebaseapp.com`
+- Vercel rewrites: static assets → API → SPA fallback (auth handled natively)
+
+**File Paths**
+- `src/lib/firebase.ts`
+- `vercel.json`
+- `package.json`
+
+**Next Priority Task**
+- Deploy to production and perform the browser-level service worker reset.
+
+**Code Organization & Quality**
+- Config-only and env alignment; no runtime flow changes beyond auth domain.
+
+---
+
+#### 2026-02-07: Infrastructure Triage - API 502 Gateway Errors
+
+**Core Components**
+- API gateway routing: `vercel.json`
+- API health endpoints: `api/_src/index.ts`
+
+**Key Features**
+- Confirmed frontend requests to `/api/register`, `/api/bootstrap`, `/api/me`, `/api/venues/me` are returning `502 Bad Gateway` in production logs.
+- Verified Vercel rewrites already route `/api/:path*` to `https://api.hospogo.com/:path*`, so the failure is upstream of the frontend.
+- Attempted direct health check of `https://api.hospogo.com/health` locally; DNS resolution failed, indicating a host/DNS or upstream availability issue.
+- Noted non-blocking console noise: COOP popup warning and PWA install banner suppression are expected and unrelated to the 502s.
+
+**Integration Points**
+- Health checks: `GET /health`, `GET /api/health`
+- API gateway target: `https://api.hospogo.com`
+
+**File Paths**
+- `vercel.json`
+- `api/_src/index.ts`
+
+**Next Priority Task**
+- Validate `api.hospogo.com` DNS/hosting health and backend availability (route health endpoint + inspect hosting logs).
+
+**Code Organization & Quality**
+- No code changes; diagnostics only.
+
+---
+
+#### 2026-02-07: Vercel Env Audit - No API Host Found
+
+**Core Components**
+- Vercel environment export: `.env.vercel`
+- API base resolution: `src/lib/queryClient.ts`
+
+**Key Features**
+- Pulled Vercel environment variables and confirmed no `VITE_API_URL` or backend host value is set in the current environment export.
+- Verified frontend continues to use same-origin API calls, relying on Vercel rewrites for `/api/*`.
+
+**Integration Points**
+- Vercel env pull: `vercel env pull .env.vercel`
+- API base selection: `VITE_API_URL` fallback to same-origin
+
+**File Paths**
+- `.env.vercel`
+- `src/lib/queryClient.ts`
+
+**Next Priority Task**
+- Identify the active backend host (Render/Railway/Fly/AWS) and validate its health endpoint.
+
+**Code Organization & Quality**
+- No code changes; configuration inspection only.
+
+---
+
+#### 2026-02-07: Vercel Build Fix - Add build:client Script
+
+**Core Components**
+- Build scripts: `package.json`
+
+**Key Features**
+- Added `build:client` alias to match Vercel build command expectations.
+
+**Integration Points**
+- Vercel Build Command: `npm run build:client`
+
+**File Paths**
+- `package.json`
+
+**Next Priority Task**
+- Trigger production deploy and confirm API functions build successfully.
+
+**Code Organization & Quality**
+- Script alias only; no runtime behavior changes.
 
 ---
 

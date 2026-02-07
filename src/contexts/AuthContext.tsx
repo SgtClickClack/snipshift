@@ -250,9 +250,6 @@ function cacheSession(user: User | null, venue?: unknown) {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  // PROGRESSIVE UNLOCK: Start timer at absolute mount to prevent "Handshake-to-Unlock does not exist" error
-  // when releaseNavigationLock/timeEnd runs before hydrateFromFirebaseUser (e.g. firebaseUser=null, pathname change)
-  console.time('Handshake-to-Unlock');
   // TAB RECOVERY: Initialize from cached session for instant mount
   const cachedSession = getCachedSession();
   const [user, setUser] = useState<User | null>(cachedSession.user);
@@ -354,7 +351,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const navigationLockReleasedRef = useRef<boolean>(false);
   const handshakeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const handshakeTimerEndedRef = useRef<boolean>(false);
-  
+  // Refs for auth listener to avoid re-mount storm (useEffect with [] deps)
+  const hydrateRef = useRef<((u: FirebaseUser) => Promise<void>) | null>(null);
+  const navigateRef = useRef<((path: string, opts?: { replace?: boolean }) => void) | null>(null);
+
+  // PROGRESSIVE UNLOCK: Start timer once on mount (useEffect with [] prevents "Already exists" re-mount storm)
+  useEffect(() => {
+    console.time('Handshake-to-Unlock');
+    return () => {
+      if (!handshakeTimerEndedRef.current) {
+        handshakeTimerEndedRef.current = true;
+        console.timeEnd('Handshake-to-Unlock');
+      }
+    };
+  }, []);
+
   /** Safe navigation lock release - ensures it's only called once per auth cycle */
   const releaseNavigationLock = useCallback(() => {
     if (!navigationLockReleasedRef.current) {
@@ -770,6 +781,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isHydratingRef.current = false;
   }, [navigate, location.pathname, user?.uid, releaseNavigationLock, unlockNavigationOnMe]);
 
+  // Keep refs in sync for auth listener (avoids listener re-mount storm)
+  hydrateRef.current = hydrateFromFirebaseUser;
+  navigateRef.current = navigate;
+
   const refreshUser = useCallback(async (): Promise<{ venueReady: boolean }> => {
     const firebaseUser = firebaseUserRef.current;
     if (!firebaseUser) return { venueReady: false };
@@ -829,6 +844,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [location.pathname, releaseNavigationLock]);
 
+  // AUTH BRIDGE LOCKDOWN: onAuthStateChanged listener in useEffect with [] to prevent "Already exists" re-mount storm
   useEffect(() => {
     let unsub: (() => void) | undefined;
     let isInitialAuthCheck = true;
@@ -902,25 +918,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 setIsRegistered(false);
                 setIsSystemReady(true); // No Firebase user - system ready for landing/login
               } else {
-                await hydrateFromFirebaseUser(firebaseUser);
-                
+                const hydrate = hydrateRef.current;
+                if (hydrate) await hydrate(firebaseUser);
+
                 // CRITICAL: Immediate navigation for popup flow results
-                  // This ensures navigation happens inside the popup promise resolution,
-                  // bypassing Chrome's bounce tracking mitigations
-                  // Only navigate if we're on auth pages and user is authenticated
-                  if (!isInitialAuthCheck) {
-                    const currentPath = window.location.pathname;
-                    if (currentPath === '/login') {
-                      const target = isVenueMissingRef.current ? '/onboarding/hub' : '/dashboard';
+                // This ensures navigation happens inside the popup promise resolution,
+                // bypassing Chrome's bounce tracking mitigations
+                // Only navigate if we're on auth pages and user is authenticated
+                if (!isInitialAuthCheck) {
+                  const currentPath = window.location.pathname;
+                  if (currentPath === '/login') {
+                    const target = isVenueMissingRef.current ? '/onboarding/hub' : '/dashboard';
+                    const nav = navigateRef.current;
+                    if (nav) {
                       if (window.location.pathname === target) {
                         setRedirecting(false);
                       } else {
                         setRedirecting(true);
-                        navigate(target, { replace: true });
+                        nav(target, { replace: true });
                       }
                     }
                   }
                 }
+              }
               } catch (error) {
               logger.error('AuthContext', 'Auth hydration failed', error);
               setUser(null);
@@ -954,7 +974,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => {
       if (unsub) unsub();
     };
-  }, [hydrateFromFirebaseUser, navigate, releaseNavigationLock]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Empty deps prevent "Already exists" re-mount storm; refs hold latest hydrate/navigate
+  }, []);
 
   // Detect Firebase auth params in URL (apiKey, mode=signIn, etc.)
   // These indicate the user just completed popup auth and landed on home page

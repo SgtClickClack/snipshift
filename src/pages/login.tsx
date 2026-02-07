@@ -18,7 +18,7 @@ export default function LoginPage() {
   const supportMessage = "Something went wrong. Give it another shot or reach out to us at info@hospogo.com.";
   
   // MODULAR PATTERN: Use ONLY useAuth() hook - no direct auth object access
-  const { user, isLoading: authLoading, isVenueMissing } = useAuth();
+  const { user, hasFirebaseUser, isLoading: authLoading, isVenueMissing } = useAuth();
   
   const [formData, setFormData] = useState({
     email: "",
@@ -29,11 +29,18 @@ export default function LoginPage() {
   useEffect(() => {
     if (authLoading) return;
 
-    // Clear pending state immediately when valid user is detected
+    // POPUP FLOW: If we're in an OAuth popup and Firebase auth is confirmed, close immediately.
+    // Parent window will handle state sync via onAuthStateChanged. Don't wait for user profile.
+    if (typeof window !== 'undefined' && window.opener && hasFirebaseUser) {
+      window.close();
+      return;
+    }
+
+    // Clear pending state immediately when valid user is detected (main window)
     if (user) {
       navigate(isVenueMissing ? '/onboarding/hub' : '/dashboard', { replace: true });
     }
-  }, [authLoading, user, isVenueMissing, navigate]);
+  }, [authLoading, user, hasFirebaseUser, isVenueMissing, navigate]);
 
   useEffect(() => {
     // Also check auth.currentUser directly for popup flow

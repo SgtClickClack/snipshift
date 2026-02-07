@@ -66,7 +66,26 @@ export function OAuthCallback() {
     }
   }, [isLoading, hasFirebaseUser, hasUser]);
 
+  // POPUP FLOW: Close immediately when onAuthStateChanged fires (hasFirebaseUser)
+  // Don't wait for user profile — parent window will handle the rest
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const isPopup = !!window.opener;
+    if (!isPopup) return;
+    if (hasRedirected.current) return;
+    if (!hasFirebaseUser) return; // Wait for Firebase auth signal
+
+    hasRedirected.current = true;
+    if (timeoutRef.current) {
+      window.clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    window.close();
+  }, [hasFirebaseUser]);
+
+  // REDIRECT FLOW: Navigate when user profile is ready (main window only)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.opener) return; // Popup handled above
     if (isLoading) return; // Wait for loading to complete
     if (hasRedirected.current) return;
 

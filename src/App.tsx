@@ -215,12 +215,8 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
           </Suspense>
         } />
 
-        {/* Authentication routes */}
-        <Route path="/login" element={
-          <AuthGuard>
-            <LoginPage />
-          </AuthGuard>
-        } />
+        {/* Authentication routes - /login must be publicly accessible (no AuthGuard) */}
+        <Route path="/login" element={<LoginPage />} />
         
         <Route path="/signup" element={<SignupPage />} />
 
@@ -807,7 +803,9 @@ function AuthGate({ children, splashHandled }: { children: React.ReactNode; spla
     location.pathname === '/login' ||
     location.pathname === '/signup' ||
     location.pathname === '/forgot-password' ||
-    location.pathname.startsWith('/onboarding');
+    location.pathname.startsWith('/onboarding') ||
+    location.pathname === '/oauth/callback' ||
+    location.pathname === '/__/auth/handler';
 
   // Logic: Proceed if auth is ready, if we are on a public route, OR if the 3s fail-safe triggered.
   const shouldShowSplash = (!isSystemReady || user === undefined) && !isPublicRoute && !timedOut && splashHandled;

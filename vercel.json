@@ -1,18 +1,15 @@
 {
-  "rewrites": [
-    {
-      "source": "/__/auth/:path*",
-      "destination": "https://snipshift-75b04.firebaseapp.com/__/auth/:path*"
-    },
-    {
-      "source": "/api/:path*",
-      "destination": "https://api.hospogo.com/:path*"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
+  "version": 2,
+  "functions": {
+    "api/index.ts": {
+      "maxDuration": 60
     }
+  },
+  "rewrites": [
+    { "source": "/assets/:path*", "destination": "/assets/:path*" },
+    { "source": "/sounds/:path*", "destination": "/sounds/:path*" },
+    { "source": "/api/:path*", "destination": "/api" },
+    { "source": "/(.*)", "destination": "/index" }
   ],
-  "cleanUrls": true,
-  "trailingSlash": false
+  "cleanUrls": true
 }
