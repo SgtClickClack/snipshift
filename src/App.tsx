@@ -780,21 +780,38 @@ function HydrationSplash() {
  * Public routes (landing, status, waitlist, investor portal) bypass the gate.
  */
 function AuthGate({ children, splashHandled }: { children: React.ReactNode; splashHandled: boolean }) {
-  const { isSystemReady, isLoading, user } = useAuth();
+  const { isSystemReady, hasFirebaseUser } = useAuth();
   const location = useLocation();
   const [timedOut, setTimedOut] = useState(false);
 
-  // FAIL-SAFE: If Firebase handshake takes > 10 seconds, force the app to load anyway.
-  // v1.1.17: Extended from 3s to 10s to allow cold-start backend bootstrap to complete.
+  // FAIL-SAFE: Tiered timeout for Firebase handshake + backend cold starts.
+  // Tier 1 (10s): Bypass splash ONLY if no Firebase user exists (guest/unauthenticated).
+  //               If a Firebase user IS present, keep waiting — the profile is still hydrating.
+  // Tier 2 (20s): Force bypass regardless — prevents infinite splash on full API outage.
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!isSystemReady) {
-        console.warn('[AuthGate] Firebase handshake timed out; bypassing splash screen.');
+    if (isSystemReady) return; // Already ready, no timers needed
+
+    const softTimer = setTimeout(() => {
+      if (!isSystemReady && !hasFirebaseUser) {
+        console.warn('[AuthGate] Firebase handshake timed out (no user); bypassing splash screen.');
         setTimedOut(true);
+      } else if (!isSystemReady && hasFirebaseUser) {
+        console.warn('[AuthGate] Soft timeout reached but Firebase user exists — waiting for hydration.');
       }
     }, 10000);
-    return () => clearTimeout(timer);
-  }, [isSystemReady]);
+
+    const hardTimer = setTimeout(() => {
+      if (!isSystemReady) {
+        console.warn('[AuthGate] Hard timeout reached (20s); forcing splash bypass.');
+        setTimedOut(true);
+      }
+    }, 20000);
+
+    return () => {
+      clearTimeout(softTimer);
+      clearTimeout(hardTimer);
+    };
+  }, [isSystemReady, hasFirebaseUser]);
 
   // POLISHED LANDING (v1.1.14): Landing (/) is NOT bypassed during auth init.
   // If we allowed / to bypass, logged-in users would see a flash of landing before redirect to /onboarding.
@@ -810,8 +827,9 @@ function AuthGate({ children, splashHandled }: { children: React.ReactNode; spla
     location.pathname === '/oauth/callback' ||
     location.pathname === '/__/auth/handler';
 
-  // Logic: Proceed if auth is ready, if we are on a public route (excluding /), OR if the 10s fail-safe triggered.
-  const shouldShowSplash = (!isSystemReady || user === undefined) && !isPublicRoute && !timedOut && splashHandled;
+  // Logic: Proceed if auth is ready, if we are on a public route (excluding /), OR if the tiered fail-safe triggered.
+  // Note: user is User|null (never undefined) — the gate relies on isSystemReady for deterministic state.
+  const shouldShowSplash = !isSystemReady && !isPublicRoute && !timedOut && splashHandled;
 
   if (shouldShowSplash) {
     return <HydrationSplash />;

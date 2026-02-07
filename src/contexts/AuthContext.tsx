@@ -519,19 +519,45 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     try {
       const bootstrapStart = Date.now();
-      const bootstrapRes = await fetch(`${getApiBase()}/api/bootstrap`, {
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-          'Content-Type': 'application/json',
-        },
-        cache: 'no-store',
-      });
 
-      if (bootstrapRes.ok) {
-        const bootstrapData = await bootstrapRes.json();
+      // COLD-START RESILIENCE: Retry bootstrap on transient failures (404/502/503).
+      // Vercel serverless functions can return 404/502 during cold start before the
+      // function handler is ready. Progressive backoff: 1.5s, 3s between attempts.
+      const MAX_BOOTSTRAP_RETRIES = 2;
+      let bootstrapRes: Response | null = null;
+
+      for (let attempt = 0; attempt <= MAX_BOOTSTRAP_RETRIES; attempt++) {
+        bootstrapRes = await fetch(`${getApiBase()}/api/bootstrap`, {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+            'Content-Type': 'application/json',
+          },
+          cache: 'no-store',
+        });
+
+        // Success or definitive client error (400, 401, 403) — don't retry
+        if (bootstrapRes.ok || (bootstrapRes.status >= 400 && bootstrapRes.status < 500 && bootstrapRes.status !== 404)) {
+          break;
+        }
+
+        // Retriable: 404 (Vercel routing during cold start), 502, 503
+        const isRetriable = [404, 502, 503].includes(bootstrapRes.status);
+        if (isRetriable && attempt < MAX_BOOTSTRAP_RETRIES) {
+          const delay = (attempt + 1) * 1500; // 1.5s, 3s
+          logger.warn('AuthContext', `Bootstrap returned ${bootstrapRes.status}, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_BOOTSTRAP_RETRIES})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+
+        // Not retriable or max retries reached
+        break;
+      }
+
+      if (bootstrapRes!.ok) {
+        const bootstrapData = await bootstrapRes!.json();
         const bootstrapElapsed = Date.now() - bootstrapStart;
-        logger.info('AuthContext', `Bootstrap completed in ${bootstrapElapsed}ms`);
-        
+        logger.info('AuthContext', `Bootstrap completed in ${bootstrapElapsed}ms (retries used: ${bootstrapRes === null ? 0 : 'see logs'})`);
+
         // Map bootstrap response to existing format
         if (bootstrapData.needsOnboarding) {
           apiResponse = {
@@ -543,11 +569,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
           apiResponse = { user: bootstrapData.user };
           venueData = bootstrapData.venue || { __notFound: true };
         }
-      } else if (bootstrapRes.status === 404) {
-        // User not found - needs onboarding
+      } else if (bootstrapRes!.status === 404) {
+        // User not found after retries - genuinely needs onboarding
         apiResponse = { user: null, needsOnboarding: true };
       } else {
-        throw new Error(`Bootstrap failed with status ${bootstrapRes.status}`);
+        throw new Error(`Bootstrap failed with status ${bootstrapRes!.status} after ${MAX_BOOTSTRAP_RETRIES} retries`);
       }
     } catch (bootstrapErr) {
       // Fallback: Use legacy parallel fetch if bootstrap fails
