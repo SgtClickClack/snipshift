@@ -7,15 +7,18 @@ import { useEffect, type ReactNode } from 'react';
  * closing—due to proxy failure, authDomain misconfiguration, or continueUrl—the popup would
  * load our full SPA with mobile-first layout in a tiny window, causing a "shrunk" signup screen.
  *
- * This guard detects that state (popup + wrong route) and renders a minimal "Completing
+ * This guard detects that state (popup + non-auth route) and renders a minimal "Completing
  * sign-in..." UI instead, then closes the popup. The parent window remains on the auth
  * trigger page so the user can retry.
+ *
+ * v1.1.25: Catches ALL non-auth paths in popup context, not just a hardcoded list.
+ * Firebase's `/__/auth/*` paths are the only legitimate popup destinations.
  */
 export function PopupGuard({ children }: { children: ReactNode }) {
   const isPopup = typeof window !== 'undefined' && !!window.opener;
   const path = typeof window !== 'undefined' ? window.location.pathname : '';
   const isAuthHandlerPath = path.startsWith('/__/auth/');
-  const isWrongPopupPath = isPopup && !isAuthHandlerPath && ['/', '/signup', '/login'].includes(path);
+  const isWrongPopupPath = isPopup && !isAuthHandlerPath;
 
   useEffect(() => {
     if (!isWrongPopupPath) return;

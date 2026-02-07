@@ -1,1 +1,31 @@
-{"version":2,"outputDirectory":"dist","functions":{"api/index.ts":{"maxDuration":60},"api/[...path].ts":{"maxDuration":60}},"rewrites":[{"source":"/assets/(.*)","destination":"/assets/$1"},{"source":"/sounds/(.*)","destination":"/sounds/$1"},{"source":"/__/auth/(.*)","destination":"https://snipshift-75b04.firebaseapp.com/__/auth/$1"},{"source":"/api/(.*)","destination":"/api"},{"source":"/(.*)","destination":"/"}],"headers":[{"source":"/api/(.*)","headers":[{"key":"Cache-Control","value":"no-store, must-revalidate"},{"key":"X-Content-Type-Options","value":"nosniff"}]}],"cleanUrls":true}
+{
+  "version": 2,
+  "outputDirectory": "dist",
+  "functions": {
+    "api/index.ts": { "maxDuration": 60 },
+    "api/[...path].ts": { "maxDuration": 60 }
+  },
+  "rewrites": [
+    { "source": "/assets/(.*)", "destination": "/assets/$1" },
+    { "source": "/sounds/(.*)", "destination": "/sounds/$1" },
+    { "source": "/__/auth/(.*)", "destination": "https://snipshift-75b04.firebaseapp.com/__/auth/$1" },
+    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/(.*)", "destination": "/" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin-allow-popups" }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, must-revalidate" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
+      ]
+    }
+  ],
+  "cleanUrls": true
+}
