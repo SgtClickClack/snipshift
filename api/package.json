@@ -5,7 +5,7 @@
   "main": "_src/index.ts",
   "type": "module",
   "engines": {
-    "node": "22.x"
+    "node": ">=22.0.0"
   },
   "scripts": {
     "postinstall": "tsc && node fix-imports.js",
