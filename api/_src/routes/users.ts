@@ -1284,7 +1284,13 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
   if (rsaNotRequired !== undefined) updates.rsaNotRequired = rsaNotRequired;
   if (hospitalityRole !== undefined) updates.hospitalityRole = hospitalityRole;
   if (hourlyRatePreference !== undefined) updates.hourlyRatePreference = String(hourlyRatePreference);
-  if (hasCompletedOnboarding !== undefined) updates.hasCompletedOnboarding = hasCompletedOnboarding;
+  if (hasCompletedOnboarding !== undefined) {
+    updates.hasCompletedOnboarding = hasCompletedOnboarding;
+    // CRITICAL: Keep isOnboarded in sync — AuthContext reads isOnboarded for redirect decisions.
+    // Without this, professional onboarding sets has_completed_onboarding but leaves is_onboarded
+    // false, causing the user to be redirected back to /onboarding on next auth hydration.
+    updates.isOnboarded = hasCompletedOnboarding;
+  }
   if (businessSettings !== undefined) {
     // Store businessSettings as JSON in the database
     // Note: This assumes the database column exists or can be added
@@ -1682,6 +1688,7 @@ router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: A
     bannerUrl: updatedUser.bannerUrl || null,
     roles: updatedUser.roles || [role],
     currentRole: frontendCurrentRole,
+    isOnboarded: true,
     uid: req.user.uid,
   });
 }));
