@@ -56,6 +56,11 @@ export default defineConfig(({ mode }) => ({
         // STABILIZATION v4.0: Restore lightweight precaching for critical shell assets
         // Only precache index.html and the main entry — all lazy chunks use runtime caching
         globPatterns: ['**/*.html'],
+        // CRITICAL: Exclude Firebase auth handler from SW navigation fallback.
+        // Without this, the NavigationRoute serves cached index.html for /__/auth/handler
+        // instead of letting the browser hit the Vercel proxy to Firebase Hosting.
+        // This causes "redirect mode is not follow" errors and kills Google Auth popups.
+        navigateFallbackDenylist: [/^\/__\/auth\//],
         // Exclude large files from precaching
         globIgnores: [
           '**/hospogoappicon.png',      // 7.66 MB - too large for precache
