@@ -54,6 +54,22 @@
 
 ---
 
+### Update: 2026-02-07 - API Path Normalization + CORS Guardrails (v1.1.16)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- **vercel.json:** Updated API rewrite to `/api/:path*` and added no-store + nosniff headers for `/api/*`.
+- **api/index.ts:** Normalized Vercel function paths when `/api` prefix is stripped.
+- **api/_src/index.ts:** Allowed `*.vercel.app` in production and rejected unknown origins.
+
+**Impact:**
+- `/api/*` routes resolve reliably in Vercel deployments even when prefixes are stripped.
+- API responses are explicitly non-cacheable and hardened against MIME sniffing.
+- Production CORS is strict while allowing Vercel preview deployments.
+
+---
+
 ### Update: 2026-02-07 - API Bridge Stabilization: Final Lockdown v1.1.8
 
 **Status:** ✅ **UPDATED**

@@ -6509,6 +6509,61 @@ The following locations contain demo bypass logic flagged for removal once produ
 
 ---
 
+#### 2026-02-07: Claude Code CLI Installed (Windows Native)
+
+**Core Components**
+- Developer tooling: Claude Code CLI (native installer)
+
+**Key Features**
+- Installed Claude Code CLI v2.1.34 via native PowerShell installer.
+- Added session PATH update for immediate CLI access.
+- Identified persistent PATH update needs due to Windows setx truncation.
+
+**Integration Points**
+- CLI entrypoint: `claude`
+- Auth via Claude.ai Pro subscription (browser login flow)
+
+**File Paths**
+- No repo files changed.
+
+**Next Priority Task**
+- Run `claude init` in the repo and sign in with Claude.ai (Pro).
+
+**Code Organization & Quality**
+- Tooling setup only; no runtime code changes.
+
+---
+
+#### 2026-02-07: Vercel API Path Normalization + CORS Guardrails
+
+**Core Components**
+- Vercel routing: `vercel.json`
+- Serverless entry: `api/index.ts`
+- API server: `api/_src/index.ts`
+
+**Key Features**
+- Normalized Vercel API paths so `/api/*` routes resolve even when the prefix is stripped.
+- Added API response headers to prevent caching and enforce `nosniff` on `/api/*`.
+- Tightened CORS behavior: allow `*.vercel.app` in production and reject unknown origins.
+
+**Integration Points**
+- Vercel rewrite: `/api/:path*` → `/api/index.ts`
+- Vercel headers: `Cache-Control` + `X-Content-Type-Options` for `/api/:path*`
+- Serverless middleware: path normalization for Vercel deployments only
+
+**File Paths**
+- `vercel.json`
+- `api/index.ts`
+- `api/_src/index.ts`
+
+**Next Priority Task**
+- Validate `/api/health` and `/api/bootstrap` on production and Vercel preview deployments.
+
+**Code Organization & Quality**
+- Middleware change scoped to Vercel runtime; no new dependencies added.
+
+---
+
 #### 2026-02-07: Vercel Build Fix - Add build:client Script
 
 **Core Components**

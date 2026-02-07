@@ -17,7 +17,7 @@ import appModule from './_src/index.js';
 // This prevents Vercel from using Edge runtime which doesn't support Node.js APIs
 export const config = {
   runtime: 'nodejs', // Explicitly forces Node.js, overriding Vercel defaults
-  maxDuration: 30,   // Prevents timeouts (matches vercel.json setting)
+  maxDuration: 60,   // Aligned with vercel.json functions.api/index.ts.maxDuration
 };
 
 // Wrap in try-catch to catch any module-level initialization errors
@@ -47,15 +47,33 @@ try {
   app = errorApp;
 }
 
-// PATH ALIGNMENT: On Vercel, ensure /api prefix so Express routes match.
-// The rewrite sends /api/* to this function; some runtimes may strip the prefix.
+// PATH ALIGNMENT (v1.1.16): On Vercel, ensure /api prefix so Express routes match.
+// The rewrite sends /api/* to this function; Vercel strips the prefix in some cases.
+//
+// Observed Vercel behaviors for a request to /api/bootstrap:
+//   1. req.url = '/api/bootstrap'   (prefix preserved — no action needed)
+//   2. req.url = '/bootstrap'       (prefix stripped — must prepend /api)
+//   3. req.url = '/index'           (resolved to function path — must remap)
+//
+// This middleware normalizes all three cases so Express routes always see /api/*.
 const pathNormalizeMiddleware = (req: express.Request, _res: express.Response, next: express.NextFunction) => {
-  if (process.env.VERCEL !== '1') return next();
-  const rawPath = (req.url || '').split('?')[0];
-  const query = req.url?.includes('?') ? '?' + req.url.split('?')[1] : '';
-  if (rawPath && !rawPath.startsWith('/api') && rawPath !== '/' && rawPath !== '/favicon.ico' && rawPath !== '/health') {
-    req.url = '/api' + rawPath + query;
+  // Skip normalization in local dev (VERCEL env is only set on Vercel deployments)
+  if (!process.env.VERCEL) return next();
+
+  const originalUrl = req.url || '/';
+  const questionIdx = originalUrl.indexOf('?');
+  const rawPath = questionIdx >= 0 ? originalUrl.slice(0, questionIdx) : originalUrl;
+  const query = questionIdx >= 0 ? originalUrl.slice(questionIdx) : '';
+
+  // Paths that should NOT be prefixed (health checks, static assets)
+  const skipPaths = ['/', '/favicon.ico', '/health'];
+
+  if (!rawPath.startsWith('/api') && !skipPaths.includes(rawPath)) {
+    const normalizedUrl = '/api' + rawPath + query;
+    console.log(`[PATH_NORM] ${rawPath} → ${normalizedUrl}`);
+    req.url = normalizedUrl;
   }
+
   next();
 };
 

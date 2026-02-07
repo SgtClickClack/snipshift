@@ -171,21 +171,28 @@ const corsOptions = {
       'http://127.0.0.1:3000',
       'http://127.0.0.1:5173',
     ];
-    
-    // Check if origin is allowed
+
+    // Check if origin is in the static allow-list
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
+      return;
+    }
+
+    // Allow Vercel preview/production deployments (*.vercel.app)
+    if (origin.endsWith('.vercel.app') && origin.startsWith('https://')) {
+      callback(null, true);
+      return;
+    }
+
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+    if (isProduction) {
+      // SECURITY: Reject unauthorized origins in production
+      console.warn(`[CORS] Blocked request from unauthorized origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
     } else {
-      const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
-      if (isProduction) {
-        // SECURITY: Reject unauthorized origins in production
-        console.warn(`[CORS] Blocked request from unauthorized origin: ${origin}`);
-        callback(new Error('Not allowed by CORS'));
-      } else {
-        // Allow in development for convenience
-        console.warn(`[CORS] Dev-mode allowing unauthorized origin: ${origin}`);
-        callback(null, true);
-      }
+      // Allow in development for convenience
+      console.warn(`[CORS] Dev-mode allowing unauthorized origin: ${origin}`);
+      callback(null, true);
     }
   },
   credentials: true,
