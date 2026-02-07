@@ -48,13 +48,16 @@ function getShiftLabel(event: ShiftBlockProps['event']): string {
 }
 
 /**
- * ShiftBlock Component
- * Renders a shift event block with different states:
- * - UNASSIGNED: Clean amber/yellow block with time
- * - CONFIRMED: Green block with staff name
- * - INVITED: Orange with pending indicator
- * 
- * Optimized for month view readability with minimal clutter
+ * ShiftBlock Component – Premium B2B visual design
+ *
+ * Status cues via slim left-border accents:
+ * - Confirmed: emerald-500 left-border on dark emerald bg
+ * - Pending/Open: amber-500 left-border with subtle glow
+ * - Invited: orange left-border with spinner
+ * - Draft: zinc border, ghosted
+ * - Past: zinc-600 muted
+ *
+ * All blocks use rounded-xl, smooth hover scale, and touch-friendly sizing.
  */
 export function ShiftBlock({ event, onClick, isRecurring, className }: ShiftBlockProps) {
   const status = event.resource?.status || 'draft';
@@ -78,7 +81,7 @@ export function ShiftBlock({ event, onClick, isRecurring, className }: ShiftBloc
     }
   };
 
-  // State A: UNASSIGNED (Auto-generated slot) - Clean amber style, no dashed border
+  // State A: UNASSIGNED (Auto-generated slot) – amber left-border accent
   if (isUnassigned) {
     return (
       <div
@@ -86,44 +89,19 @@ export function ShiftBlock({ event, onClick, isRecurring, className }: ShiftBloc
         data-testid="shift-block-unassigned-slot"
         className={cn(
           "shift-block shift-block-unassigned",
-          "w-full h-full rounded-md",
-          "bg-amber-500/90 dark:bg-amber-600/90 cursor-pointer",
+          "w-full h-full rounded-lg",
+          "bg-amber-500/15 dark:bg-amber-500/10 cursor-pointer",
+          "border-l-[3px] border-l-amber-500 border border-amber-500/20 dark:border-amber-500/15",
           "flex items-center gap-1.5 px-2 py-1",
-          "hover:bg-amber-500 dark:hover:bg-amber-600 transition-colors",
-          "text-white relative overflow-hidden",
+          "hover:bg-amber-500/25 dark:hover:bg-amber-500/20",
+          "transition-all duration-200 ease-out",
+          "text-amber-700 dark:text-amber-400 relative overflow-hidden",
           className
         )}
         style={{ minHeight: '22px' }}
       >
         <Clock className="h-3 w-3 flex-shrink-0 opacity-80" />
-        <span className="text-xs font-medium truncate">{shiftLabel}</span>
-        {showRecurring && (
-          <Repeat className="h-2.5 w-2.5 absolute top-0.5 right-0.5 opacity-70" />
-        )}
-      </div>
-    );
-  }
-
-  // State B: DRAFT (Ghost Slot) - Subtle outline style
-  if (status === 'draft') {
-    return (
-      <div
-        onClick={handleClick}
-        data-testid="shift-block-ghost-slot"
-        className={cn(
-          "shift-block shift-block-draft",
-          "w-full h-full rounded-md border",
-          "bg-slate-100/50 dark:bg-slate-800/50 cursor-pointer",
-          "border-slate-300 dark:border-slate-600",
-          "flex items-center gap-1.5 px-2 py-1",
-          "hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors",
-          "text-slate-600 dark:text-slate-300 relative overflow-hidden",
-          className
-        )}
-        style={{ minHeight: '22px' }}
-      >
-        <UserPlus className="h-3 w-3 flex-shrink-0 opacity-70" />
-        <span className="text-xs font-medium truncate">Open</span>
+        <span className="text-xs font-semibold truncate">{shiftLabel}</span>
         {showRecurring && (
           <Repeat className="h-2.5 w-2.5 absolute top-0.5 right-0.5 opacity-60" />
         )}
@@ -131,7 +109,36 @@ export function ShiftBlock({ event, onClick, isRecurring, className }: ShiftBloc
     );
   }
 
-  // State C: INVITED (Pending) - Orange with subtle spinner
+  // State B: DRAFT (Ghost Slot) – zinc ghosted style
+  if (status === 'draft') {
+    return (
+      <div
+        onClick={handleClick}
+        data-testid="shift-block-ghost-slot"
+        className={cn(
+          "shift-block shift-block-draft",
+          "w-full h-full rounded-lg border",
+          "bg-zinc-100/50 dark:bg-zinc-800/30 cursor-pointer",
+          "border-zinc-300/60 dark:border-zinc-700/50",
+          "border-l-[3px] border-l-zinc-400 dark:border-l-zinc-500",
+          "flex items-center gap-1.5 px-2 py-1",
+          "hover:bg-zinc-200/60 dark:hover:bg-zinc-700/40",
+          "transition-all duration-200 ease-out",
+          "text-zinc-500 dark:text-zinc-400 relative overflow-hidden",
+          className
+        )}
+        style={{ minHeight: '22px' }}
+      >
+        <UserPlus className="h-3 w-3 flex-shrink-0 opacity-60" />
+        <span className="text-xs font-semibold truncate">Open</span>
+        {showRecurring && (
+          <Repeat className="h-2.5 w-2.5 absolute top-0.5 right-0.5 opacity-50" />
+        )}
+      </div>
+    );
+  }
+
+  // State C: INVITED (Pending) – orange left-border with spinner
   if (status === 'invited') {
     const first = assignedList[0];
     const staffName = first?.name || first?.displayName || 'Pending';
@@ -143,26 +150,28 @@ export function ShiftBlock({ event, onClick, isRecurring, className }: ShiftBloc
         data-testid="shift-block-pending"
         className={cn(
           "shift-block shift-block-invited",
-          "w-full h-full rounded-md",
-          "bg-orange-500/90 dark:bg-orange-600/90",
-          "cursor-pointer hover:bg-orange-500 dark:hover:bg-orange-600 transition-colors",
+          "w-full h-full rounded-lg",
+          "bg-orange-500/15 dark:bg-orange-500/10",
+          "border-l-[3px] border-l-orange-500 border border-orange-500/20 dark:border-orange-500/15",
+          "cursor-pointer hover:bg-orange-500/25 dark:hover:bg-orange-500/20",
+          "transition-all duration-200 ease-out",
           "flex items-center gap-1.5 px-2 py-1 relative overflow-hidden",
           className
         )}
         style={{ minHeight: '22px' }}
       >
-        <Loader2 className="h-3 w-3 text-white/80 animate-spin flex-shrink-0" />
-        <span className="text-white text-xs font-medium truncate flex-1">
+        <Loader2 className="h-3 w-3 text-orange-500 dark:text-orange-400 animate-spin flex-shrink-0" />
+        <span className="text-orange-700 dark:text-orange-300 text-xs font-semibold truncate flex-1">
           {capacity > 1 ? `${filled}/${capacity} Filled` : firstName}
         </span>
         {showRecurring && (
-          <Repeat className="h-2.5 w-2.5 text-white absolute top-0.5 right-0.5 opacity-70" />
+          <Repeat className="h-2.5 w-2.5 text-orange-500/60 absolute top-0.5 right-0.5" />
         )}
       </div>
     );
   }
 
-  // State D: PENDING/OPEN (Posted to Job Board) - Amber/Yellow; show 0/capacity when capacity > 1
+  // State D: PENDING/OPEN (Posted to Job Board) – amber glow accent
   if (status === 'pending' || status === 'open' || status === 'OPEN' || status === 'PUBLISHED') {
     const openLabel = capacity > 1 ? `0/${capacity}` : shiftLabel;
     return (
@@ -171,26 +180,29 @@ export function ShiftBlock({ event, onClick, isRecurring, className }: ShiftBloc
         data-testid="shift-block-open"
         className={cn(
           "shift-block shift-block-open",
-          "w-full h-full rounded-md",
-          "bg-amber-500/90 dark:bg-amber-600/90",
-          "cursor-pointer hover:bg-amber-500 dark:hover:bg-amber-600 transition-colors",
+          "w-full h-full rounded-lg",
+          "bg-amber-500/15 dark:bg-amber-500/10",
+          "border-l-[3px] border-l-amber-500 border border-amber-500/20 dark:border-amber-500/15",
+          "cursor-pointer hover:bg-amber-500/25 dark:hover:bg-amber-500/20",
+          "transition-all duration-200 ease-out",
           "flex items-center gap-1.5 px-2 py-1 relative overflow-hidden",
+          "shadow-[0_0_8px_rgba(245,158,11,0.08)] dark:shadow-[0_0_12px_rgba(245,158,11,0.12)]",
           className
         )}
         style={{ minHeight: '22px' }}
       >
-        <Clock className="h-3 w-3 text-white flex-shrink-0 opacity-80" />
-        <span className="text-white text-xs font-medium truncate flex-1">
+        <Clock className="h-3 w-3 text-amber-600 dark:text-amber-400 flex-shrink-0 opacity-80" />
+        <span className="text-amber-700 dark:text-amber-300 text-xs font-semibold truncate flex-1">
           {openLabel}
         </span>
         {showRecurring && (
-          <Repeat className="h-2.5 w-2.5 text-white absolute top-0.5 right-0.5 opacity-70" />
+          <Repeat className="h-2.5 w-2.5 text-amber-500/60 absolute top-0.5 right-0.5" />
         )}
       </div>
     );
   }
 
-  // State E: CONFIRMED (Locked) - Green with staff avatars and/or "X/Y Filled", "Add Worker" when capacity > filled
+  // State E: CONFIRMED (Locked) – emerald left-border, dark emerald bg
   if (status === 'confirmed' || status === 'filled') {
     const avatarsToShow = assignedList.slice(0, 3);
     const first = assignedList[0];
@@ -202,9 +214,11 @@ export function ShiftBlock({ event, onClick, isRecurring, className }: ShiftBloc
         data-testid="shift-block-confirmed"
         className={cn(
           "shift-block shift-block-confirmed",
-          "w-full h-full rounded-md",
-          "bg-success",
-          "cursor-pointer hover:bg-success/90 transition-colors",
+          "w-full h-full rounded-lg",
+          "bg-emerald-500/15 dark:bg-emerald-500/10",
+          "border-l-[3px] border-l-emerald-500 border border-emerald-500/20 dark:border-emerald-500/15",
+          "cursor-pointer hover:bg-emerald-500/25 dark:hover:bg-emerald-500/20",
+          "transition-all duration-200 ease-out",
           "flex items-center gap-1.5 px-2 py-1 relative overflow-hidden",
           className
         )}
@@ -212,52 +226,53 @@ export function ShiftBlock({ event, onClick, isRecurring, className }: ShiftBloc
       >
         <div className="flex items-center gap-0.5 flex-shrink-0">
           {avatarsToShow.map((s, i) => (
-            <Avatar key={s?.id || i} className="h-4 w-4 border border-white/30">
+            <Avatar key={s?.id || i} className="h-4 w-4 border border-emerald-500/30">
               <AvatarImage src={(s as any)?.avatarUrl} />
-              <AvatarFallback className="text-[8px] bg-white/20 text-white">
+              <AvatarFallback className="text-[8px] bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
                 {(s?.name || s?.displayName || '?').charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
           ))}
           {hasSlots && (
             <div
-              className="h-4 w-4 rounded-full border border-dashed border-white/60 flex items-center justify-center bg-white/10"
+              className="h-4 w-4 rounded-full border border-dashed border-emerald-500/50 flex items-center justify-center bg-emerald-500/10"
               title="Add Worker"
             >
-              <UserPlus className="h-2.5 w-2.5 text-white/80" />
+              <UserPlus className="h-2.5 w-2.5 text-emerald-600 dark:text-emerald-400" />
             </div>
           )}
         </div>
-        <span className="text-white text-xs font-medium truncate flex-1">
+        <span className="text-emerald-700 dark:text-emerald-300 text-xs font-semibold truncate flex-1">
           {capacity > 1 ? `${filled}/${capacity} Filled` : firstName}
         </span>
         {showRecurring && (
-          <Repeat className="h-2.5 w-2.5 text-white absolute top-0.5 right-0.5 opacity-70" />
+          <Repeat className="h-2.5 w-2.5 text-emerald-500/60 absolute top-0.5 right-0.5" />
         )}
       </div>
     );
   }
 
-  // Fallback: Default rendering for other statuses (past, etc.)
+  // Fallback: Default rendering for other statuses (past, completed, etc.) – muted zinc
   return (
     <div
       onClick={handleClick}
       className={cn(
         "shift-block shift-block-default",
-        "w-full h-full rounded-md",
-        "bg-slate-400/80 dark:bg-slate-600/80",
-        "cursor-pointer hover:bg-slate-500 dark:hover:bg-slate-700 transition-colors",
+        "w-full h-full rounded-lg",
+        "bg-zinc-200/50 dark:bg-zinc-800/40",
+        "border-l-[3px] border-l-zinc-400 dark:border-l-zinc-600 border border-zinc-300/40 dark:border-zinc-700/30",
+        "cursor-pointer hover:bg-zinc-300/50 dark:hover:bg-zinc-700/40",
+        "transition-all duration-200 ease-out",
         "flex items-center gap-1.5 px-2 py-1 relative overflow-hidden",
-        "text-white text-xs font-medium",
+        "text-zinc-600 dark:text-zinc-400 text-xs font-semibold",
         className
       )}
       style={{ minHeight: '22px' }}
     >
       <span className="truncate">{shiftLabel}</span>
       {showRecurring && (
-        <Repeat className="h-2.5 w-2.5 absolute top-0.5 right-0.5 opacity-70" />
+        <Repeat className="h-2.5 w-2.5 absolute top-0.5 right-0.5 opacity-50" />
       )}
     </div>
   );
 }
-

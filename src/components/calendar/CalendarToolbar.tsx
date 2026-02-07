@@ -187,12 +187,12 @@ export function CalendarToolbar({
   const isSyncedToXero = xeroStatus?.connected === true;
 
   return (
-    <CardHeader className="border-b bg-gradient-to-r from-background via-purple-50/5 to-blue-50/5 dark:from-background dark:via-purple-950/10 dark:to-blue-950/10">
+    <CardHeader className="border-b border-zinc-200/50 dark:border-zinc-800 bg-background/80 backdrop-blur-sm dark:bg-zinc-950/80">
       <div className="flex flex-col gap-3">
         {/* Top row: Title + View/Nav controls */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <CardTitle 
-            className="text-xl bg-gradient-to-r from-foreground via-purple-600 to-blue-600 dark:from-foreground dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent" 
+          <CardTitle
+            className="text-xl font-bold tracking-tight text-foreground"
             data-testid="calendar-schedule-title"
           >
             Schedule
@@ -393,7 +393,7 @@ export function CalendarToolbar({
             )}
             
             {/* View Switcher */}
-            <div className="min-w-0 flex flex-wrap gap-1 border rounded-md p-1 bg-background/50 backdrop-blur-sm">
+            <div className="min-w-0 flex flex-wrap gap-1 border border-zinc-200/60 dark:border-zinc-800 rounded-xl p-1 bg-zinc-50/50 dark:bg-zinc-900/50 backdrop-blur-sm">
               <Button
                 variant={view === "month" ? "default" : "ghost"}
                 size="sm"
@@ -456,7 +456,7 @@ export function CalendarToolbar({
         </div>
 
         {/* Bottom row: Filter + Legend */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t border-border/40">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t border-zinc-200/30 dark:border-zinc-800/60">
           {/* Status Filter */}
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-muted-foreground">Status:</span>
@@ -478,32 +478,32 @@ export function CalendarToolbar({
             className="flex items-center gap-3 sm:gap-4 text-xs overflow-x-auto pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent touch-scroll"
             data-testid="status-legend"
           >
-            <div 
-            className="flex items-center gap-1.5 cursor-help whitespace-nowrap shrink-0 px-2 py-1 rounded-md bg-success/10 sm:bg-transparent sm:px-0 sm:py-0" 
+            <div
+            className="flex items-center gap-1.5 cursor-help whitespace-nowrap shrink-0 px-2 py-1 rounded-lg bg-emerald-500/8 sm:bg-transparent sm:px-0 sm:py-0"
             title="100% Confirmed — All required staff have confirmed attendance"
             >
-              <div className="w-3.5 h-3.5 rounded bg-success border-2 border-success shrink-0"></div>
-              <span className="text-muted-foreground font-medium">100% Confirmed</span>
+              <div className="w-3 h-3 rounded-md bg-emerald-500/20 border-l-[3px] border-l-emerald-500 shrink-0"></div>
+              <span className="text-muted-foreground font-medium">Confirmed</span>
             </div>
-            <div 
-              className="flex items-center gap-1.5 cursor-help whitespace-nowrap shrink-0 px-2 py-1 rounded-md bg-amber-500/10 sm:bg-transparent sm:px-0 sm:py-0" 
+            <div
+              className="flex items-center gap-1.5 cursor-help whitespace-nowrap shrink-0 px-2 py-1 rounded-lg bg-amber-500/8 sm:bg-transparent sm:px-0 sm:py-0"
               title="Invitations Sent — Staff have been invited, awaiting confirmation"
             >
-              <div className="w-3.5 h-3.5 rounded bg-amber-500 border-2 border-amber-600 shrink-0"></div>
-              <span className="text-muted-foreground font-medium">Invitations Sent</span>
+              <div className="w-3 h-3 rounded-md bg-amber-500/20 border-l-[3px] border-l-amber-500 shrink-0"></div>
+              <span className="text-muted-foreground font-medium">Pending</span>
             </div>
-            <div 
-              className="flex items-center gap-1.5 cursor-help whitespace-nowrap shrink-0 px-2 py-1 rounded-md bg-red-500/10 sm:bg-transparent sm:px-0 sm:py-0" 
+            <div
+              className="flex items-center gap-1.5 cursor-help whitespace-nowrap shrink-0 px-2 py-1 rounded-lg bg-red-500/8 sm:bg-transparent sm:px-0 sm:py-0"
               title="Vacant (Action Required) — Open slots need to be filled or invitations have been declined"
             >
-              <div className="w-3.5 h-3.5 rounded bg-red-500 border-2 border-red-600 shrink-0 animate-pulse-subtle"></div>
+              <div className="w-3 h-3 rounded-md bg-red-500/20 border-l-[3px] border-l-red-500 shrink-0 animate-pulse-subtle"></div>
               <span className="text-muted-foreground font-medium">Vacant</span>
             </div>
-            <div 
-              className="flex items-center gap-1.5 cursor-help whitespace-nowrap shrink-0 px-2 py-1 rounded-md bg-zinc-500/10 sm:bg-transparent sm:px-0 sm:py-0" 
+            <div
+              className="flex items-center gap-1.5 cursor-help whitespace-nowrap shrink-0 px-2 py-1 rounded-lg bg-zinc-500/8 sm:bg-transparent sm:px-0 sm:py-0"
               title="Past — Completed or expired shifts"
             >
-              <div className="w-3.5 h-3.5 rounded bg-zinc-500 border-2 border-zinc-600 shrink-0"></div>
+              <div className="w-3 h-3 rounded-md bg-zinc-500/20 border-l-[3px] border-l-zinc-400 dark:border-l-zinc-600 shrink-0"></div>
               <span className="text-muted-foreground font-medium">Past</span>
             </div>
           </div>

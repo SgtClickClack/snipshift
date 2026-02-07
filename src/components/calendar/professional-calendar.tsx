@@ -2608,7 +2608,7 @@ function ProfessionalCalendarContent({
     <div className="w-full h-full">
       {/* Main Calendar Area - Full Width */}
       <div className="w-full" data-testid="calendar-container">
-        <Card className="glassmorphic-card w-full flex flex-col bg-background">
+        <Card className="glassmorphic-card w-full flex flex-col bg-background/95 dark:bg-zinc-950/95 backdrop-blur-sm border-zinc-200/50 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm dark:shadow-[0_2px_20px_rgba(0,0,0,0.3)]">
           <CalendarToolbar
             mode={mode}
             view={view}
@@ -2635,19 +2635,19 @@ function ProfessionalCalendarContent({
                 className="relative max-w-full min-w-0 overflow-x-auto w-full" 
                 ref={calendarRef}
               >
-                {/* Legend - Traffic Light System */}
-                <div className="flex gap-4 mb-4 text-sm text-zinc-400 flex-wrap">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-success"></div>
-                    <span>Confirmed</span>
+                {/* Legend – Refined status indicators */}
+                <div className="flex gap-4 mb-4 text-xs text-zinc-500 dark:text-zinc-400 flex-wrap">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500/20 border-l-[2px] border-l-emerald-500"></div>
+                    <span className="font-medium">Confirmed</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-yellow-500"></div>
-                    <span>Open Slot</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-sm bg-amber-500/20 border-l-[2px] border-l-amber-500"></div>
+                    <span className="font-medium">Open</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-zinc-500"></div>
-                    <span>Past</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-sm bg-zinc-500/20 border-l-[2px] border-l-zinc-400 dark:border-l-zinc-600"></div>
+                    <span className="font-medium">Past</span>
                   </div>
                 </div>
                 
@@ -2854,9 +2854,9 @@ function ProfessionalCalendarContent({
         </Card>
       </div>
 
-      {/* Event Details Sheet */}
+      {/* Event Details Sheet – glassmorphism panel */}
       <Sheet open={showEventDetails} onOpenChange={setShowEventDetails}>
-        <SheetContent className="w-full sm:max-w-lg max-h-[85vh] overflow-y-auto">
+        <SheetContent className="w-full sm:max-w-lg max-h-[85vh] overflow-y-auto bg-background/95 dark:bg-zinc-950/95 backdrop-blur-xl border-zinc-200/50 dark:border-zinc-800">
           <SheetHeader>
             <SheetTitle>{selectedEvent?.title || "Event Details"}</SheetTitle>
             <SheetDescription>
@@ -2864,10 +2864,10 @@ function ProfessionalCalendarContent({
                 <Badge
                   className={
                     selectedEvent.resource.status === "confirmed"
-                      ? "bg-success"
+                      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25"
                       : selectedEvent.resource.status === "pending"
-                      ? "bg-blue-600"
-                      : "bg-gray-600"
+                      ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/25"
+                      : "bg-zinc-500/15 text-zinc-600 dark:text-zinc-400 border border-zinc-500/25"
                   }
                 >
                   {selectedEvent.resource.status.charAt(0).toUpperCase() +

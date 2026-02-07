@@ -367,19 +367,23 @@ button:active, a:active, [role="button"]:active {
   border-left-color: hsl(var(--primary));
 }
 
-/* React Big Calendar Styles - High Contrast */
+/* ======================================
+   React Big Calendar – Premium Dark B2B
+   Zinc/Slate palette · Glassmorphism · Smooth transitions
+   ====================================== */
+
 .rbc-calendar {
   font-family: inherit;
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
 }
 
-/* Header styling - Clean and transparent */
+/* Header styling – subtle, high-end */
 .rbc-header {
-  padding: 0.5rem 0.25rem !important;
+  padding: 0.625rem 0.25rem !important;
   font-weight: 600;
-  border-bottom: 1px solid hsl(var(--border) / 0.5) !important;
-  border-left: 1px solid hsl(var(--border) / 0.3) !important;
+  border-bottom: 1px solid hsl(var(--border) / 0.25) !important;
+  border-left: 1px solid hsl(var(--border) / 0.15) !important;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -387,7 +391,9 @@ button:active, a:active, [role="button"]:active {
   background: transparent !important;
   color: hsl(var(--muted-foreground));
   font-size: 0.75rem;
-  transition: all 0.2s ease;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  transition: color 0.25s ease, background-color 0.25s ease;
 }
 
 .rbc-header:first-child {
@@ -396,19 +402,19 @@ button:active, a:active, [role="button"]:active {
 
 /* Weekend header styling */
 .rbc-header-weekend {
-  border-bottom-color: hsl(var(--border) / 0.5) !important;
+  border-bottom-color: hsl(var(--border) / 0.25) !important;
 }
 
-/* Dark mode header improvements */
+/* Dark mode header – zinc-800 border on zinc-950 background */
 .dark .rbc-header {
   background: transparent !important;
-  border-bottom-color: hsl(var(--border) / 0.3) !important;
-  border-left-color: hsl(var(--border) / 0.2) !important;
-  color: hsl(var(--muted-foreground)) !important;
+  border-bottom-color: #27272a !important; /* zinc-800 */
+  border-left-color: #1c1c1e !important;
+  color: #a1a1aa !important; /* zinc-400 */
 }
 
 .dark .rbc-header-weekend {
-  border-bottom-color: hsl(var(--border) / 0.3) !important;
+  border-bottom-color: #27272a !important;
 }
 
 .rbc-header-today {
@@ -417,22 +423,23 @@ button:active, a:active, [role="button"]:active {
   font-weight: 700;
 }
 
-/* Dark mode today header - subtle highlight */
+/* Dark mode today header – subtle primary accent */
 .dark .rbc-header-today {
   background: transparent !important;
-  color: hsl(var(--foreground)) !important;
+  color: #e4e4e7 !important; /* zinc-200 */
 }
 
-/* Time gutter with high contrast and subtle gradient */
+/* Time gutter – softer, premium feel */
 .rbc-time-header-gutter {
-  background: linear-gradient(to right, hsl(var(--muted)), hsl(var(--muted) / 0.95));
-  border-right: 2px solid hsl(var(--border));
+  background: hsl(var(--muted) / 0.6);
+  border-right: 1px solid hsl(var(--border) / 0.4);
   color: hsl(var(--foreground));
   font-weight: 600;
+  font-size: 0.6875rem;
 }
 
 .rbc-time-header-content {
-  border-left: 2px solid hsl(var(--border));
+  border-left: 1px solid hsl(var(--border) / 0.4);
   background-color: hsl(var(--background));
 }
 
@@ -470,16 +477,16 @@ button:active, a:active, [role="button"]:active {
   background-color: hsl(var(--background));
 }
 
-/* Dark mode time gutter - better contrast with gradient */
+/* Dark mode time gutter – zinc depth */
 .dark .rbc-time-header-gutter {
-  background: linear-gradient(to right, hsl(var(--muted) / 0.8), hsl(var(--muted) / 0.75)) !important;
-  border-right-color: hsl(var(--border) / 0.9) !important;
-  color: hsl(var(--foreground)) !important;
-  font-weight: 700;
+  background: #18181b !important; /* zinc-900 */
+  border-right-color: #27272a !important;
+  color: #a1a1aa !important; /* zinc-400 */
+  font-weight: 600;
 }
 
 .dark .rbc-time-header-content {
-  border-left-color: hsl(var(--border) / 0.9) !important;
+  border-left-color: #27272a !important;
 }
 
 /* Dark mode header z-index fix */
@@ -500,180 +507,194 @@ button:active, a:active, [role="button"]:active {
   background-color: hsl(var(--background));
 }
 
-/* Current day column styling in week/day view - Google Calendar style */
+/* Current day column – refined primary tint */
 .rbc-time-view .rbc-day-slot.rbc-today {
-  background-color: rgba(59, 130, 246, 0.08) !important; /* Subtle blue tint */
+  background-color: hsl(var(--primary) / 0.06) !important;
 }
 
 .rbc-time-view .rbc-day-slot.rbc-today .rbc-time-slot {
-  border-top-color: hsl(var(--border));
+  border-top-color: hsl(var(--border) / 0.3);
 }
 
 .rbc-time-view .rbc-header.rbc-header-today + .rbc-day-bg {
-  border-left: 3px solid hsl(var(--primary)) !important;
-  background-color: rgba(59, 130, 246, 0.08) !important; /* Subtle blue tint */
+  border-left: 2px solid hsl(var(--primary) / 0.6) !important;
+  background-color: hsl(var(--primary) / 0.06) !important;
 }
 
 .rbc-time-view .rbc-day-bg.rbc-today {
-  background-color: rgba(59, 130, 246, 0.08) !important; /* Subtle blue tint */
+  background-color: hsl(var(--primary) / 0.06) !important;
 }
 
-/* Dark mode current day - more visible */
+/* Dark mode current day – deeper tint */
 .dark .rbc-time-view .rbc-day-slot.rbc-today {
-  background-color: rgba(59, 130, 246, 0.18) !important;
+  background-color: hsl(var(--primary) / 0.1) !important;
 }
 
 .dark .rbc-time-view .rbc-header.rbc-header-today + .rbc-day-bg {
-  background-color: rgba(59, 130, 246, 0.18) !important;
+  background-color: hsl(var(--primary) / 0.1) !important;
 }
 
 .dark .rbc-time-view .rbc-day-bg.rbc-today {
-  background-color: rgba(59, 130, 246, 0.18) !important;
+  background-color: hsl(var(--primary) / 0.1) !important;
 }
 
-/* Day background with clear borders */
+/* Day background – subtle zinc grid */
 .rbc-day-bg {
-  border-color: hsl(var(--border));
+  border-color: hsl(var(--border) / 0.4);
   background-color: hsl(var(--background));
-  transition: background-color 0.2s ease;
+  transition: background-color 0.3s ease;
 }
 
-/* Weekend day backgrounds - subtle color tint */
+/* Weekend day backgrounds – very subtle accent */
 .rbc-day-bg:nth-child(1),
 .rbc-day-bg:nth-child(7) {
-  background-color: rgba(168, 85, 247, 0.02);
+  background-color: rgba(168, 85, 247, 0.015);
 }
 
 .dark .rbc-day-bg:nth-child(1),
 .dark .rbc-day-bg:nth-child(7) {
-  background-color: rgba(168, 85, 247, 0.05) !important;
+  background-color: rgba(168, 85, 247, 0.03) !important;
 }
 
-/* Dark mode day background - ensure visibility */
+/* Dark mode day background – zinc-950 base */
 .dark .rbc-day-bg {
-  border-color: #27272a !important; /* Subtle dark mode grid lines */
-  background-color: hsl(var(--background)) !important;
+  border-color: #1c1c1e !important;
+  background-color: #09090b !important; /* zinc-950 */
 }
 
 .rbc-time-slot {
-  border-top-color: hsl(var(--border) / 0.5);
+  border-top-color: hsl(var(--border) / 0.25);
 }
 
-/* Dark mode grid lines - subtle */
+/* Dark mode grid lines – nearly invisible */
 .dark .rbc-time-slot {
-  border-top-color: #27272a !important;
+  border-top-color: #1c1c1e !important;
 }
 
 .rbc-time-content {
-  border-top-color: hsl(var(--border));
+  border-top-color: hsl(var(--border) / 0.3);
   background-color: hsl(var(--background));
 }
 
 .rbc-time-view {
-  border-color: hsl(var(--border));
+  border-color: hsl(var(--border) / 0.3);
   background-color: hsl(var(--background));
 }
 
 .rbc-day-slot .rbc-time-slot {
-  border-top-color: hsl(var(--border) / 0.5);
+  border-top-color: hsl(var(--border) / 0.2);
 }
 
-/* Today indicator with subtle transparent accent */
+/* Today indicator – refined accent */
 .rbc-today {
-  background-color: rgba(59, 130, 246, 0.08) !important;
+  background-color: hsl(var(--primary) / 0.05) !important;
 }
 
 .rbc-today .rbc-day-bg {
-  background-color: rgba(59, 130, 246, 0.08) !important;
-  border-left: 3px solid hsl(var(--primary)) !important;
+  background-color: hsl(var(--primary) / 0.05) !important;
+  border-left: 2px solid hsl(var(--primary) / 0.5) !important;
 }
 
-/* Dark mode today indicator - more visible */
+/* Dark mode today – deeper */
 .dark .rbc-today {
-  background-color: rgba(59, 130, 246, 0.18) !important;
+  background-color: hsl(var(--primary) / 0.08) !important;
 }
 
 .dark .rbc-today .rbc-day-bg {
-  background-color: rgba(59, 130, 246, 0.18) !important;
-  border-left: 3px solid hsl(var(--primary)) !important;
+  background-color: hsl(var(--primary) / 0.08) !important;
+  border-left: 2px solid hsl(var(--primary) / 0.6) !important;
 }
 
-/* Off-range days with subtle background */
+/* Off-range days – muted out */
 .rbc-off-range-bg {
-  background-color: hsl(var(--muted) / 0.4);
+  background-color: hsl(var(--muted) / 0.25);
   color: hsl(var(--muted-foreground));
 }
 
-/* Events with high contrast and color coding */
+/* Events – transparent wrapper, ShiftBlock handles visuals */
 .rbc-event {
-  border-radius: 6px;
-  padding: 8px 12px;
-  border: 2px solid;
+  border-radius: 8px;
+  padding: 0;
+  border: none;
   font-weight: 500;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
+  transition: transform 0.2s ease, box-shadow 0.25s ease;
+}
+
+.rbc-event:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 5;
+}
+
+.dark .rbc-event:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 .rbc-event-content {
-  font-size: 0.9375rem; /* 15px - slightly larger */
-  font-weight: 600; /* Semi-bold */
+  font-size: 0.9375rem;
+  font-weight: 600;
   line-height: 1.5;
 }
 
-/* Event hover state */
+/* Event focus – refined ring */
 .rbc-event:focus,
 .rbc-event:active {
-  outline: 2px solid hsl(var(--primary));
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.4), 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* Month view cells */
+/* Month view date cells – clean typography */
 .rbc-date-cell {
   color: hsl(var(--foreground));
   font-weight: 500;
-  transition: color 0.2s ease;
+  transition: color 0.25s ease;
 }
 
 .rbc-date-cell > a {
   color: hsl(var(--foreground));
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
+  border-radius: 9999px;
+  padding: 2px 6px;
 }
 
 .rbc-date-cell > a:hover {
   color: hsl(var(--primary));
-  text-decoration: underline;
-  transform: scale(1.05);
+  background-color: hsl(var(--primary) / 0.08);
 }
 
-/* Weekend date cells - subtle color accent */
+/* Weekend date cells – muted accent */
 .rbc-date-cell:nth-child(1) > a,
 .rbc-date-cell:nth-child(7) > a {
-  color: rgba(168, 85, 247, 0.8);
+  color: #a1a1aa; /* zinc-400 */
 }
 
 .dark .rbc-date-cell:nth-child(1) > a,
 .dark .rbc-date-cell:nth-child(7) > a {
-  color: rgba(192, 132, 252, 0.9) !important;
+  color: #71717a !important; /* zinc-500 */
 }
 
-/* Dark mode date cells - better contrast */
+/* Dark mode date cells – high contrast */
 .dark .rbc-date-cell {
-  color: hsl(var(--foreground)) !important;
+  color: #d4d4d8 !important; /* zinc-300 */
   font-weight: 600;
 }
 
 .dark .rbc-date-cell > a {
-  color: hsl(var(--foreground)) !important;
+  color: #d4d4d8 !important;
 }
 
 .dark .rbc-date-cell > a:hover {
   color: hsl(var(--primary)) !important;
+  background-color: hsl(var(--primary) / 0.12) !important;
 }
 
-/* Selected date styling */
+/* Selected date – soft primary ring */
 .rbc-selected {
-  background-color: hsl(var(--primary) / 0.2) !important;
-  border: 2px solid hsl(var(--primary)) !important;
+  background-color: hsl(var(--primary) / 0.1) !important;
+  border: 1px solid hsl(var(--primary) / 0.4) !important;
+  border-radius: 8px;
 }
 
 /* Hide default toolbar */
@@ -697,111 +718,124 @@ button:active, a:active, [role="button"]:active {
   border-color: hsl(var(--primary));
 }
 
-/* Calendar container with subtle gradient overlay */
+/* Calendar container – zinc-950 base */
 .rbc-calendar {
-  background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--background)) 100%);
+  background: hsl(var(--background));
   position: relative;
+  border-radius: 12px;
 }
 
 .dark .rbc-calendar {
-  background: linear-gradient(135deg, hsl(var(--background)) 0%, rgba(59, 130, 246, 0.02) 50%, rgba(168, 85, 247, 0.02) 100%);
+  background: #09090b; /* zinc-950 */
 }
 
-/* Grid line improvements - lighter for better readability */
+/* Grid lines – ultra-subtle dividers */
 .rbc-month-view,
 .rbc-time-view {
-  border-color: hsl(var(--border) / 0.6);
+  border-color: hsl(var(--border) / 0.3);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .rbc-month-row {
-  border-color: hsl(var(--border) / 0.6);
+  border-color: hsl(var(--border) / 0.25);
 }
 
 .rbc-day-bg + .rbc-day-bg {
-  border-left-color: hsl(var(--border) / 0.6);
+  border-left-color: hsl(var(--border) / 0.2);
 }
 
 .rbc-row {
-  border-color: hsl(var(--border) / 0.5);
+  border-color: hsl(var(--border) / 0.2);
 }
 
 .rbc-row-segment {
-  border-color: hsl(var(--border) / 0.5);
+  border-color: hsl(var(--border) / 0.15);
 }
 
-/* Additional grid line styling for better visibility */
 .rbc-time-content {
-  border-left-color: hsl(var(--border) / 0.6);
+  border-left-color: hsl(var(--border) / 0.2);
 }
 
 .rbc-day-slot {
-  border-right-color: hsl(var(--border) / 0.6);
+  border-right-color: hsl(var(--border) / 0.2);
 }
 
-/* Dark mode grid lines - subtle */
+/* Dark mode grid – zinc-800 hairlines */
 .dark .rbc-month-view,
 .dark .rbc-time-view {
   border-color: #27272a !important;
 }
 
 .dark .rbc-month-row {
-  border-color: #27272a !important;
+  border-color: #1c1c1e !important;
 }
 
 .dark .rbc-day-bg + .rbc-day-bg {
-  border-left-color: hsl(var(--border) / 0.8) !important;
+  border-left-color: #1c1c1e !important;
 }
 
 .dark .rbc-row {
-  border-color: hsl(var(--border) / 0.7) !important;
+  border-color: #1c1c1e !important;
 }
 
 .dark .rbc-row-segment {
-  border-color: hsl(var(--border) / 0.7) !important;
+  border-color: #1c1c1e !important;
 }
 
 .dark .rbc-time-content {
-  border-left-color: hsl(var(--border) / 0.8) !important;
+  border-left-color: #1c1c1e !important;
 }
 
 .dark .rbc-day-slot {
-  border-right-color: hsl(var(--border) / 0.8) !important;
+  border-right-color: #1c1c1e !important;
 }
 
 .dark .rbc-time-slot {
-  border-top-color: hsl(var(--border) / 0.7) !important;
+  border-top-color: #1c1c1e !important;
 }
 
 .dark .rbc-day-slot .rbc-time-slot {
-  border-top-color: hsl(var(--border) / 0.7) !important;
+  border-top-color: #1c1c1e !important;
 }
 
 /* ======================================
-   MONTH VIEW - CLEANER LAYOUT
+   MONTH VIEW – Premium Layout
    ====================================== */
 
-/* Month view event rows - more compact */
+/* Month view event rows */
 .rbc-month-view .rbc-row-content {
   min-height: 80px;
 }
 
 .rbc-month-view .rbc-row-segment {
-  padding: 1px 2px !important;
+  padding: 1px 3px !important;
 }
 
-/* Month view events - cleaner, smaller padding */
+/* Month view events – rounded-xl, smooth transitions */
 .rbc-month-view .rbc-event {
   padding: 0 !important;
   border: none !important;
-  border-radius: 4px !important;
+  border-radius: 10px !important;
   box-shadow: none !important;
-  margin: 1px 0 !important;
+  margin: 1.5px 0 !important;
   height: auto !important;
-  min-height: 20px !important;
-  max-height: 22px !important;
+  min-height: 22px !important;
+  max-height: 24px !important;
   overflow: hidden;
   pointer-events: auto !important;
   cursor: pointer !important;
+  transition: transform 0.2s ease, box-shadow 0.25s ease !important;
+}
+
+.rbc-month-view .rbc-event:hover {
+  transform: scale(1.04) !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12) !important;
+  z-index: 5 !important;
+}
+
+.dark .rbc-month-view .rbc-event:hover {
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.35) !important;
 }
 
 /* Ensure shift blocks inside events are clickable */
@@ -816,7 +850,7 @@ button:active, a:active, [role="button"]:active {
 }
 
 .rbc-month-view .rbc-event-content {
-  font-size: 0.6875rem !important; /* 11px */
+  font-size: 0.6875rem !important;
   font-weight: 500 !important;
   line-height: 1.3 !important;
   padding: 0 !important;
@@ -825,27 +859,29 @@ button:active, a:active, [role="button"]:active {
   align-items: center !important;
 }
 
-/* Remove background from event wrapper - let ShiftBlock handle it */
+/* Remove background from event wrapper – ShiftBlock handles it */
 .rbc-month-view .rbc-event {
   background: transparent !important;
 }
 
-/* Show more link - cleaner styling */
+/* "+X more" link – premium styling */
 .rbc-month-view .rbc-show-more {
   font-size: 0.6875rem !important;
   font-weight: 600 !important;
   color: hsl(var(--primary)) !important;
   background: transparent !important;
-  padding: 2px 4px !important;
+  padding: 2px 6px !important;
   margin-top: 2px !important;
   text-decoration: none !important;
   display: inline-block !important;
-  transition: color 0.2s ease !important;
+  border-radius: 6px !important;
+  transition: all 0.25s ease !important;
 }
 
 .rbc-month-view .rbc-show-more:hover {
-  color: hsl(var(--primary) / 0.8) !important;
-  text-decoration: underline !important;
+  color: hsl(var(--primary)) !important;
+  background-color: hsl(var(--primary) / 0.08) !important;
+  text-decoration: none !important;
 }
 
 .dark .rbc-month-view .rbc-show-more {
@@ -854,18 +890,19 @@ button:active, a:active, [role="button"]:active {
 
 .dark .rbc-month-view .rbc-show-more:hover {
   color: hsl(220 90% 80%) !important;
+  background-color: hsl(220 90% 70% / 0.1) !important;
 }
 
-/* Month row borders - subtle */
+/* Month row borders – hairline */
 .rbc-month-view .rbc-month-row + .rbc-month-row {
-  border-top: 1px solid hsl(var(--border) / 0.4) !important;
+  border-top: 1px solid hsl(var(--border) / 0.2) !important;
 }
 
-/* Date cell in month view - cleaner */
+/* Date cell – semi-bold dates, clean spacing */
 .rbc-month-view .rbc-date-cell {
-  padding: 4px 6px !important;
+  padding: 6px 8px !important;
   font-size: 0.8125rem !important;
-  font-weight: 500 !important;
+  font-weight: 600 !important;
 }
 
 .rbc-month-view .rbc-date-cell.rbc-now {
@@ -875,65 +912,70 @@ button:active, a:active, [role="button"]:active {
 .rbc-month-view .rbc-date-cell.rbc-now > a {
   background: hsl(var(--primary)) !important;
   color: hsl(var(--primary-foreground)) !important;
-  border-radius: 50% !important;
-  width: 24px !important;
-  height: 24px !important;
+  border-radius: 9999px !important;
+  width: 26px !important;
+  height: 26px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 8px hsl(var(--primary) / 0.3) !important;
 }
 
 .dark .rbc-month-view .rbc-date-cell.rbc-now > a {
-  background: hsl(220 80% 60%) !important;
+  background: hsl(220 80% 55%) !important;
   color: white !important;
+  box-shadow: 0 2px 12px hsl(220 80% 55% / 0.4) !important;
 }
 
-/* Off-range date cells - subtle */
+/* Off-range – very muted */
 .rbc-month-view .rbc-off-range {
-  color: hsl(var(--muted-foreground) / 0.5) !important;
+  color: hsl(var(--muted-foreground) / 0.35) !important;
 }
 
 .rbc-month-view .rbc-off-range-bg {
-  background-color: hsl(var(--muted) / 0.2) !important;
+  background-color: hsl(var(--muted) / 0.12) !important;
 }
 
 .dark .rbc-month-view .rbc-off-range-bg {
-  background-color: hsl(var(--muted) / 0.1) !important;
+  background-color: #0a0a0a !important;
 }
 
-/* Overlay popup for "+X more" - cleaner */
+/* Overlay popup – glassmorphism */
 .rbc-overlay {
-  background: hsl(var(--card)) !important;
-  border: 1px solid hsl(var(--border)) !important;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
-  padding: 8px !important;
-  max-width: 280px !important;
+  background: hsl(var(--card) / 0.95) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  border: 1px solid hsl(var(--border) / 0.3) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  padding: 10px !important;
+  max-width: 300px !important;
   z-index: 1000 !important;
 }
 
 .dark .rbc-overlay {
-  background: hsl(var(--card)) !important;
-  border-color: hsl(var(--border)) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+  background: rgba(24, 24, 27, 0.9) !important; /* zinc-900/90 */
+  border-color: #27272a !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3) !important;
 }
 
 .rbc-overlay-header {
   font-size: 0.8125rem !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
   color: hsl(var(--foreground)) !important;
-  padding-bottom: 6px !important;
-  margin-bottom: 6px !important;
-  border-bottom: 1px solid hsl(var(--border) / 0.5) !important;
+  padding-bottom: 8px !important;
+  margin-bottom: 8px !important;
+  border-bottom: 1px solid hsl(var(--border) / 0.25) !important;
 }
 
 .rbc-overlay > * + * {
   margin-top: 4px !important;
 }
 
-/* Shift block styles in month view */
+/* Shift block styles in month view – rounded-xl */
 .rbc-month-view .shift-block {
-  border-radius: 4px !important;
+  border-radius: 8px !important;
   height: 100% !important;
 }
 
@@ -943,23 +985,34 @@ button:active, a:active, [role="button"]:active {
 }
 
 .rbc-month-view .rbc-event.rbc-selected {
-  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.5) !important;
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.4) !important;
+  border-radius: 10px !important;
 }
 
 /* ======================================
-   WEEK/DAY VIEW - SLIGHTLY CLEANER
+   WEEK/DAY VIEW – Premium refinement
    ====================================== */
 
 .rbc-time-view .rbc-event {
-  border-radius: 4px !important;
+  border-radius: 8px !important;
   border: none !important;
   padding: 2px 6px !important;
+  transition: transform 0.2s ease, box-shadow 0.25s ease !important;
+}
+
+.rbc-time-view .rbc-event:hover {
+  transform: scale(1.02) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+}
+
+.dark .rbc-time-view .rbc-event:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
 }
 
 .rbc-time-view .rbc-event-label {
   font-size: 0.6875rem !important;
   font-weight: 500 !important;
-  opacity: 0.9;
+  opacity: 0.85;
 }
 
 /* ======================================

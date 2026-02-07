@@ -85,22 +85,22 @@ export function ShiftBucketPill({ bucket, onClick, className }: ShiftBucketPillP
       status = 'vacant';
     }
     
-    // Color coding based on status:
-    // - Green: 100% Confirmed - all slots filled with confirmed workers
-    // - Amber: Invitations Pending - some slots have pending invitations
-    // - Red: Vacant/Rejected - slots are empty + PULSE animation to alert owner
+    // Refined status colors with left-border accent and glassmorphism:
+    // - Emerald: 100% Confirmed – all slots filled
+    // - Amber: Invitations Pending – awaiting responses
+    // - Red: Vacant/Rejected – needs attention (subtle pulse)
     let variant: string;
     switch (status) {
       case 'confirmed':
-        variant = 'bg-green-500/90 dark:bg-green-600/90 hover:bg-green-500 dark:hover:bg-green-600 border-2 border-green-600 dark:border-green-500';
+        variant = 'bg-emerald-500/15 dark:bg-emerald-500/10 hover:bg-emerald-500/25 dark:hover:bg-emerald-500/20 border border-emerald-500/25 dark:border-emerald-500/20 border-l-[3px] border-l-emerald-500';
         break;
       case 'pending':
-        variant = 'bg-amber-500/90 dark:bg-amber-600/90 hover:bg-amber-500 dark:hover:bg-amber-600 border-2 border-amber-600 dark:border-amber-500';
+        variant = 'bg-amber-500/15 dark:bg-amber-500/10 hover:bg-amber-500/25 dark:hover:bg-amber-500/20 border border-amber-500/25 dark:border-amber-500/20 border-l-[3px] border-l-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.08)] dark:shadow-[0_0_12px_rgba(245,158,11,0.12)]';
         break;
       case 'vacant':
       default:
-        // PULSE effect on RED buckets to alert owner of staffing risks
-        variant = 'bg-red-500/90 dark:bg-red-600/90 hover:bg-red-500 dark:hover:bg-red-600 border-2 border-red-600 dark:border-red-500 animate-pulse-subtle';
+        // Subtle pulse on vacant buckets to alert owner
+        variant = 'bg-red-500/15 dark:bg-red-500/10 hover:bg-red-500/25 dark:hover:bg-red-500/20 border border-red-500/25 dark:border-red-500/20 border-l-[3px] border-l-red-500 animate-pulse-subtle';
         break;
     }
     
@@ -121,19 +121,18 @@ export function ShiftBucketPill({ bucket, onClick, className }: ShiftBucketPillP
       data-required-count={requiredCount}
       data-bucket-state={bucketStatus}
       className={cn(
-        'shift-bucket-pill w-full h-full rounded-md cursor-pointer',
+        'shift-bucket-pill w-full h-full rounded-lg cursor-pointer',
         'flex items-center gap-1.5 px-3 py-2 min-[768px]:px-2 min-[768px]:py-1',
-        'text-white transition-colors touch-manipulation',
+        'transition-all duration-200 ease-out touch-manipulation',
         // Mobile touch target: minimum 44px for accessibility
         'min-h-[44px] min-[768px]:min-h-[28px]',
         variantClass,
         className
       )}
     >
-      {/* Label in white, count in brand primary for high visibility */}
-      <span className="text-xs font-black truncate flex-1" style={{ fontFamily: 'Urbanist, sans-serif' }}>
+      <span className="text-xs font-black truncate flex-1 text-foreground" style={{ fontFamily: 'Urbanist, sans-serif' }}>
         {label}:{' '}
-        <span className="text-primary">
+        <span className="text-primary font-black">
           {filledCount}/{requiredCount}
         </span>
       </span>
