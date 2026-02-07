@@ -6398,6 +6398,34 @@ The following locations contain demo bypass logic flagged for removal once produ
 
 ---
 
+#### 2026-02-07: API Path Alignment (v1.1.15)
+
+**Core Components**
+- Vercel routing config: `vercel.json`
+- Serverless entrypoint: `api/index.ts`
+- Package metadata: `package.json`
+
+**Key Features**
+- Updated the API rewrite to `/api/(.*)` so Vercel strips the `/api` prefix before handing off to the serverless function.
+- Verified API routes (e.g., `router.get('/bootstrap')`) are defined without the `/api` prefix and rely on the rewrite for alignment.
+- Bumped the app version to `1.1.15` for the release.
+
+**Integration Points**
+- Vercel rewrites: `/api/(.*)` → `/api/index.ts`
+
+**File Paths**
+- `vercel.json`
+- `package.json`
+- `api/index.ts`
+
+**Next Priority Task**
+- Deploy to production and validate `/api/bootstrap` and `/api/me` responses in production.
+
+**Code Organization & Quality**
+- Config-only change; no runtime behavior changes required.
+
+---
+
 #### 2026-02-07: Firebase Native Auth Lockdown + Shield-First Routing (v1.1.10)
 
 **Core Components**

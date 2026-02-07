@@ -7,7 +7,7 @@
   "rewrites": [
     { "source": "/assets/:path*", "destination": "/assets/:path*" },
     { "source": "/sounds/:path*", "destination": "/sounds/:path*" },
-    { "source": "/api/:path*", "destination": "/api/index.ts" },
+    { "source": "/api/(.*)", "destination": "/api/index.ts" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "cleanUrls": true

@@ -8,6 +8,17 @@
 
 ---
 
+### Update: 2026-02-07 - API Path Alignment (v1.1.15)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Updated the Vercel API rewrite to use `/api/(.*)` → `/api/index.ts` so the `/api` prefix is stripped for the serverless entrypoint.
+- Bumped the app version to `1.1.15` for the API path alignment release.
+
+**Impact:**
+- Express now receives internal routes without the `/api` prefix, matching the Vercel rewrite behavior.
+
 ### Update: 2026-02-05 - Boardroom Briefing Mode (CTO Deck)
 
 **Status:** ✅ **UPDATED**
