@@ -96,11 +96,10 @@ test.describe('Authentication Tests', () => {
         const url = new URL(googleAuthUrl);
         const redirectUri = url.searchParams.get('redirect_uri');
         
-        // The redirect_uri should contain the Firebase project domain
-        // Based on the firebase.ts config, this should be 'hospogo.com'
-        // or the custom auth domain if configured
+        // The redirect_uri should contain the custom auth domain (hospogo.com)
+        // since authDomain is set to 'hospogo.com' in firebase.ts (v1.1.19)
         if (redirectUri) {
-          expect(redirectUri).toContain('firebaseapp.com');
+          expect(redirectUri).toContain('hospogo.com');
         }
       }
     });
@@ -245,12 +244,9 @@ test.describe('Authentication Tests', () => {
           // This should be hospogo.com (or firebaseapp.com if using default)
           // depending on the VITE_FIREBASE_AUTH_DOMAIN environment variable
           if (redirectUri) {
-            // Verify it's a valid Firebase redirect URI
-            expect(redirectUri).toMatch(/.*firebaseapp\.com.*/);
-            
-            // Check if it contains the expected project ID pattern
-            // The project ID should be hospogo-75b04 or similar
-            expect(redirectUri).toMatch(/-75b04\.firebaseapp\.com/);
+            // Verify redirect URI uses the custom authDomain (hospogo.com)
+            // v1.1.19: authDomain changed from snipshift-75b04.firebaseapp.com to hospogo.com
+            expect(redirectUri).toMatch(/hospogo\.com/);
           }
         } catch (e) {
           // URL parsing failed, which is okay if the URL was incomplete
