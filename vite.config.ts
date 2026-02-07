@@ -221,6 +221,12 @@ export default defineConfig(({ mode }) => ({
         changeOrigin: true,
         secure: false,
       },
+      // Proxy Firebase auth handler to Firebase Hosting (matches vercel.json rewrite)
+      '/__/auth': {
+        target: 'https://snipshift-75b04.firebaseapp.com',
+        changeOrigin: true,
+        secure: true,
+      },
     },
   },
   resolve: {

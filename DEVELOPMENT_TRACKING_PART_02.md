@@ -1,7 +1,38 @@
 # Development Tracking Part 02
 <!-- markdownlint-disable-file -->
 
-#### 2026-02-07: Auth Loop Fix — Restore Firebase Handlers + Self-Host
+#### 2026-02-07: Full Auth Infrastructure Audit & External Proxy Fix
+
+**Core Components**
+- `vercel.json` — Replaced broken identity rewrites with external proxy: `/__/auth/(.*)` → `https://snipshift-75b04.firebaseapp.com/__/auth/$1`
+- `vite.config.ts` — Added dev server proxy for `/__/auth` → Firebase Hosting (mirrors production rewrite)
+
+**Key Features**
+- **Root cause identified:** Two broken rewrites — (1) identity rewrite to non-existent static file, (2) `:path*` syntax (doesn't work on Vercel) — caused SPA catch-all to serve React app inside the popup
+- **External proxy rewrite:** Uses regex `(.*)` syntax (verified working) to proxy `/__/auth/*` to Firebase Hosting
+- **Firebase Hosting verified accessible:** `snipshift-75b04.firebaseapp.com/__/auth/handler` confirmed serving valid auth handler
+- **Previous "Site can't be reached" diagnosed:** Caused by `:path*` syntax failure, not actual connectivity issue
+
+**Integration Points**
+- COOP headers (`unsafe-none` for `/__/auth/*`) still in place and correct
+- PopupGuard + AuthGate already handle `/__/auth/` paths as public routes (no changes needed)
+- Singleton pattern verified: one `signInWithPopup` call per user action with double-click guard
+
+**File Paths**
+- `vercel.json` (rewrites — line 11)
+- `vite.config.ts` (dev proxy)
+
+**Next Priority Task**
+- Deploy and verify Google Sign-In popup completes end-to-end
+
+**Code Organization & Quality**
+- Net reduction: 2 broken rewrites replaced by 1 correct external proxy rewrite
+- No new source files; config changes only
+- TypeScript compilation verified clean
+
+---
+
+#### 2026-02-07: Auth Loop Fix — Restore Firebase Handlers + Self-Host (SUPERSEDED)
 
 **Core Components**
 - `public/__/auth/handler.html` — Firebase auth handler (self-hosted, `{{POST_BODY}}` replaced with empty string)
