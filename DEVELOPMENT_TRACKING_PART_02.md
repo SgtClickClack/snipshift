@@ -1,6 +1,70 @@
 # Development Tracking Part 02
 <!-- markdownlint-disable-file -->
 
+#### 2026-02-07: Splash Shield — Flicker Fix + Logo Swap (v1.1.23)
+
+**Core Components**
+- `index.html` — Removed legacy static splash screen (HTML/CSS/JS) to eliminate mounting race flicker
+- `src/components/auth/AuthGate.tsx` — HydrationSplash now uses Navbar logo (`/hospogo-navbar-banner.png`) instead of text for brand consistency
+- `src/App.tsx` — Simplified splash logic; `splashHandled` is always true (AuthGate is sole splash source)
+- `package.json` — Version bumped to `1.1.23`
+
+**Key Features**
+- **Flicker elimination:** Single splash source (React/AuthGate) — no HTML/React transition race
+- **Brand alignment:** Splash uses same logo as Navbar (preloaded for fast display)
+- **Logo fallback:** Text "HospoGo" shown if image fails to load
+
+**Integration Points**
+- index.html preload → `/hospogo-navbar-banner.png` (unchanged) for AuthGate logo cache
+- AuthGate HydrationSplash → logo w-48 md:w-56, centered, Electric Lime glow
+
+**File Paths**
+- `index.html` (removed #splash-screen div, CSS, removeSplash script)
+- `src/components/auth/AuthGate.tsx` (logo swap, fallback)
+- `src/App.tsx` (splashHandled constant)
+- `package.json` (version: '1.1.23')
+
+**Next Priority Task**
+- Deploy with `vercel --prod --force` for cache-bust
+- Monitor for 404s on logo asset path
+
+**Code Organization & Quality**
+- No new files; scoped edits only
+- Removed ~90 lines from index.html
+
+---
+
+#### 2026-02-07: First-Party Storage Hardening + Tracking Prevention Fix — v1.1.22
+
+**Core Components**
+- `src/contexts/AuthContext.tsx` — `setPersistence()` now **awaited** before `onAuthStateChanged` registration (was fire-and-forget)
+- `public/firebase-messaging-sw.js` — `authDomain` aligned to `'hospogo.com'` (was `'snipshift-75b04.firebaseapp.com'`)
+- `package.json` — Version bumped from `1.1.19` to `1.1.22`
+
+**Key Features**
+- **Storage race condition fix:** `setPersistence(auth, browserLocalPersistence)` is now `await`ed before `onAuthStateChanged` is registered, ensuring the browser recognises the first-party storage claim before Firebase touches localStorage
+- **Service worker domain alignment:** `firebase-messaging-sw.js` authDomain changed from the Firebase project domain to `hospogo.com`, eliminating the third-party storage context that triggered "Tracking Prevention blocked access to storage" warnings
+- **In-memory fallback preserved:** When `isLocalStorageAvailable()` returns false, `inMemoryPersistence` is used (no change to existing fallback)
+
+**Integration Points**
+- AuthContext `useEffect` → `await setPersistence()` → `onAuthStateChanged` (sequential, no race)
+- Service worker Firebase init → `authDomain: 'hospogo.com'` → same-origin storage context
+- `firebase.json` headers: no CSP conflicts (cache-control only)
+
+**File Paths**
+- `src/contexts/AuthContext.tsx:880-893` (awaited setPersistence before auth listener)
+- `public/firebase-messaging-sw.js:21-22` (authDomain: 'hospogo.com')
+- `package.json:3` (version: '1.1.22')
+
+**Next Priority Task**
+- Monitor Tracking Prevention warnings in production after deployment
+
+**Code Organization & Quality**
+- No new files created; scoped edits to existing files only
+- Build verified clean (43.69s, 0 errors)
+
+---
+
 #### 2026-02-07: Popup Blocker + Push Token Auth Hardening — v1.1.19
 
 **Core Components**

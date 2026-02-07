@@ -48,7 +48,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     
-    <!-- PERFORMANCE: Preload critical assets for faster TTI -->
+    <!-- PERFORMANCE: Preload splash logo for AuthGate hydration (single splash source) -->
     <link rel="preload" href="/hospogo-navbar-banner.png" as="image" type="image/png" />
     
     <!-- Font loading with swap for better FCP -->
@@ -107,101 +107,10 @@
         overflow-x: hidden;
         isolation: isolate;
       }
-
-      /* Splash Screen - Shows while React hydrates */
-      :root {
-        --splash-bg: hsl(0, 0%, 97%);
-        --splash-loader: #3b82f6;
-        --splash-text: rgba(0, 0, 0, 0.8);
-      }
-      .dark {
-        --splash-bg: #111418;
-        --splash-loader: #3b82f6;
-        --splash-text: rgba(255, 255, 255, 0.8);
-      }
-      
-      #splash-screen {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: var(--splash-bg);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 99999;
-        transition: opacity 0.3s ease-out;
-      }
-      #splash-screen.hidden {
-        opacity: 0;
-        pointer-events: none;
-      }
-      .splash-logo {
-        width: min(360px, 85vw);
-        height: auto;
-        margin-bottom: 24px;
-        object-fit: contain;
-        animation: pulse 2s ease-in-out infinite;
-        image-rendering: auto;
-        transform: translateZ(0);
-        will-change: transform;
-        backface-visibility: hidden;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        filter: drop-shadow(0 0 14px rgba(50,205,50,0.45));
-      }
-
-      .splash-logo-container {
-        min-height: 150px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 24px;
-      }
-      .splash-loader {
-        width: 40px;
-        height: 40px;
-        border: 4px solid rgba(128, 128, 128, 0.2);
-        border-top-color: var(--splash-loader);
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-      }
-      .loader-text {
-        color: var(--splash-text);
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        font-size: 14px;
-        margin-top: 16px;
-        letter-spacing: 0.5px;
-      }
-      @keyframes spin {
-        to { transform: rotate(360deg); }
-      }
-      @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.7; }
-      }
     </style>
   </head>
   <body class="bg-background">
-    <!-- Splash Screen -->
-    <div id="splash-screen">
-      <div class="splash-logo-container">
-        <img 
-          src="/hospogo-navbar-banner.png" 
-          alt="HospoGo" 
-          class="splash-logo"
-          width="360"
-          height="70"
-          loading="eager"
-          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
-        />
-        <div style="display: none; color: white; font-size: 24px; font-weight: bold;">HospoGo</div>
-      </div>
-      <div class="splash-loader"></div>
-      <div class="loader-text">Loading...</div>
-    </div>
+    <!-- Splash is managed by React AuthGate only (no legacy HTML splash - eliminates mounting race flicker) -->
     <div id="root"></div>
     <script>
       // TEMP (HospoGo Clean-Break): if any legacy "snipshift" keys exist, wipe localStorage to
@@ -269,28 +178,6 @@
       })();
     </script>
     <script type="module" src="./src/main.tsx"></script>
-    <script>
-      // Expose removeSplash function for React to call after successful mount
-      window.removeSplash = function() {
-        const splash = document.getElementById('splash-screen');
-        if (splash) {
-          splash.classList.add('hidden');
-          setTimeout(function() {
-            splash.remove();
-          }, 300);
-        }
-      };
-
-      // Fallback: Remove splash after 5 seconds if React hasn't called removeSplash()
-      // This prevents the splash from staying forever if React fails to mount
-      setTimeout(function() {
-        const splash = document.getElementById('splash-screen');
-        if (splash && !splash.classList.contains('hidden')) {
-          console.warn('Splash screen fallback: Removing after 5s timeout');
-          window.removeSplash();
-        }
-      }, 5000);
-    </script>
   </body>
 </html>
 

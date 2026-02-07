@@ -15,7 +15,11 @@ const HARD_TIMEOUT_MS = 20000;
  * This prevents ALL nested components (Stripe, Xero, Analytics, Chat widgets) from
  * even attempting to render or fetch data, eliminating 401 console errors entirely.
  */
+const LOGO_URL = '/hospogo-navbar-banner.png';
+
 function HydrationSplash() {
+  const [logoSrc, setLogoSrc] = useState(LOGO_URL);
+
   return (
     <div
       className="fixed inset-0 z-[10000] flex flex-col items-center justify-center"
@@ -25,22 +29,35 @@ function HydrationSplash() {
       data-testid="hydration-splash"
       aria-hidden="true"
     >
-      {/* HospoGo Logo with Electric Lime Glow */}
+      {/* HospoGo Logo - Navbar banner for brand consistency */}
       <div className="flex flex-col items-center justify-center">
-        <div
-          className="text-5xl md:text-7xl font-black tracking-tight mb-4"
-          style={{
-            fontFamily: 'Urbanist, sans-serif',
-            color: 'hsl(var(--primary))',
-            textShadow: '0 0 40px hsl(var(--primary) / 0.3), 0 0 80px hsl(var(--primary) / 0.15)',
-            letterSpacing: '-0.02em',
-          }}
-        >
-          HospoGo
+        <div className="w-48 md:w-56 flex items-center justify-center mb-6">
+          {logoSrc ? (
+            <img
+              src={logoSrc}
+              alt="HospoGo"
+              className="w-full h-auto object-contain"
+              style={{
+                filter: 'drop-shadow(0 0 14px hsl(var(--primary) / 0.45))',
+              }}
+              onError={() => setLogoSrc('')}
+            />
+          ) : (
+            <span
+              className="text-4xl md:text-5xl font-black tracking-tight"
+              style={{
+                fontFamily: 'Urbanist, sans-serif',
+                color: 'hsl(var(--primary))',
+                textShadow: '0 0 40px hsl(var(--primary) / 0.3)',
+              }}
+            >
+              HospoGo
+            </span>
+          )}
         </div>
 
         {/* Electric Lime Pulse Ring */}
-        <div className="relative w-16 h-16 mt-6">
+        <div className="relative w-16 h-16 mt-2">
           <div
             className="absolute inset-0 rounded-full animate-ping"
             style={{

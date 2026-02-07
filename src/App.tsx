@@ -690,27 +690,10 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { GlobalErrorBoundary } from '@/components/common/GlobalErrorBoundary';
 
-// Track if HTML splash has been removed (shared between App and AppRoutes)
-let htmlSplashRemoved = false;
+// SPLASH_SHIELD: No legacy HTML splash - AuthGate is sole splash source (eliminates mounting race flicker)
+const splashHandled = true;
 
 function App() {
-  const [splashHandled, setSplashHandled] = useState(htmlSplashRemoved);
-
-  // Remove HTML splash screen when React mounts
-  // PERFORMANCE: Removed artificial 300ms delay - splash removal is now immediate
-  // The CSS fade transition still applies but doesn't block React rendering
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.removeSplash) {
-      window.removeSplash();
-      // Mark splash as handled immediately - CSS handles the fade animation
-      htmlSplashRemoved = true;
-      setSplashHandled(true);
-    } else {
-      // No splash to remove, mark as handled immediately
-      htmlSplashRemoved = true;
-      setSplashHandled(true);
-    }
-  }, []);
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="hospogo-ui-theme">
