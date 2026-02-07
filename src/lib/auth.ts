@@ -1,6 +1,5 @@
 // Temporary compatibility shim: prefer useAuth from contexts/AuthContext
 import type { User } from '@shared/firebase-schema';
-import { toast } from '@/hooks/useToast';
 
 let currentUser: User | null = null;
 
@@ -85,43 +84,10 @@ export async function signInWithGoogleLocalDevPopup() {
 
   try {
     await setPersistence(auth, browserLocalPersistence);
-    // Popup flow - COOP warning is expected but auth still works via postMessage
+    // Popup flow with same-origin authDomain (hospogo.com) — no cross-origin issues.
+    // onAuthStateChanged in AuthContext fires immediately on success and handles hydration + navigation.
     const result = await signInWithPopup(auth, googleProvider);
-    
-    // URL-PARAM BRIDGE: Redirect a lightweight popup to /auth/bridge with uid in query params.
-    // This avoids storage partitioning issues by using same-origin routing + cookies.
-    if (result?.user && typeof window !== 'undefined') {
-      const bridgeUrl = new URL('/auth/bridge', window.location.origin);
-      bridgeUrl.searchParams.set('uid', result.user.uid);
 
-      try {
-        const bridgeWindow = window.open(bridgeUrl.toString(), 'hospogo_auth_bridge', 'width=420,height=560');
-        if (bridgeWindow) {
-          bridgeWindow.focus();
-        } else {
-          console.warn('[Auth] Bridge popup was blocked; falling back to localStorage bridge.');
-          localStorage.setItem(
-            'hospogo_auth_bridge',
-            JSON.stringify({ uid: result.user.uid, ts: Date.now() })
-          );
-
-          // UX bridge: guide the user when the popup was blocked and we fall back to the
-          // localStorage bridge so it doesn't feel like the app is "stuck".
-          try {
-            toast({
-              title: 'Almost there!',
-              description: 'Please click anywhere on the page to finish signing in.',
-            });
-          } catch (toastError) {
-            // Never let toast failures break auth; this is best-effort UX sugar.
-            console.warn('[Auth] Failed to show bridge guidance toast (non-critical):', toastError);
-          }
-        }
-      } catch (bridgeError) {
-        console.warn('[Auth] Failed to open bridge popup (non-critical):', bridgeError);
-      }
-    }
-    
     return result.user;
   } catch (error) {
     const code = (error as any)?.code;

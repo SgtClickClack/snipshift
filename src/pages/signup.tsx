@@ -97,36 +97,8 @@ export default function SignupPage() {
     console.debug('[Signup] No redirect needed - showing signup form');
   }, [isLoading, user, isVenueMissing, navigate]);
 
-  // IMMEDIATE REDIRECT GUARD: Check for localStorage bridge on mount
-  // If popup just completed auth, immediately redirect without showing signup UI
-  useEffect(() => {
-    try {
-      const bridgeData = safeGetItem('hospogo_auth_bridge', false);
-      if (!bridgeData) return;
-
-      const parsed = JSON.parse(bridgeData) as { uid?: string; ts?: number };
-      if (!parsed.uid || !parsed.ts) return;
-
-      // Only process if bridge is recent (less than 30 seconds old)
-      const age = Date.now() - parsed.ts;
-      if (age > 30000) {
-        // Bridge is stale, clean it up
-        safeRemoveItem('hospogo_auth_bridge', false);
-        return;
-      }
-
-      // Bridge is fresh - popup just completed auth
-      logger.debug('Signup', 'localStorage bridge detected, finalizing auth...', { uid: parsed.uid, age });
-      setIsFinalizing(true);
-      
-      // Show "Finalizing..." state and redirect immediately
-      setTimeout(() => {
-        navigate('/onboarding', { replace: true });
-      }, 500);
-    } catch (error) {
-      console.debug('[Signup] Failed to check localStorage bridge', error);
-    }
-  }, [navigate]);
+  // Auth redirect after popup sign-in is handled by AuthContext.onAuthStateChanged
+  // which fires immediately when signInWithPopup succeeds and navigates to /onboarding.
 
   // Check for email, role, and plan in query params (e.g. redirect from login, landing page, or pricing)
   useEffect(() => {
