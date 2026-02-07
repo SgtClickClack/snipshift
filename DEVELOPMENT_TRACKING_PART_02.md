@@ -1,6 +1,54 @@
 # Development Tracking Part 02
 <!-- markdownlint-disable-file -->
 
+#### 2026-02-07: Auth 404 Storm Resolution — Vercel Routing Fix v1.1.18
+
+**Root Cause**
+- Vercel file-based routing maps `api/index.ts` → URL `/api` (exact match only). Requests to `/api/bootstrap`, `/api/register`, etc. never reached the Express serverless function — Vercel returned its own 404 at the routing layer.
+- SPA catch-all destination `/index.html` was being 308-redirected by `cleanUrls: true` instead of served.
+- `:path*` syntax does NOT work in Vercel rewrites/headers — must use regex `(.*)`.
+
+**Core Components**
+- `vercel.json` — API rewrite `"/api/(.*)" → "/api"` routes all sub-paths to Express function; SPA catch-all `"/(.*)" → "/"` serves index.html correctly with cleanUrls
+- `api/[...path].ts` — NEW catch-all serverless function re-exporting from `./index.js` (belt-and-suspenders with rewrite)
+- `api/index.ts` — Added `rawUrlLogger` diagnostic middleware + hardened `pathNormalizeMiddleware`
+- `src/contexts/AuthContext.tsx` — `NAVIGATION_LOCK_TIMEOUT_MS` increased from 3s to 10s
+
+**Key Features**
+- **API rewrite (critical fix):** `"/api/(.*)" → "/api"` ensures ALL `/api/*` sub-paths reach the Express serverless function
+- **Catch-all function:** `api/[...path].ts` provides Vercel file-based routing fallback for `/api/*`
+- **SPA catch-all:** `"/(.*)" → "/"` with cleanUrls-compatible destination (no `.html` extension)
+- **Navigation lock timeout (10s):** Prevents premature unlock during cold starts (bootstrap retry ~7.5s worst case)
+- **Raw URL diagnostic logging:** `[VERCEL_ENTRY]` logs in production for debugging path normalization
+
+**Integration Points**
+- Vercel rewrites → `api/index.ts` (rawUrlLogger → pathNormalize → Express app) → route handlers
+- AuthContext navigation lock (10s) → AuthGate splash (10s/20s tiered) → bootstrap retry (3 attempts)
+
+**File Paths**
+- `vercel.json` (rewrites: API + SPA catch-all, functions: index.ts + [...path].ts)
+- `api/[...path].ts` (catch-all function, re-exports from index.js)
+- `api/index.ts` (rawUrlLogger + pathNormalizeMiddleware + wrappedApp)
+- `api/tsconfig.json` (include: added [...path].ts)
+- `api/.gitignore` (ignore compiled .js/.js.map for index and [...path])
+- `src/contexts/AuthContext.tsx:413` (NAVIGATION_LOCK_TIMEOUT_MS = 10000)
+- `package.json` (version 1.1.18)
+
+**Smoke Test Results (production)**
+- `/api/health` → 200, `/api/bootstrap` → 401, `/api/register` POST → 400 (validation)
+- `/login` → 200, `/signup` → 200, `/some-random-page` → 200 (SPA served)
+
+**Lessons Learned**
+1. Vercel rewrite destinations are URL paths, NOT file paths (`/api` not `/api/index.ts`)
+2. `cleanUrls: true` causes 308 redirect on `.html` destinations — use `/` not `/index.html`
+3. `:path*` syntax does NOT work in Vercel rewrites — must use regex `(.*)`
+4. Stale compiled `.js` files from `tsc postinstall` can shadow `.ts` source — gitignore them
+
+**Next Priority Task**
+- Monitor production Vercel logs for any remaining 404s; remove `rawUrlLogger` once stable
+
+---
+
 #### 2026-02-07: Nuclear Infrastructure Alignment — Final Recovery v1.1.9
 
 **Core Components**
@@ -6610,6 +6658,29 @@ The following locations contain demo bypass logic flagged for removal once produ
 
 **Code Organization & Quality**
 - Config-only change; no runtime code paths altered.
+
+---
+
+#### 2026-02-07: Claude Code Guidance File (CLAUDE.md)
+
+**Core Components**
+- Claude Code project guidance: `CLAUDE.md`
+
+**Key Features**
+- Added repo-level instructions for workflow, code standards, testing, and safety.
+- Documented tracking/roadmap update expectations and file structure rules.
+
+**Integration Points**
+- Claude Code project memory loading via `CLAUDE.md`.
+
+**File Paths**
+- `CLAUDE.md`
+
+**Next Priority Task**
+- Run `claude init` in the repo to ensure project memory is loaded.
+
+**Code Organization & Quality**
+- Documentation-only change; no runtime code paths altered.
 
 ---
 

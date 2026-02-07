@@ -1,1 +1,6 @@
 .vercel
+# Compiled JS output from tsc (postinstall) — Vercel compiles .ts directly
+index.js
+index.js.map
+[...path].js
+[...path].js.map

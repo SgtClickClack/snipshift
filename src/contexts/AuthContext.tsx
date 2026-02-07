@@ -408,9 +408,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [isNavigationLocked]);
 
-  // Safety timeout: force isNavigationLocked to false after 3s if API is hanging (prevents stuck skeleton)
-  // Reduced from 6s to 3s now that venue fetch is non-blocking (user profile is the only blocking call)
-  const NAVIGATION_LOCK_TIMEOUT_MS = 3000;
+  // Safety timeout: force isNavigationLocked to false if API is hanging (prevents stuck skeleton)
+  // Increased to 10s to accommodate Vercel cold starts — bootstrap retry needs up to ~7.5s worst case
+  const NAVIGATION_LOCK_TIMEOUT_MS = 10000;
   useEffect(() => {
     if (!isNavigationLocked) return;
     const t = setTimeout(() => {

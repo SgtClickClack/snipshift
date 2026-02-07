@@ -47,15 +47,25 @@ try {
   app = errorApp;
 }
 
-// PATH ALIGNMENT (v1.1.16): On Vercel, ensure /api prefix so Express routes match.
-// The rewrite sends /api/* to this function; Vercel strips the prefix in some cases.
+// DIAGNOSTIC (v1.1.18): Log the raw URL Vercel passes to the function BEFORE any mutation.
+// This is the single source of truth for debugging 404s caused by path-stripping.
+const rawUrlLogger = (req: express.Request, _res: express.Response, next: express.NextFunction) => {
+  if (process.env.VERCEL) {
+    console.log(`[VERCEL_ENTRY] RAW req.url=${req.url} req.originalUrl=${req.originalUrl} method=${req.method}`);
+  }
+  next();
+};
+
+// PATH ALIGNMENT (v1.1.18): Normalize req.url so Express routes always see /api/*.
+//
+// Express routes in _src/index.ts are mounted as app.use('/api', router), so
+// req.url MUST start with '/api/' for Express to match and strip the prefix.
 //
 // Observed Vercel behaviors for a request to /api/bootstrap:
 //   1. req.url = '/api/bootstrap'   (prefix preserved — no action needed)
 //   2. req.url = '/bootstrap'       (prefix stripped — must prepend /api)
 //   3. req.url = '/index'           (resolved to function path — must remap)
-//
-// This middleware normalizes all three cases so Express routes always see /api/*.
+//   4. req.url = '/api'             (bare prefix — pass through)
 const pathNormalizeMiddleware = (req: express.Request, _res: express.Response, next: express.NextFunction) => {
   // Skip normalization in local dev (VERCEL env is only set on Vercel deployments)
   if (!process.env.VERCEL) return next();
@@ -65,25 +75,33 @@ const pathNormalizeMiddleware = (req: express.Request, _res: express.Response, n
   const rawPath = questionIdx >= 0 ? originalUrl.slice(0, questionIdx) : originalUrl;
   const query = questionIdx >= 0 ? originalUrl.slice(questionIdx) : '';
 
-  // Paths that should NOT be prefixed (health checks, static assets)
-  const skipPaths = ['/', '/favicon.ico', '/health'];
-
-  // Vercel sometimes passes the function path as /index when request was /api
-  if (rawPath === '/index' || rawPath === '/index.ts') {
-    req.url = '/api' + query;
+  // Already correctly prefixed — no action needed
+  if (rawPath.startsWith('/api')) {
     return next();
   }
 
-  if (!rawPath.startsWith('/api') && !skipPaths.includes(rawPath)) {
-    const normalizedUrl = '/api' + rawPath + query;
-    console.log(`[PATH_NORM] ${rawPath} → ${normalizedUrl}`);
-    req.url = normalizedUrl;
+  // Paths that should NOT be prefixed (health checks, static assets)
+  const skipPaths = ['/', '/favicon.ico', '/health'];
+  if (skipPaths.includes(rawPath)) {
+    return next();
   }
 
+  // Vercel sometimes resolves to the function file path
+  if (rawPath === '/index' || rawPath === '/index.ts') {
+    req.url = '/api' + query;
+    console.log(`[PATH_NORM] ${rawPath} → /api${query}`);
+    return next();
+  }
+
+  // Default: Vercel stripped the /api prefix — re-add it
+  const normalizedUrl = '/api' + rawPath + query;
+  console.log(`[PATH_NORM] ${rawPath} → ${normalizedUrl}`);
+  req.url = normalizedUrl;
   next();
 };
 
 const wrappedApp = express();
+wrappedApp.use(rawUrlLogger);
 wrappedApp.use(pathNormalizeMiddleware);
 wrappedApp.use(app);
 
