@@ -784,14 +784,15 @@ function AuthGate({ children, splashHandled }: { children: React.ReactNode; spla
   const location = useLocation();
   const [timedOut, setTimedOut] = useState(false);
 
-  // FAIL-SAFE: If Firebase handshake takes > 3 seconds, force the app to load anyway.
+  // FAIL-SAFE: If Firebase handshake takes > 10 seconds, force the app to load anyway.
+  // v1.1.17: Extended from 3s to 10s to allow cold-start backend bootstrap to complete.
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!isSystemReady) {
         console.warn('[AuthGate] Firebase handshake timed out; bypassing splash screen.');
         setTimedOut(true);
       }
-    }, 3000);
+    }, 10000);
     return () => clearTimeout(timer);
   }, [isSystemReady]);
 
@@ -809,7 +810,7 @@ function AuthGate({ children, splashHandled }: { children: React.ReactNode; spla
     location.pathname === '/oauth/callback' ||
     location.pathname === '/__/auth/handler';
 
-  // Logic: Proceed if auth is ready, if we are on a public route (excluding /), OR if the 3s fail-safe triggered.
+  // Logic: Proceed if auth is ready, if we are on a public route (excluding /), OR if the 10s fail-safe triggered.
   const shouldShowSplash = (!isSystemReady || user === undefined) && !isPublicRoute && !timedOut && splashHandled;
 
   if (shouldShowSplash) {
