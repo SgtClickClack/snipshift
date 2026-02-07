@@ -8,6 +8,48 @@
 
 ---
 
+### Update: 2026-02-07 - Popup Blocker Elimination + Push Token Auth + Bridge Removal (v1.1.19)
+
+**Status:** ✅ **DEPLOYED**
+
+**Action Taken:**
+- **authDomain → hospogo.com:** Changed from `snipshift-75b04.firebaseapp.com` to same-origin `hospogo.com`, preventing popup blockers from treating the Firebase auth popup as third-party
+- **Firebase auth proxy:** Added `/__/auth/(.*)` rewrite in vercel.json proxying to `https://snipshift-75b04.firebaseapp.com/__/auth/$1`
+- **Push token auth guard:** Added `Authorization: Bearer <idToken>` to both `registerPushToken()` (POST) and `unregisterPushToken()` (DELETE), fixing 401 on logout cleanup
+- **Bridge popup removed:** Deleted redundant `window.open('/auth/bridge')` code from `auth.ts` — the source of "Bridge popup was blocked" console errors. `signInWithPopup` returns user directly; `onAuthStateChanged` handles hydration
+- **Stale bridge detection removed:** Deleted localStorage bridge check from `signup.tsx`
+- Deployed with `vercel --prod --force`
+
+**Impact:**
+- "Bridge popup was blocked" error eliminated entirely (62 lines of dead code removed)
+- `DELETE /api/push-tokens` no longer fires without auth token
+- Google sign-in works same-origin; if popup is blocked, automatic fallback to `signInWithRedirect`
+- `/__/auth/handler` and `/__/auth/handler.js` both return 200 from Firebase
+
+---
+
+### Update: 2026-02-07 - Auth 404 Storm Resolution + Vercel Routing Fix (v1.1.18)
+
+**Status:** ✅ **DEPLOYED**
+
+**Action Taken:**
+- **Root cause found:** Vercel file-based routing maps `api/index.ts` → `/api` (exact only). All sub-paths (`/api/bootstrap`, `/api/register`) returned Vercel's own 404 before reaching Express
+- **API rewrite:** `"/api/(.*)" → "/api"` routes all sub-paths to the Express serverless function
+- **Catch-all function:** Created `api/[...path].ts` re-exporting from `./index.js` as belt-and-suspenders
+- **SPA catch-all fix:** `"/(.*)" → "/"` — destination changed from `/index.html` to `/` because `cleanUrls: true` was causing 308 redirects
+- **Rewrite syntax:** Confirmed `:path*` does NOT work in Vercel rewrites — must use regex `(.*)`
+- **Path normalization:** Added `rawUrlLogger` + hardened `pathNormalizeMiddleware` in `api/index.ts`
+- **Navigation lock:** Increased `NAVIGATION_LOCK_TIMEOUT_MS` from 3s to 10s for cold-start budget
+- **Stale JS cleanup:** Gitignored compiled `api/index.js` and `api/[...path].js` from `tsc postinstall`
+- Bumped version to 1.1.18; deployed with `vercel --prod --force`
+
+**Impact:**
+- `/api/health` → 200, `/api/bootstrap` → 401, `/api/register` POST → 400 (all working)
+- `/login` → 200, `/signup` → 200, `/some-random-page` → 200 (SPA catch-all working)
+- Auth 404 storm and redirect loops eliminated
+
+---
+
 ### Update: 2026-02-06 - Auth Proxy Priority + Sounds Rewrite (v1.1.0)
 
 **Status:** ✅ **UPDATED**

@@ -6,20 +6,27 @@
 **Core Components**
 - `src/lib/firebase.ts` — `authDomain` changed from `snipshift-75b04.firebaseapp.com` to `hospogo.com`
 - `src/lib/push-notifications.ts` — `registerPushToken()` and `unregisterPushToken()` now include Firebase ID token
+- `src/lib/auth.ts` — Removed redundant bridge popup code (source of "Bridge popup was blocked" error)
+- `src/pages/signup.tsx` — Removed stale localStorage bridge detection
 - `vercel.json` — Added `/__/auth/(.*)` rewrite proxying to Firebase auth handler
 
 **Key Features**
-- **Popup blocker elimination:** `authDomain: 'hospogo.com'` makes the auth popup same-origin, preventing "Bridge popup was blocked" errors
+- **Popup blocker elimination:** `authDomain: 'hospogo.com'` makes the Firebase auth popup same-origin, preventing third-party popup blocking
+- **Bridge popup removed:** The second `window.open('/auth/bridge')` was redundant — `signInWithPopup` returns user directly and `onAuthStateChanged` handles hydration. Removing it eliminates the "Bridge popup was blocked" console error entirely
 - **Firebase auth proxy:** `/__/auth/*` rewritten to `https://snipshift-75b04.firebaseapp.com/__/auth/*` so custom authDomain works
 - **Push token auth guard:** Both POST and DELETE push-token API calls now attach `Authorization: Bearer <idToken>`, fixing 401 on logout cleanup
 - **Auth-first guard:** `unregisterPushToken()` checks `auth.currentUser` before firing — skips silently if no user
+- **Popup-blocked fallback:** If `signInWithPopup` itself is blocked, automatic fallback to `signInWithRedirect` (full-page Google OAuth redirect)
 
 **Integration Points**
 - Firebase auth popup → same-origin `hospogo.com/__/auth/handler` → Vercel rewrite → Firebase hosting
+- Popup flow: `signInWithPopup` → `onAuthStateChanged` → `hydrateFromFirebaseUser` → navigation (no bridge needed)
 - Logout flow: `cleanupPushNotifications()` → `unregisterPushToken()` → auth guard → `DELETE /api/push-tokens` with Bearer token
 
 **File Paths**
 - `src/lib/firebase.ts:26` (authDomain: 'hospogo.com')
+- `src/lib/auth.ts:85-91` (signInWithPopup, no bridge popup)
+- `src/lib/auth.ts:95-109` (popup-blocked → signInWithRedirect fallback)
 - `src/lib/push-notifications.ts:265-282` (unregisterPushToken with auth)
 - `src/lib/push-notifications.ts:234-260` (registerPushToken with auth)
 - `vercel.json:16` (__/auth rewrite)
@@ -27,10 +34,16 @@
 
 **Smoke Test Results (production)**
 - `/api/health` → 200, `/api/bootstrap` → 401, `/login` → 200
-- `/__/auth/handler` → 200 (Firebase auth proxy working)
+- `/__/auth/handler` → 200, `/__/auth/handler.js` → 200 (Firebase auth proxy working)
+
+**Code Organization & Quality**
+- Removed 62 lines of dead bridge popup code from `auth.ts`
+- Removed stale localStorage bridge detection from `signup.tsx`
+- Removed unused `toast` import from `auth.ts`
 
 **Next Priority Task**
-- Verify popup-based Google sign-in works end-to-end with popup blocker enabled
+- Manual browser test: Google sign-in with popup blocker enabled on Chrome, Safari, Firefox
+- Monitor production for any remaining auth console errors
 
 ---
 
