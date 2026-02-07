@@ -9,6 +9,10 @@
     <link rel="icon" type="image/png" href="/brand-icon.png" />
     <link rel="apple-touch-icon" href="/brand-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- Popup context: ensure minimum width for auth popups to prevent shrunk layout -->
+    <script>
+      (function(){try{if(window.opener){var m=document.querySelector('meta[name=viewport]');if(m)m.setAttribute('content','width=500, minimum-scale=1, viewport-fit=cover');}}catch(e){}})();
+    </script>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />

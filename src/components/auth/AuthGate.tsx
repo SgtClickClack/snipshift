@@ -158,7 +158,7 @@ export function AuthGate({ children, splashHandled }: { children: React.ReactNod
     location.pathname === '/forgot-password' ||
     location.pathname.startsWith('/onboarding') ||
     location.pathname === '/oauth/callback' ||
-    location.pathname === '/__/auth/handler';
+    location.pathname.startsWith('/__/auth/');
 
   // Logic: Proceed if auth is ready, if we are on a public route (excluding /), OR if the tiered fail-safe triggered.
   // Note: user is User|null (never undefined) — the gate relies on isSystemReady for deterministic state.

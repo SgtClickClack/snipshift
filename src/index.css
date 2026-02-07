@@ -232,9 +232,13 @@
   }
 
   /* Prevent horizontal overflow from common elements */
-  img, video, iframe, svg {
+  /* NOTE: iframe excluded from height:auto — causes collapse of OAuth/auth iframes with no intrinsic size */
+  img, video, svg {
     max-width: 100%;
     height: auto;
+  }
+  iframe {
+    max-width: 100%;
   }
 }
 

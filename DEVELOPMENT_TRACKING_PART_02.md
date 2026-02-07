@@ -1,6 +1,42 @@
 # Development Tracking Part 02
 <!-- markdownlint-disable-file -->
 
+#### 2026-02-07: Google Auth Popup — Shrunk UI Fix (v1.1.24)
+
+**Core Components**
+- `src/components/auth/PopupGuard.tsx` — New component: detects popup on wrong route (/, /signup, /login) and renders minimal "Completing sign-in…" UI instead of full SPA
+- `src/App.tsx` — PopupGuard wraps AuthProvider; popup on wrong path bypasses full app load
+- `src/index.css` — iframe excluded from `height: auto` (prevents OAuth iframe collapse)
+- `index.html` — Popup viewport tweak: when `window.opener` exists, set `width=500` to prevent shrunk mobile-first layout
+- `src/components/auth/AuthGate.tsx` — Public route check uses `pathname.startsWith('/__/auth/')` for broader auth handler bypass
+
+**Key Features**
+- **Popup recovery:** When Firebase redirects popup to /, /signup, or /login (proxy failure or continueUrl edge case), show minimal UI and close popup instead of full signup screen
+- **Viewport fix:** Popup context gets `width=500` viewport to avoid mobile-first layout in small window
+- **iframe CSS:** Excluded iframes from `height: auto` to prevent collapse of embedded OAuth iframes
+
+**Integration Points**
+- PopupGuard runs before AuthProvider — wrong-path popups never mount full app
+- AuthGate bypass: `/__/auth/*` routes skip hydration splash
+- vercel.json `/__/auth/(.*)` rewrite unchanged — primary fix is client-side recovery
+
+**File Paths**
+- `src/components/auth/PopupGuard.tsx` (new)
+- `src/App.tsx` (PopupGuard wrapper)
+- `src/index.css` (iframe rule)
+- `index.html` (viewport script)
+- `src/components/auth/AuthGate.tsx` (startsWith for /__/auth/)
+
+**Next Priority Task**
+- Deploy with `vercel --prod --force`; verify Google Sign-In popup flow
+- Monitor for PopupGuard recovery triggers (indicates proxy or redirect misconfiguration)
+
+**Code Organization & Quality**
+- PopupGuard: 52 lines, single responsibility
+- Build verified clean (26.36s)
+
+---
+
 #### 2026-02-07: Vercel Deployment Config Cleanup — Environment Parity
 
 **Core Components**

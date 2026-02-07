@@ -8,6 +8,22 @@
 
 ---
 
+### Update: 2026-02-07 - Google Auth Popup Shrunk UI Fix (v1.1.24)
+
+**Status:** ✅ **COMPLETE**
+
+**Action Taken:**
+- **PopupGuard:** New component detects when popup lands on /, /signup, or /login (instead of Firebase auth handler). Renders minimal "Completing sign-in…" UI and closes popup — prevents full signup screen from rendering in shrunk popup window
+- **Viewport fix:** In index.html, when `window.opener` exists (popup context), set viewport to `width=500` to prevent mobile-first layout constraint
+- **iframe CSS:** Excluded iframes from `height: auto` in index.css — prevents collapse of OAuth/auth iframes
+- **AuthGate:** Public route check now uses `pathname.startsWith('/__/auth/')` for broader auth handler bypass
+
+**Impact:**
+- "Shrunk signup screen in Google auth popup" fixed via client-side recovery
+- If proxy fails or Firebase redirects popup to app route, user sees minimal UI and can retry
+
+---
+
 ### Update: 2026-02-07 - Vercel Deployment Config Cleanup (Environment Parity)
 
 **Status:** ✅ **COMPLETE**

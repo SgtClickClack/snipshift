@@ -15,6 +15,7 @@ import { PusherProvider } from '@/contexts/PusherContext';
 import { NotificationToast } from '@/components/notifications/notification-toast';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { AuthGate } from '@/components/auth/AuthGate';
+import { PopupGuard } from '@/components/auth/PopupGuard';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { LoadingScreen } from '@/components/ui/loading-screen';
@@ -704,6 +705,9 @@ function App() {
             <QueryClientProvider client={queryClient}>
               <TooltipProvider>
                 <Router>
+                    {/* GOOGLE AUTH POPUP FIX: Detect popup on wrong route (/, /signup, /login)
+                        and render minimal UI instead of shrunk full app */}
+                    <PopupGuard>
                   <AuthProvider>
                     {/* HOSPOGO_CORE_SYSTEM_RECOVERY: Top-level auth gate */}
                     {/* This wraps ALL content and shows Electric Lime splash until isSystemReady && user !== undefined */}
@@ -728,6 +732,7 @@ function App() {
                       </PusherProvider>
                     </AuthGate>
                   </AuthProvider>
+                    </PopupGuard>
                 </Router>
               </TooltipProvider>
             </QueryClientProvider>
