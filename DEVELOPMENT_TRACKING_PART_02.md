@@ -1,6 +1,39 @@
 # Development Tracking Part 02
 <!-- markdownlint-disable-file -->
 
+#### 2026-02-07: Popup Blocker + Push Token Auth Hardening — v1.1.19
+
+**Core Components**
+- `src/lib/firebase.ts` — `authDomain` changed from `snipshift-75b04.firebaseapp.com` to `hospogo.com`
+- `src/lib/push-notifications.ts` — `registerPushToken()` and `unregisterPushToken()` now include Firebase ID token
+- `vercel.json` — Added `/__/auth/(.*)` rewrite proxying to Firebase auth handler
+
+**Key Features**
+- **Popup blocker elimination:** `authDomain: 'hospogo.com'` makes the auth popup same-origin, preventing "Bridge popup was blocked" errors
+- **Firebase auth proxy:** `/__/auth/*` rewritten to `https://snipshift-75b04.firebaseapp.com/__/auth/*` so custom authDomain works
+- **Push token auth guard:** Both POST and DELETE push-token API calls now attach `Authorization: Bearer <idToken>`, fixing 401 on logout cleanup
+- **Auth-first guard:** `unregisterPushToken()` checks `auth.currentUser` before firing — skips silently if no user
+
+**Integration Points**
+- Firebase auth popup → same-origin `hospogo.com/__/auth/handler` → Vercel rewrite → Firebase hosting
+- Logout flow: `cleanupPushNotifications()` → `unregisterPushToken()` → auth guard → `DELETE /api/push-tokens` with Bearer token
+
+**File Paths**
+- `src/lib/firebase.ts:26` (authDomain: 'hospogo.com')
+- `src/lib/push-notifications.ts:265-282` (unregisterPushToken with auth)
+- `src/lib/push-notifications.ts:234-260` (registerPushToken with auth)
+- `vercel.json:16` (__/auth rewrite)
+- `package.json` (version 1.1.19)
+
+**Smoke Test Results (production)**
+- `/api/health` → 200, `/api/bootstrap` → 401, `/login` → 200
+- `/__/auth/handler` → 200 (Firebase auth proxy working)
+
+**Next Priority Task**
+- Verify popup-based Google sign-in works end-to-end with popup blocker enabled
+
+---
+
 #### 2026-02-07: Auth 404 Storm Resolution — Vercel Routing Fix v1.1.18
 
 **Root Cause**

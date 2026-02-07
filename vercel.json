@@ -14,6 +14,7 @@
   "rewrites": [
     { "source": "/assets/(.*)", "destination": "/assets/$1" },
     { "source": "/sounds/(.*)", "destination": "/sounds/$1" },
+    { "source": "/__/auth/(.*)", "destination": "https://snipshift-75b04.firebaseapp.com/__/auth/$1" },
     { "source": "/api/(.*)", "destination": "/api" },
     { "source": "/(.*)", "destination": "/" }
   ],

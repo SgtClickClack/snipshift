@@ -5,7 +5,7 @@
  */
 
 import { getMessaging, getToken, onMessage, Messaging, isSupported } from 'firebase/messaging';
-import { app } from './firebase';
+import { app, auth } from './firebase';
 import { logger } from './logger';
 
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || '';
@@ -229,14 +229,24 @@ export async function getFCMToken(): Promise<string | null> {
 }
 
 /**
- * Register push token with the backend
+ * Register push token with the backend.
+ * Attaches Firebase ID token to authenticate the request.
  */
 export async function registerPushToken(token: string, _userId: string): Promise<boolean> {
   try {
+    // AUTH GUARD: Only fire POST if the user is authenticated
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      logger.warn('push-notifications', 'No authenticated user, skipping push token register');
+      return false;
+    }
+    const idToken = await currentUser.getIdToken();
+
     const response = await fetch('/api/push-tokens', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`,
       },
       body: JSON.stringify({
         token,
@@ -260,12 +270,24 @@ export async function registerPushToken(token: string, _userId: string): Promise
 }
 
 /**
- * Unregister push token from the backend
+ * Unregister push token from the backend.
+ * Waits for Firebase auth to be present before firing the DELETE request.
  */
 export async function unregisterPushToken(token: string): Promise<boolean> {
   try {
+    // AUTH GUARD: Only fire DELETE if the user is still authenticated
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      logger.warn('push-notifications', 'No authenticated user, skipping push token unregister');
+      return false;
+    }
+    const idToken = await currentUser.getIdToken();
+
     const response = await fetch(`/api/push-tokens/${encodeURIComponent(token)}`, {
       method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${idToken}`,
+      },
     });
 
     if (!response.ok) {

@@ -1,5 +1,5 @@
 /**
- * Vercel Catch-All API Handler (v1.1.18)
+ * Vercel Catch-All API Handler (v1.1.19)
  *
  * Vercel file-based routing maps api/index.ts → /api (exact).
  * This catch-all handles all /api/* sub-paths (e.g. /api/bootstrap,

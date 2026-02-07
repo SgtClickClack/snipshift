@@ -18,12 +18,13 @@ const getEnv = (key: keyof ImportMetaEnv) => {
 // Project snipshift-75b04: VITE_FIREBASE_PROJECT_ID and VITE_FIREBASE_MESSAGING_SENDER_ID
 // must match this project exactly; mismatches cause Firebase 400 errors (e.g. on token cleanup).
 // 
-// v1.1.10 Firebase native auth domain: bypass Vercel proxy.
-// Prevents auth popup loops and Service Worker proxy conflicts.
+// v1.1.19 Custom auth domain: use hospogo.com so the auth popup stays same-origin.
+// Eliminates "Bridge popup was blocked" errors from popup blockers.
+// Requires /__/auth/* rewrite in vercel.json to proxy to Firebase.
 function buildConfig() {
   return {
     apiKey: getEnv('VITE_FIREBASE_API_KEY'),
-    authDomain: 'snipshift-75b04.firebaseapp.com',
+    authDomain: 'hospogo.com',
     projectId: getEnv('VITE_FIREBASE_PROJECT_ID'),
     storageBucket: getEnv('VITE_FIREBASE_STORAGE_BUCKET'),
     messagingSenderId: getEnv('VITE_FIREBASE_MESSAGING_SENDER_ID'),
