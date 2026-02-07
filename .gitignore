@@ -172,6 +172,12 @@ test-output*.txt
 # Firebase CLI cache / deploy state
 .firebase/
 
+# Firebase auth handler static files — NEVER commit these.
+# Vercel filesystem match + cleanUrls intercepts before rewrites fire,
+# shadowing the rewrite to Firebase Hosting and serving stale handler JS.
+# The rewrite in vercel.json proxies /__/auth/* to Firebase Hosting instead.
+public/__/auth/
+
 # Firebase service account files (security)
 snipshift-75b04-service-account.json
 *-service-account.json
