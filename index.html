@@ -114,6 +114,15 @@
     </style>
   </head>
   <body class="bg-background">
+    <!-- PWA: Capture beforeinstallprompt as early as possible (before React loads).
+         The hamburger menu Install button mounts later; without this, the event is missed and stays greyed out. -->
+    <script>
+      (function(){try{
+        if(!('onbeforeinstallprompt' in window))return;
+        var h=function(e){e.preventDefault();window.__deferredInstallPrompt=e;window.dispatchEvent(new CustomEvent('pwa-install-prompt-captured'));};
+        window.addEventListener('beforeinstallprompt',h,{capture:true});
+      }catch(e){}})();
+    </script>
     <!-- Splash is managed by React AuthGate only (no legacy HTML splash - eliminates mounting race flicker) -->
     <div id="root"></div>
     <script>

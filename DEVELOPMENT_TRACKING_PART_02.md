@@ -1,6 +1,39 @@
 # Development Tracking Part 02
 <!-- markdownlint-disable-file -->
 
+#### 2026-02-08: Fix Greyed-out PWA Install in Hamburger Menu
+
+**Core Components**
+- `index.html` — Early `beforeinstallprompt` capture script
+- `src/hooks/useInstallPrompt.ts` — Global store integration, promptInstall fallback
+- `src/components/pwa/install-button.tsx` — Hamburger menu Install button
+
+**Key Features**
+- **Early capture:** Inline script in index.html captures `beforeinstallprompt` before React mounts and stores in `window.__deferredInstallPrompt`. The event fires once per load; the hamburger menu mounts later, so the previous per-component listener missed it and the button stayed greyed out.
+- **Global store:** Event persisted in `window.__deferredInstallPrompt`; custom event `pwa-install-prompt-captured` notifies React when captured.
+- **useInstallPrompt:** Initializes from global on mount; listens for `pwa-install-prompt-captured`; `promptInstall` uses `deferredPrompt ?? window.__deferredInstallPrompt` to handle late-mount; clears global after use.
+- **Install flow:** User clicks "Install App" → calls `.prompt()` on saved event → clears state. Button enabled only when `installPromptEvent` is non-null.
+
+**Integration Points**
+- `manifest.json` linked in index.html (verified)
+- VitePWA Workbox registers SW; `manifest.webmanifest` generated in dist
+
+**File Paths**
+- `index.html` (inline script)
+- `src/vite-env.d.ts` (Window.__deferredInstallPrompt type)
+- `src/hooks/useInstallPrompt.ts`
+- `src/components/pwa/install-button.tsx`
+
+**Next Priority Task**
+- Manual test on Chrome/Edge (desktop + Android): Install App button enabled when PWA criteria met
+- Note: Safari iOS does not support `beforeinstallprompt`; users use Add to Home Screen from share menu
+
+**Code Organization & Quality**
+- No new dependencies; scoped edits only
+- Build verified clean (22.16s)
+
+---
+
 #### 2026-02-08: Optimize Hydration Speed & Eliminate Post-Login Redirects
 
 **Core Components**

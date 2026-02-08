@@ -20,10 +20,8 @@ export function InstallButton({
 }: InstallButtonProps) {
   const { canInstall, promptInstall, isInstalled } = useInstallPrompt();
 
-  // Always render the button for now to debug visibility
-  // Disable it if app is already installed or prompt isn't available
   const isDisabled = isInstalled || !canInstall;
-  
+
   return (
     <Button
       variant={variant}
