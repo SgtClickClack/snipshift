@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => ({
       //   3. Second call throws InvalidStateError (SW already destroying)
       // Now: main.tsx version-aware invalidation is the SINGLE source of truth.
       // SW stays alive for runtime caching (fonts, API, venue chunk).
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['brand-logo.png', 'brand-wordmark.png', 'brand-icon.png', 'brand-logo-192.png', 'brand-logo-512.png', 'logo.png', 'logo-white.png', 'og-image.jpg'],
       manifest: {
         name: 'HospoGo',
@@ -71,7 +71,6 @@ export default defineConfig(({ mode }) => ({
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3MB limit
         cleanupOutdatedCaches: true,
         clientsClaim: true,
-        skipWaiting: true,
         runtimeCaching: [
           {
             // Runtime cache for large venue chunk (prevents partial-update white screen)

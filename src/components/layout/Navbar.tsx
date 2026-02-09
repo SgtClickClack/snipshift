@@ -443,14 +443,12 @@ export default function Navbar() {
                           </Link>
                         </SheetClose>
 
-                         {/* Install App Button */}
-                         <div className="px-2 py-2">
-                           <InstallButton 
-                             variant="ghost" 
-                             size="sm"
-                             className="w-full justify-start text-foreground dark:text-steel-100 hover:bg-muted dark:hover:bg-steel-800"
-                           />
-                         </div>
+                         {/* Download App — only renders when installable */}
+                         <InstallButton
+                           variant="ghost"
+                           size="sm"
+                           className="mx-2 my-2 w-[calc(100%-1rem)] justify-start text-foreground dark:text-steel-100 hover:bg-muted dark:hover:bg-steel-800"
+                         />
 
                          <div className="border-t border-border dark:border-steel-800 my-2 pt-2">
                             {(user.roles || []).includes('admin') && (

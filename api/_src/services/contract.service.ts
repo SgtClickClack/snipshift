@@ -117,13 +117,13 @@ export async function replaceContractProfessional(
   const professionalName = professional?.name || 'Professional';
   const acceptanceLog = `Backup worker ${professionalName} (${newProfessionalId}) accepted the terms of the MSA for Shift ${shiftId}`;
 
+  // Preserve original createdAt for audit trail; only update professionalId, contractHash, acceptanceLog
   const [updated] = await db
     .update(contracts)
     .set({
       professionalId: newProfessionalId,
       contractHash,
       acceptanceLog,
-      createdAt: now,
     })
     .where(eq(contracts.shiftId, shiftId))
     .returning({ id: contracts.id, contractHash: contracts.contractHash, createdAt: contracts.createdAt });

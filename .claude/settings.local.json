@@ -20,7 +20,6 @@
       "Bash(git stash:*)",
       "Bash(git stash pop:*)",
       "Bash(vercel:*)",
-      "Bash(popup was blocked\" console errors on every Google sign-in.\n\n- Remove bridge popup code from signInWithGoogleLocalDevPopup\\(\\)\n- Remove stale localStorage bridge detection from signup.tsx\n- Remove unused toast import from auth.ts\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
       "WebFetch(domain:hospogo.com)",
       "Bash(npx playwright test:*)",
       "Bash(npx playwright install:*)",

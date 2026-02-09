@@ -10,35 +10,28 @@ interface InstallButtonProps {
 
 /**
  * PWA Install Button Component
- * Displays a button to install the PWA when available
- * Hidden if the app is already installed
+ * Only renders when the app can be installed (prompt available & not already installed).
+ * Triggers the native browser install prompt on click.
  */
-export function InstallButton({ 
-  variant = 'outline', 
+export function InstallButton({
+  variant = 'outline',
   size = 'default',
-  className 
+  className
 }: InstallButtonProps) {
-  const { canInstall, promptInstall, isInstalled } = useInstallPrompt();
+  const { canInstall, promptInstall } = useInstallPrompt();
 
-  const isDisabled = isInstalled || !canInstall;
+  if (!canInstall) return null;
 
   return (
     <Button
       variant={variant}
       size={size}
-      onClick={canInstall && !isInstalled ? promptInstall : undefined}
-      disabled={isDisabled}
+      onClick={promptInstall}
       className={className}
-      title={
-        isInstalled 
-          ? 'App already installed' 
-          : canInstall 
-            ? 'Install HospoGo app' 
-            : 'Install prompt will appear soon'
-      }
+      title="Install HospoGo app"
     >
       <Download className="h-4 w-4 mr-2 text-current" />
-      <span>Install App</span>
+      <span>Download App</span>
     </Button>
   );
 }
