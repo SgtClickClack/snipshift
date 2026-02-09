@@ -113,7 +113,7 @@ function HydrationSplash() {
  * Public routes (landing, status, waitlist, investor portal) bypass the gate.
  */
 export function AuthGate({ children, splashHandled }: { children: React.ReactNode; splashHandled: boolean }) {
-  const { isSystemReady, hasFirebaseUser } = useAuth();
+  const { isSystemReady, hasFirebaseUser, isHydrating } = useAuth();
   const location = useLocation();
   const [timedOut, setTimedOut] = useState(false);
 
@@ -159,6 +159,12 @@ export function AuthGate({ children, splashHandled }: { children: React.ReactNod
     location.pathname.startsWith('/onboarding') ||
     location.pathname === '/oauth/callback' ||
     location.pathname.startsWith('/__/auth/');
+
+  // REDIRECT STORM FIX: While hydrating, freeze the ENTIRE app behind splash.
+  // No public route bypass, no navigation, no redirects — until Firebase has spoken.
+  if (isHydrating) {
+    return <HydrationSplash />;
+  }
 
   // Logic: Proceed if auth is ready, if we are on a public route (excluding /), OR if the tiered fail-safe triggered.
   // Note: user is User|null (never undefined) — the gate relies on isSystemReady for deterministic state.

@@ -1,6 +1,34 @@
 # Development Tracking Part 02
 <!-- markdownlint-disable-file -->
 
+#### 2026-02-09: Auth Hydration Hardening — Redirect Storm Fix (v1.1.26)
+
+**Core Components**
+- `src/contexts/AuthContext.tsx` — Added `isHydrating` state (default: `true`, `false` if cached session). Set to `false` as the FIRST call inside `onAuthStateChanged` callback. Exported via context value.
+- `src/components/auth/AuthGate.tsx` — Absolute freeze: if `isHydrating` is true, renders `HydrationSplash` unconditionally (no public-route bypass, no navigation).
+- `src/components/auth/protected-route.tsx` — Renders `LoadingScreen` while `isHydrating` is true, preventing premature redirect to `/login`.
+- `src/components/auth/auth-guard.tsx` — Renders `DashboardLayoutSkeleton` while `isHydrating` is true, preventing premature `<Navigate to="/login">`.
+
+**Key Features**
+- **Redirect Storm Eliminated:** On page refresh, ProtectedRoutes were triggering redirect to `/login` before Firebase restored the persisted session. The new `isHydrating` flag freezes ALL routing decisions until `onAuthStateChanged` fires its first callback.
+- **Cached Session Fast Path:** When `sessionStorage` has a cached user, `isHydrating` starts `false` — no additional splash delay for returning users.
+- **Defense in Depth:** `isHydrating` is checked independently in AuthGate, ProtectedRoute, AND AuthGuard, ensuring no routing component can leak through during the Firebase handshake window.
+
+**Integration Points**
+- `AuthContextType.isHydrating` — New boolean exposed by `useAuth()` hook
+- `isHydrating` is orthogonal to `isSystemReady`: hydrating = "Firebase hasn't spoken yet" vs system ready = "full API hydration complete"
+
+**File Paths**
+- `src/contexts/AuthContext.tsx`
+- `src/components/auth/AuthGate.tsx`
+- `src/components/auth/protected-route.tsx`
+- `src/components/auth/auth-guard.tsx`
+
+**Next Priority Task**
+- Monitor production for any remaining redirect artifacts post-deploy
+
+---
+
 #### 2026-02-09: Mobile UX — Calendar Input Fix & Responsive Audit (v1.1.25)
 
 **Core Components**

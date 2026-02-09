@@ -16,7 +16,7 @@ export function AuthGuard({
   redirectTo,
 }: AuthGuardProps) {
   // Minimalist guard: rely on Firebase session + DB profile
-  const { user, isLoading, hasFirebaseUser, isVenueMissing } = useAuth();
+  const { user, isLoading, hasFirebaseUser, isVenueMissing, isHydrating } = useAuth();
   const location = useLocation();
 
   const isOnboardingPath = location.pathname === '/onboarding' || location.pathname.startsWith('/onboarding/');
@@ -44,7 +44,9 @@ export function AuthGuard({
   //   }
   // }, [hasFirebaseUser, user, isOnboardingPath, isVenueMissing, isLoading, navigate]);
 
-  if (isLoading) {
+  // REDIRECT STORM FIX: Absolute freeze while Firebase hasn't spoken yet.
+  // No redirect to /login, no Navigate — just skeleton.
+  if (isHydrating || isLoading) {
     return <DashboardLayoutSkeleton />;
   }
 

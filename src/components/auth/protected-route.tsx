@@ -31,7 +31,7 @@ interface ProtectedRouteProps {
  * Checks role requirements if specified.
  */
 export function ProtectedRoute({ children, requiredRole, allowedRoles }: ProtectedRouteProps) {
-  const { user, isLoading, isTransitioning, hasFirebaseUser, isSystemReady } = useAuth();
+  const { user, isLoading, isTransitioning, hasFirebaseUser, isSystemReady, isHydrating } = useAuth();
   const location = useLocation();
   
   // GRACE PERIOD: Track whether we've waited long enough to make redirect decisions
@@ -74,6 +74,12 @@ export function ProtectedRoute({ children, requiredRole, allowedRoles }: Protect
     (localStorage.getItem('E2E_MODE') === 'true' || import.meta.env.VITE_E2E === '1');
   const hasE2ETestUser = isE2EMode && typeof window !== 'undefined' && 
     !!(sessionStorage.getItem('hospogo_test_user') || localStorage.getItem('hospogo_test_user'));
+
+  // REDIRECT STORM FIX: Absolute freeze while Firebase hasn't spoken yet.
+  // No redirect to /login, no content — just loading screen.
+  if (isHydrating) {
+    return <LoadingScreen />;
+  }
 
   // PERFORMANCE: Show stable loading UI until system is FULLY ready
   // This includes: Firebase auth + /api/me + /api/venues/me (for venue users)

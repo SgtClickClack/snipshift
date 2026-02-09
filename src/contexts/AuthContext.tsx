@@ -62,6 +62,8 @@ interface AuthContextType {
   isVenueLoaded: boolean;
   /** PERFORMANCE: True only when Firebase + user profile + venue check are ALL complete. Use for stable splash-to-app transition. */
   isSystemReady: boolean;
+  /** REDIRECT STORM FIX: True until the first onAuthStateChanged callback fires. While true, ALL routing decisions are frozen. */
+  isHydrating: boolean;
   login: (user: User) => void;
   logout: () => Promise<void>;
   /** Refreshes /api/me and /api/venues/me; keeps isRedirecting true during refresh. Returns venueReady (false if venue missing or 404/429 after retry). */
@@ -285,6 +287,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // full component re-render loops. This ensures stable UI during auth handshake.
   // ============================================================================
   const [isSystemReady, setIsSystemReadyDebounced] = useState(!!cachedSession.user);
+  // REDIRECT STORM FIX: Freeze ALL routing until onAuthStateChanged has fired at least once.
+  // If cached session exists, skip hydration wait — we already have known-good data.
+  const [isHydrating, setIsHydrating] = useState(!cachedSession.user);
   const systemReadyDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const SYSTEM_READY_DEBOUNCE_MS = 200;
   
@@ -960,6 +965,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // It fires immediately when signInWithPopup completes, providing a direct identity signal
         await new Promise<void>((resolve) => {
           unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+            // REDIRECT STORM FIX: Signal that Firebase has spoken — routing decisions can now proceed.
+            // This MUST be the first call to prevent ProtectedRoute/AuthGuard from redirecting to /login
+            // before Firebase has had a chance to restore the persisted session.
+            setIsHydrating(false);
+
             const path = typeof window !== 'undefined' ? window.location.pathname : '';
             if (path.startsWith('/signup') || path.startsWith('/onboarding')) {
               setIsNavigationLocked(false);
@@ -1238,11 +1248,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isVenueMissing,
       isVenueLoaded,
       isSystemReady,
+      isHydrating,
       login,
       logout,
       refreshUser,
     }),
-    [user, token, isLoading, isRedirecting, isTransitioning, isNavigationLocked, isRegistered, isVenueMissing, isVenueLoaded, isSystemReady, firebaseUser, login, logout, refreshUser]
+    [user, token, isLoading, isRedirecting, isTransitioning, isNavigationLocked, isRegistered, isVenueMissing, isVenueLoaded, isSystemReady, isHydrating, firebaseUser, login, logout, refreshUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
