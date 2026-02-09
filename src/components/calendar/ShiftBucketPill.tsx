@@ -99,8 +99,8 @@ export function ShiftBucketPill({ bucket, onClick, className }: ShiftBucketPillP
         break;
       case 'vacant':
       default:
-        // Subtle pulse on vacant buckets to alert owner (red-400 for brighter visibility)
-        variant = 'bg-red-400/20 dark:bg-red-400/15 hover:bg-red-400/30 dark:hover:bg-red-400/25 border border-red-400/30 dark:border-red-400/25 border-l-[3px] border-l-red-400 animate-pulse-subtle';
+        // Subtle pulse on vacant buckets to alert owner (brighter red for visibility in dark mode)
+        variant = 'bg-red-400/25 dark:bg-red-400/35 hover:bg-red-400/35 dark:hover:bg-red-400/45 border border-red-400/35 dark:border-red-400/50 border-l-[3px] border-l-red-400 animate-pulse-subtle';
         break;
     }
     
