@@ -965,10 +965,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // It fires immediately when signInWithPopup completes, providing a direct identity signal
         await new Promise<void>((resolve) => {
           unsub = onAuthStateChanged(auth, async (firebaseUser) => {
-            // REDIRECT STORM FIX: Signal that Firebase has spoken — routing decisions can now proceed.
-            // This MUST be the first call to prevent ProtectedRoute/AuthGuard from redirecting to /login
-            // before Firebase has had a chance to restore the persisted session.
-            setIsHydrating(false);
+            // REDIRECT STORM FIX v2: DO NOT set isHydrating(false) here.
+            // It must remain true until user state is FULLY committed to React state.
+            // Moved to AFTER both the null and authenticated branches complete below.
 
             const path = typeof window !== 'undefined' ? window.location.pathname : '';
             if (path.startsWith('/signup') || path.startsWith('/onboarding')) {
@@ -989,6 +988,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 setToken(null);
                 setIsRegistered(false);
                 setIsSystemReady(true); // No Firebase user - system ready for landing/login
+                // REDIRECT STORM FIX v2: Release hydration lock AFTER null state is committed.
+                // React batches these setState calls, so isHydrating=false and user=null
+                // are committed in the SAME render — ProtectedRoute never sees the gap.
+                setIsHydrating(false);
               } else {
                 const hydrate = hydrateRef.current;
                 if (hydrate) {
@@ -1013,6 +1016,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     isRefreshModeRef.current = false;
                   }
                 }
+                // REDIRECT STORM FIX v2: Release hydration lock AFTER user profile is fully hydrated.
+                // hydrateFromFirebaseUser() has already called setUser(), setIsSystemReady(true), etc.
+                // Only now is it safe for ProtectedRoute to evaluate auth state.
+                setIsHydrating(false);
                 // Post-login navigation is handled by hydrateFromFirebaseUser (role-aware routing).
                 // Removed duplicate !isInitialAuthCheck block that always routed to /dashboard
                 // regardless of user role (venue users need /venue/dashboard).
@@ -1022,6 +1029,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
               setUser(null);
               setToken(null);
               setIsSystemReady(true); // Error state - system ready for error handling
+              // REDIRECT STORM FIX v2: Release on error too — system is in a known state.
+              setIsHydrating(false);
             }
 
             // Resolve the Promise after the first callback (initial auth check)
@@ -1040,6 +1049,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setToken(null);
         setIsLoading(false);
         setIsSystemReady(true); // Error state - system ready for error handling
+        setIsHydrating(false); // REDIRECT STORM FIX v2: Release on init failure
         releaseNavigationLock(); // SECURITY: unlock AFTER system is marked ready
       }
     };

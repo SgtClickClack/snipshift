@@ -111,7 +111,16 @@ const UnauthorizedPage = lazy(() => import('@/pages/unauthorized'));
 
 function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
   const location = useLocation();
-  const { isLoading, isRedirecting, isNavigationLocked, isSystemReady } = useAuth();
+  const { isLoading, isRedirecting, isNavigationLocked, isSystemReady, isHydrating } = useAuth();
+
+  // REDIRECT STORM FIX v2 — ROUTER HARD GUARD:
+  // While isHydrating is true, the ENTIRE route tree is replaced with a loading screen.
+  // This prevents React Router from evaluating ANY route match (<Route path="/dashboard">),
+  // which in turn prevents ProtectedRoute from ever seeing "no user" and firing <Navigate to="/login">.
+  // The route tree literally does not exist in the React tree until Firebase has spoken.
+  if (isHydrating) {
+    return <LoadingScreen />;
+  }
 
   // Performance check: if isNavigationLocked takes >2s to flip, optimize GET /api/venues/me
   const lockStartRef = useRef<number | null>(null);

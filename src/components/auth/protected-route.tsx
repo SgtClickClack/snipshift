@@ -101,12 +101,18 @@ export function ProtectedRoute({ children, requiredRole, allowedRoles }: Protect
   // Not authenticated - redirect to login
   // RESILIENCE: Check for recently valid auth (prevents redirect during token refresh)
   // Firebase token refresh can briefly cause hasFirebaseUser to be false
-  const hasRecentAuth = typeof window !== 'undefined' && 
-    sessionStorage.getItem('hospogo_auth_timestamp') && 
+  const hasRecentAuth = typeof window !== 'undefined' &&
+    sessionStorage.getItem('hospogo_auth_timestamp') &&
     Date.now() - parseInt(sessionStorage.getItem('hospogo_auth_timestamp') || '0') < 10000;
-  
+
   const hasAuth = hasFirebaseUser || hasE2ETestUser || hasRecentAuth;
   if (!hasAuth || (!user && !hasRecentAuth)) {
+    // REDIRECT STORM FIX v2: Belt-and-suspenders — if isHydrating is STILL true
+    // (e.g. due to a React batching edge case), never emit <Navigate>.
+    // Return null to render nothing — the Router Hard Guard in AppRoutes is the primary defense.
+    if (isHydrating) {
+      return null;
+    }
     // Store the attempted URL for post-login redirect
     return <Navigate to="/login" state={{ from: location }} replace />;
   }

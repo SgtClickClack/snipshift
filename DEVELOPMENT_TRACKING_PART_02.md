@@ -1,6 +1,29 @@
 # Development Tracking Part 02
 <!-- markdownlint-disable-file -->
 
+#### 2026-02-09: Auth Hydration v2 — Router Hard Guard (v1.1.27)
+
+**Root Cause (v1.1.26 gap)**
+v1.1.26 set `isHydrating(false)` as the FIRST call in `onAuthStateChanged`, creating a 1-frame window where `isHydrating=false` + `user=null`. React Router evaluated route matches → ProtectedRoute saw no user → emitted `<Navigate to="/login">` → Firebase restored session → redirect back to `/dashboard`.
+
+**Core Components**
+- `src/contexts/AuthContext.tsx` — Moved `setIsHydrating(false)` from TOP of `onAuthStateChanged` to AFTER state is committed in all 3 branches (null user, successful hydration, error). React batches the setState calls so `isHydrating=false` and `user=<value>` commit in the same render.
+- `src/App.tsx` (AppRoutes) — **Router Hard Guard**: if `isHydrating` is true, the entire `<Routes>` tree is replaced with `<LoadingScreen>`. React Router cannot evaluate ANY route match, preventing ProtectedRoute from ever seeing "no user".
+- `src/components/auth/protected-route.tsx` — Belt-and-suspenders: the `<Navigate to="/login">` path explicitly re-checks `isHydrating` and returns `null` instead.
+
+**Defense Layers**
+1. **Layer 1 (AuthGate):** `isHydrating` → HydrationSplash (wraps all content)
+2. **Layer 2 (AppRoutes):** `isHydrating` → LoadingScreen (routes don't exist in React tree)
+3. **Layer 3 (ProtectedRoute):** `isHydrating` → null (Navigate cannot fire)
+4. **Layer 4 (AuthGuard):** `isHydrating` → DashboardLayoutSkeleton
+
+**File Paths**
+- `src/contexts/AuthContext.tsx`
+- `src/App.tsx`
+- `src/components/auth/protected-route.tsx`
+
+---
+
 #### 2026-02-09: Auth Hydration Hardening — Redirect Storm Fix (v1.1.26)
 
 **Core Components**
