@@ -1,11 +1,14 @@
 /**
  * ShiftBucketManagementModal - Command center for managing shift buckets
- * 
+ *
  * Provides three primary actions:
  * 1. A-Team: Invite favorite professionals
  * 2. Search: Manual search for specific staff
  * 3. Marketplace: Post to job board
- * 
+ *
+ * MOBILE UX: Renders as bottom-sheet (Drawer) on mobile (<768px) for
+ * thumb-reachability, and centered Dialog on desktop.
+ *
  * BRANDING: Uses brand primary for primary actions
  */
 
@@ -17,21 +20,29 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Search, 
-  UserPlus, 
-  Star, 
-  Clock, 
+import {
+  Search,
+  UserPlus,
+  Star,
+  Clock,
   Users,
   Store,
   ChevronRight,
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/useMobile";
 import type { ShiftBucket } from "./ShiftBucketPill";
 import type { Professional } from "./assign-staff-modal";
 
@@ -71,6 +82,7 @@ export function ShiftBucketManagementModal({
   onPostToMarketplace,
   isLoading = false,
 }: ShiftBucketManagementModalProps) {
+  const isMobile = useIsMobile();
   const [view, setView] = useState<'actions' | 'search'>('actions');
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -119,7 +131,7 @@ export function ShiftBucketManagementModal({
     if (!bucket?.bucket?.events) {
       return [];
     }
-    
+
     const staff: Array<{ id: string; name: string; avatarUrl?: string }> = [];
     for (const event of bucket.bucket.events) {
       const shift = (event as any).resource?.booking?.shift || (event as any).resource?.booking?.job;
@@ -145,21 +157,256 @@ export function ShiftBucketManagementModal({
   const vacantSlots = Math.max(0, bucket.requiredCount - bucket.filledCount);
   const isFullyStaffed = bucket.filledCount >= bucket.requiredCount;
 
+  // Shared body content
+  const bodyContent = (
+    <div className="flex-1 overflow-y-auto p-6">
+      {view === 'actions' ? (
+        <div className="space-y-6">
+          {/* Currently Assigned Staff */}
+          {assignedStaff.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Currently Assigned ({assignedStaff.length})
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {assignedStaff.map((staff) => (
+                  <div
+                    key={staff.id}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/30 rounded-full"
+                  >
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={staff.avatarUrl} />
+                      <AvatarFallback className="text-[10px] bg-green-600">
+                        {getInitials(staff.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium">{staff.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Vacant Slots Warning */}
+          {vacantSlots > 0 && (
+            <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <div className="flex items-center gap-2 text-red-400 font-semibold">
+                <Users className="h-5 w-5" />
+                <span>{vacantSlots} vacant slot{vacantSlots > 1 ? 's' : ''} need staffing</span>
+              </div>
+            </div>
+          )}
+
+          {/* Command Center Actions */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold mb-3">Fill Vacant Slots</h3>
+
+            {/* A-TEAM BUTTON */}
+            <Button
+              onClick={() => {
+                onInviteATeam(bucket.bucket);
+                onClose();
+              }}
+              disabled={isLoading || favoriteProfessionals.length === 0}
+              className="w-full h-14 justify-between text-black font-bold text-base"
+              style={{ backgroundColor: BRAND_LIME }}
+            >
+              <div className="flex items-center gap-3">
+                <Star className="h-5 w-5 fill-black" />
+                <div className="text-left">
+                  <div>Invite A-Team</div>
+                  <div className="text-xs font-normal opacity-70">
+                    {favoriteProfessionals.length > 0
+                      ? `${favoriteProfessionals.length} favorite${favoriteProfessionals.length > 1 ? 's' : ''} available`
+                      : 'No favorites configured'}
+                  </div>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+
+            {/* SEARCH BUTTON */}
+            <Button
+              onClick={() => setView('search')}
+              disabled={isLoading}
+              variant="outline"
+              className="w-full h-14 justify-between font-semibold text-base border-2 hover:border-primary hover:bg-primary/10"
+            >
+              <div className="flex items-center gap-3">
+                <Search className="h-5 w-5" />
+                <div className="text-left">
+                  <div>Search Staff</div>
+                  <div className="text-xs font-normal text-muted-foreground">
+                    Find and assign specific professionals
+                  </div>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+
+            {/* MARKETPLACE BUTTON */}
+            <Button
+              onClick={() => {
+                onPostToMarketplace(bucket.bucket);
+                onClose();
+              }}
+              disabled={isLoading}
+              variant="outline"
+              className="w-full h-14 justify-between font-semibold text-base border-2 hover:border-primary hover:bg-primary/10"
+            >
+              <div className="flex items-center gap-3">
+                <Store className="h-5 w-5" />
+                <div className="text-left">
+                  <div>Post to Marketplace</div>
+                  <div className="text-xs font-normal text-muted-foreground">
+                    Broadcast to job board for applications
+                  </div>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      ) : (
+        /* SEARCH VIEW */
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setView('actions')}
+              className="text-muted-foreground"
+            >
+              ← Back
+            </Button>
+            <h3 className="font-semibold">Search Staff</h3>
+          </div>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name or skill..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+              autoFocus
+            />
+          </div>
+
+          {/* Favorites Section */}
+          {favoriteProfessionals.length > 0 && !searchQuery && (
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                <h4 className="text-sm font-semibold">Favorites</h4>
+              </div>
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {favoriteProfessionals.map((professional) => (
+                  <ProfessionalRow
+                    key={professional.id}
+                    professional={professional}
+                    isFavorite={true}
+                    onAssign={() => {
+                      onAssignProfessional(professional, bucket.bucket);
+                      onClose();
+                    }}
+                    isLoading={isLoading}
+                    getInitials={getInitials}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Search Results */}
+          <div>
+            {searchQuery && (
+              <h4 className="text-sm font-semibold mb-2">
+                {filteredProfessionals.length} result{filteredProfessionals.length !== 1 ? 's' : ''}
+              </h4>
+            )}
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {filteredProfessionals.length === 0 ? (
+                <div className="text-center py-8 text-sm text-muted-foreground">
+                  No professionals found matching "{searchQuery}"
+                </div>
+              ) : (
+                filteredProfessionals.map((professional) => (
+                  <ProfessionalRow
+                    key={professional.id}
+                    professional={professional}
+                    isFavorite={favoriteProfessionals.some(f => f.id === professional.id)}
+                    onAssign={() => {
+                      onAssignProfessional(professional, bucket.bucket);
+                      onClose();
+                    }}
+                    isLoading={isLoading}
+                    getInitials={getInitials}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  // Mobile: Bottom-sheet (Drawer) for thumb-reachability
+  if (isMobile) {
+    return (
+      <Drawer open={isOpen} onOpenChange={handleOpenChange}>
+        <DrawerContent className="max-h-[85vh] overflow-hidden flex flex-col">
+          <DrawerHeader className="p-6 pb-4 border-b bg-gradient-to-br from-zinc-900 to-zinc-950 text-left">
+            <DrawerTitle className="flex items-center justify-between text-white">
+              <span className="text-lg">{bucket.label}</span>
+              <span
+                className={cn(
+                  "text-2xl font-black tracking-tight",
+                  isFullyStaffed
+                    ? "text-green-400"
+                    : vacantSlots > 0
+                      ? "text-red-400 animate-pulse"
+                      : "text-amber-400"
+                )}
+                style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 900 }}
+              >
+                {bucket.filledCount}/{bucket.requiredCount}
+              </span>
+            </DrawerTitle>
+            <DrawerDescription className="text-zinc-400">
+              <div className="flex items-center gap-4 mt-2 text-sm">
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-4 w-4" />
+                  <span>{format(bucket.startTime, "h:mm a")} - {format(bucket.endTime, "h:mm a")}</span>
+                </div>
+                <div className="text-zinc-500">
+                  {bucket.dateFormatted}
+                </div>
+              </div>
+            </DrawerDescription>
+          </DrawerHeader>
+          {bodyContent}
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  // Desktop: Centered Dialog
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="w-[95vw] max-w-lg max-h-[85vh] overflow-hidden flex flex-col p-0">
-        {/* Header with capacity indicator */}
         <DialogHeader className="p-6 pb-4 border-b bg-gradient-to-br from-zinc-900 to-zinc-950">
           <DialogTitle className="flex items-center justify-between text-white">
             <span className="text-lg">{bucket.label}</span>
-            {/* HIGH VISIBILITY COUNT - Urbanist font-weight 900 */}
-            <span 
+            <span
               className={cn(
                 "text-2xl font-black tracking-tight",
-                isFullyStaffed 
-                  ? "text-green-400" 
-                  : vacantSlots > 0 
-                    ? "text-red-400 animate-pulse" 
+                isFullyStaffed
+                  ? "text-green-400"
+                  : vacantSlots > 0
+                    ? "text-red-400 animate-pulse"
                     : "text-amber-400"
               )}
               style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 900 }}
@@ -179,199 +426,7 @@ export function ShiftBucketManagementModal({
             </div>
           </DialogDescription>
         </DialogHeader>
-
-        <div className="flex-1 overflow-y-auto p-6">
-          {view === 'actions' ? (
-            <div className="space-y-6">
-              {/* Currently Assigned Staff */}
-              {assignedStaff.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    Currently Assigned ({assignedStaff.length})
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {assignedStaff.map((staff) => (
-                      <div 
-                        key={staff.id}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/30 rounded-full"
-                      >
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={staff.avatarUrl} />
-                          <AvatarFallback className="text-[10px] bg-green-600">
-                            {getInitials(staff.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm font-medium">{staff.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Vacant Slots Warning */}
-              {vacantSlots > 0 && (
-                <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
-                  <div className="flex items-center gap-2 text-red-400 font-semibold">
-                    <Users className="h-5 w-5" />
-                    <span>{vacantSlots} vacant slot{vacantSlots > 1 ? 's' : ''} need staffing</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Command Center Actions */}
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold mb-3">Fill Vacant Slots</h3>
-                
-                {/* A-TEAM BUTTON */}
-                <Button
-                  onClick={() => {
-                    onInviteATeam(bucket.bucket);
-                    onClose();
-                  }}
-                  disabled={isLoading || favoriteProfessionals.length === 0}
-                  className="w-full h-14 justify-between text-black font-bold text-base"
-                  style={{ backgroundColor: BRAND_LIME }}
-                >
-                  <div className="flex items-center gap-3">
-                    <Star className="h-5 w-5 fill-black" />
-                    <div className="text-left">
-                      <div>Invite A-Team</div>
-                      <div className="text-xs font-normal opacity-70">
-                        {favoriteProfessionals.length > 0 
-                          ? `${favoriteProfessionals.length} favorite${favoriteProfessionals.length > 1 ? 's' : ''} available`
-                          : 'No favorites configured'}
-                      </div>
-                    </div>
-                  </div>
-                  <ChevronRight className="h-5 w-5" />
-                </Button>
-
-                {/* SEARCH BUTTON */}
-                <Button
-                  onClick={() => setView('search')}
-                  disabled={isLoading}
-                  variant="outline"
-                  className="w-full h-14 justify-between font-semibold text-base border-2 hover:border-primary hover:bg-primary/10"
-                >
-                  <div className="flex items-center gap-3">
-                    <Search className="h-5 w-5" />
-                    <div className="text-left">
-                      <div>Search Staff</div>
-                      <div className="text-xs font-normal text-muted-foreground">
-                        Find and assign specific professionals
-                      </div>
-                    </div>
-                  </div>
-                  <ChevronRight className="h-5 w-5" />
-                </Button>
-
-                {/* MARKETPLACE BUTTON */}
-                <Button
-                  onClick={() => {
-                    onPostToMarketplace(bucket.bucket);
-                    onClose();
-                  }}
-                  disabled={isLoading}
-                  variant="outline"
-                  className="w-full h-14 justify-between font-semibold text-base border-2 hover:border-primary hover:bg-primary/10"
-                >
-                  <div className="flex items-center gap-3">
-                    <Store className="h-5 w-5" />
-                    <div className="text-left">
-                      <div>Post to Marketplace</div>
-                      <div className="text-xs font-normal text-muted-foreground">
-                        Broadcast to job board for applications
-                      </div>
-                    </div>
-                  </div>
-                  <ChevronRight className="h-5 w-5" />
-                </Button>
-              </div>
-            </div>
-          ) : (
-            /* SEARCH VIEW */
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-4">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setView('actions')}
-                  className="text-muted-foreground"
-                >
-                  ← Back
-                </Button>
-                <h3 className="font-semibold">Search Staff</h3>
-              </div>
-
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name or skill..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                  autoFocus
-                />
-              </div>
-
-              {/* Favorites Section */}
-              {favoriteProfessionals.length > 0 && !searchQuery && (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <h4 className="text-sm font-semibold">Favorites</h4>
-                  </div>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {favoriteProfessionals.map((professional) => (
-                      <ProfessionalRow 
-                        key={professional.id}
-                        professional={professional}
-                        isFavorite={true}
-                        onAssign={() => {
-                          onAssignProfessional(professional, bucket.bucket);
-                          onClose();
-                        }}
-                        isLoading={isLoading}
-                        getInitials={getInitials}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Search Results */}
-              <div>
-                {searchQuery && (
-                  <h4 className="text-sm font-semibold mb-2">
-                    {filteredProfessionals.length} result{filteredProfessionals.length !== 1 ? 's' : ''}
-                  </h4>
-                )}
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {filteredProfessionals.length === 0 ? (
-                    <div className="text-center py-8 text-sm text-muted-foreground">
-                      No professionals found matching "{searchQuery}"
-                    </div>
-                  ) : (
-                    filteredProfessionals.map((professional) => (
-                      <ProfessionalRow 
-                        key={professional.id}
-                        professional={professional}
-                        isFavorite={favoriteProfessionals.some(f => f.id === professional.id)}
-                        onAssign={() => {
-                          onAssignProfessional(professional, bucket.bucket);
-                          onClose();
-                        }}
-                        isLoading={isLoading}
-                        getInitials={getInitials}
-                      />
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        {bodyContent}
       </DialogContent>
     </Dialog>
   );

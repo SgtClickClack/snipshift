@@ -795,11 +795,15 @@ export default function CalendarSettingsModal({
                 <div className="flex items-center gap-4">
                   <Input
                     id="required-staff"
-                    type="number"
-                    min="1"
-                    max="20"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={defaultRequiredStaff}
-                    onChange={(e) => setDefaultRequiredStaff(parseInt(e.target.value, 10) || 1)}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/[^0-9]/g, '');
+                      if (raw === '') return;
+                      setDefaultRequiredStaff(Math.max(1, Math.min(20, parseInt(raw, 10) || 1)));
+                    }}
                     className="w-28 h-14 text-2xl font-bold text-center bg-primary/10 border-2 border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/30"
                     data-testid="required-staff-input"
                   />
@@ -902,11 +906,15 @@ export default function CalendarSettingsModal({
                             <Users className="h-5 w-5 text-primary" />
                             <span className="text-sm font-bold text-primary">Staff:</span>
                             <Input
-                              type="number"
-                              min="1"
-                              max="20"
+                              type="text"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
                               value={slot.requiredStaff}
-                              onChange={(e) => updateCustomSlot(index, { requiredStaff: parseInt(e.target.value, 10) || 1 })}
+                              onChange={(e) => {
+                                const raw = e.target.value.replace(/[^0-9]/g, '');
+                                if (raw === '') return;
+                                updateCustomSlot(index, { requiredStaff: Math.max(1, Math.min(20, parseInt(raw, 10) || 1)) });
+                              }}
                               className="w-20 h-12 text-xl font-bold text-center bg-primary/10 border-2 border-primary/50 focus:border-primary"
                               data-testid={`custom-slot-required-${index}`}
                             />

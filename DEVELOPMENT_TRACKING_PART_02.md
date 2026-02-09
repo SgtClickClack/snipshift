@@ -1,6 +1,41 @@
 # Development Tracking Part 02
 <!-- markdownlint-disable-file -->
 
+#### 2026-02-09: Mobile UX — Calendar Input Fix & Responsive Audit (v1.1.25)
+
+**Core Components**
+- `src/components/calendar/ShiftSettings.tsx` — StaffRequiredField refactored: `type="text"` + `inputMode="numeric"` + `pattern="[0-9]*"`
+- `src/components/calendar/create-shift-modal.tsx` — Hourly Rate, Expected Pax, Occurrences inputs fixed for mobile
+- `src/components/calendar/calendar-settings-modal.tsx` — Preset/custom staff-per-slot inputs fixed for mobile
+- `src/components/calendar/professional-calendar.tsx` — Edit form hourly rate input fixed for mobile
+- `src/components/calendar/shift-block.tsx` — Touch targets upgraded to 44px minimum on mobile
+- `src/components/calendar/ShiftBucketManagementModal.tsx` — Responsive Drawer (bottom-sheet) on mobile, Dialog on desktop
+
+**Key Features**
+- **Input Bug Fix:** Changed all `type="number"` inputs to `type="text"` with `inputMode="numeric"` (integers) or `inputMode="decimal"` (currency). Fixes React mobile bug where backspace/delete fails to clear values on iOS/Android
+- **Manual onChange Filters:** Each input sanitizes to digits-only (or digits+decimal for currency), preventing non-numeric entry while allowing empty intermediate states
+- **Touch Target Compliance:** All ShiftBlock states now use responsive `min-h-[44px] min-[1024px]:min-h-[36px]` (was hardcoded 36px). ShiftBucketPill already compliant.
+- **Bottom-Sheet Modal:** ShiftBucketManagementModal renders as Drawer (anchored bottom, rounded top, drag handle) on mobile (<768px) for thumb-reachability, centered Dialog on desktop. Uses existing `useIsMobile` hook and Drawer UI component.
+
+**Integration Points**
+- `useIsMobile` hook (`src/hooks/useMobile.tsx`) — 768px breakpoint for Drawer/Dialog switch
+- `src/components/ui/drawer.tsx` — Existing Radix-based bottom-sheet component
+- CalendarToolbar buttons already had 44px touch targets (no change needed)
+
+**File Paths**
+- `src/components/calendar/ShiftSettings.tsx`
+- `src/components/calendar/create-shift-modal.tsx`
+- `src/components/calendar/calendar-settings-modal.tsx`
+- `src/components/calendar/professional-calendar.tsx`
+- `src/components/calendar/shift-block.tsx`
+- `src/components/calendar/ShiftBucketManagementModal.tsx`
+
+**Next Priority Task**
+- Test on physical iOS/Android devices to verify backspace works in all numeric inputs
+- Verify Drawer bottom-sheet closes properly on swipe-down gesture
+
+---
+
 #### 2026-02-08: Automate Shift Acceptance Contracts
 
 **Core Components**

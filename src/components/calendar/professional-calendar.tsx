@@ -2741,11 +2741,17 @@ function ProfessionalCalendarContent({
                     <Label htmlFor="hourlyRate">Hourly Rate ($) *</Label>
                     <Input
                       id="hourlyRate"
-                      type="number"
-                      step="0.01"
+                      type="text"
+                      inputMode="decimal"
+                      pattern="[0-9]*\.?[0-9]*"
                       required
                       value={shiftFormData.hourlyRate}
-                      onChange={(e) => setShiftFormData({ ...shiftFormData, hourlyRate: e.target.value })}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/[^0-9.]/g, '');
+                        const parts = raw.split('.');
+                        const sanitized = parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : raw;
+                        setShiftFormData({ ...shiftFormData, hourlyRate: sanitized });
+                      }}
                       placeholder="45.00"
                       className="bg-zinc-900 border-zinc-700"
                     />

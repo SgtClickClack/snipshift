@@ -498,11 +498,18 @@ export default function CreateShiftModal({
               <Label htmlFor="hourlyRate">Hourly Rate ($/hr) *</Label>
               <Input
                 id="hourlyRate"
-                type="number"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
+                pattern="[0-9]*\.?[0-9]*"
                 required
                 value={formData.hourlyRate}
-                onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/[^0-9.]/g, '');
+                  // Allow only one decimal point
+                  const parts = raw.split('.');
+                  const sanitized = parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : raw;
+                  setFormData({ ...formData, hourlyRate: sanitized });
+                }}
                 placeholder="45.00"
                 className="bg-zinc-900 border-zinc-700"
               />
@@ -554,10 +561,14 @@ export default function CreateShiftModal({
               <Label htmlFor="expectedPax">Expected Pax (optional)</Label>
               <Input
                 id="expectedPax"
-                type="number"
-                min="0"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={formData.expectedPax}
-                onChange={(e) => setFormData({ ...formData, expectedPax: e.target.value })}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/[^0-9]/g, '');
+                  setFormData({ ...formData, expectedPax: raw });
+                }}
                 placeholder="e.g., 120"
                 className="bg-zinc-900 border-zinc-700"
               />
@@ -641,11 +652,15 @@ export default function CreateShiftModal({
                       <Label htmlFor="occurrences">Number of Occurrences</Label>
                       <Input
                         id="occurrences"
-                        type="number"
-                        min="2"
-                        max="52"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         value={numberOfOccurrences}
-                        onChange={(e) => setNumberOfOccurrences(parseInt(e.target.value) || 2)}
+                        onChange={(e) => {
+                          const raw = e.target.value.replace(/[^0-9]/g, '');
+                          if (raw === '') return;
+                          setNumberOfOccurrences(Math.max(2, Math.min(52, parseInt(raw, 10) || 2)));
+                        }}
                       />
                       <p className="text-xs text-muted-foreground mt-1">
                         Total shifts including the first one (2-52)

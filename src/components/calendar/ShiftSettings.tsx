@@ -21,7 +21,9 @@ export interface StaffRequiredFieldProps {
   'data-testid'?: string;
 }
 
-/** Staff Required numeric input. Defaults to 1, used for capacity in shift create/edit. */
+/** Staff Required numeric input. Defaults to 1, used for capacity in shift create/edit.
+ * Uses type="text" + inputMode="numeric" to fix mobile backspace/delete bug
+ * (React type="number" swallows empty state on mobile browsers). */
 export function StaffRequiredField({
   value,
   onChange,
@@ -35,16 +37,23 @@ export function StaffRequiredField({
 }: StaffRequiredFieldProps) {
   const n = Math.max(min, Math.min(max, value ?? 1));
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/[^0-9]/g, '');
+    if (raw === '') return; // allow clearing without forcing a value
+    const parsed = parseInt(raw, 10);
+    onChange(Math.max(min, Math.min(max, parsed || min)));
+  };
+
   return (
     <div className={className}>
       <Label htmlFor="staffRequired">{label}</Label>
       <Input
         id="staffRequired"
-        type="number"
-        min={min}
-        max={max}
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
         value={n}
-        onChange={(e) => onChange(Math.max(min, Math.min(max, parseInt(e.target.value, 10) || min)))}
+        onChange={handleChange}
         className={inputClassName}
         data-testid={dataTestId}
       />
