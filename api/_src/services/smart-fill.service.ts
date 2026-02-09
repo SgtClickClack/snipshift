@@ -551,6 +551,10 @@ export async function respondToInvitation(
         })
         .where(eq(shifts.id, shiftId));
 
+      // Action-as-signature: Log contract (User X accepted the terms of the MSA for Shift Y)
+      const { createShiftAcceptanceContract } = await import('./contract.service.js');
+      await createShiftAcceptanceContract(shiftId, shift.employerId, professionalId, 'professional');
+
       // Update invitation status
       await db
         .update(shiftInvitations)

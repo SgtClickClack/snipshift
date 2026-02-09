@@ -3,13 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import { checkInShift, requestSubstitute, clockOutShift, getWaitlistStatus, reportLateArrival, acceptBackupShift, fetchMyApplications } from '@/lib/api/professional';
-import { fetchShiftDetails, createApplication } from '@/lib/api/shared';
+import { fetchShiftDetails, createApplication, fetchShiftContract } from '@/lib/api/shared';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePusher } from '@/contexts/PusherContext';
-import { MapPin, Clock, DollarSign, ArrowLeft, CheckCircle2, Heart, Building2, Users, FileText, Navigation, UserX, LogOut, AlertCircle } from 'lucide-react';
+import { MapPin, Clock, DollarSign, ArrowLeft, CheckCircle2, Heart, Building2, Users, FileText, Navigation, UserX, LogOut, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 import {
   AlertDialog,
@@ -354,6 +354,15 @@ export default function ShiftDetailsPage() {
     queryFn: () => getWaitlistStatus(id!),
     enabled: !!user && !!id && !!shift && isBackupRequest && !!(shift as any)?.backupRequestedAt && !(shift as any)?.backupWorkerId,
     staleTime: 10 * 1000, // Cache for 10 seconds
+  });
+
+  // Fetch contract (digital receipt) when user is assignee or venue and shift is filled/confirmed
+  const isAssigneeOrVenue = !!user && !!shift && (shift.assigneeId === user.id || shift.employerId === user.id);
+  const isContracted = (shift?.status === 'filled' || shift?.status === 'confirmed');
+  const { data: contract } = useQuery({
+    queryKey: ['shift-contract', id],
+    queryFn: () => fetchShiftContract(id!),
+    enabled: !!id && !!user && isAssigneeOrVenue && isContracted,
   });
 
   // Check for waitlist conversion (when user accepts from waitlist)
@@ -835,6 +844,38 @@ export default function ShiftDetailsPage() {
                     <li key={`${String(req).substring(0, 20)}-${index}`}>{req}</li>
                   ))}
                 </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Contract (Digital Receipt) - shown when user is assignee/venue and shift is contracted */}
+          {contract && isAssigneeOrVenue && (
+            <Card className="bg-card rounded-lg border border-border shadow-sm mb-6" data-testid="shift-contract-receipt">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <ShieldCheck className="h-5 w-5 text-success" />
+                  <h2 className="text-xl font-bold text-foreground">Contracted</h2>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  This shift is covered by a binding agreement. Both parties accepted the terms of the Master Service Agreement.
+                </p>
+                <div className="space-y-2 text-sm">
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <span className="text-muted-foreground">Agreed:</span>
+                    <span className="font-mono text-foreground">
+                      {contract.createdAt ? new Date(contract.createdAt).toLocaleString('en-AU', { dateStyle: 'medium', timeStyle: 'short' }) : '—'}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-muted-foreground">Digital fingerprint:</span>
+                    <code className="font-mono text-xs bg-muted px-2 py-1 rounded break-all" title={contract.contractHash}>
+                      {contract.contractHash}
+                    </code>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-4">
+                  <a href="/terms#msa" className="underline hover:text-foreground">View Master Service Agreement</a>
+                </p>
               </CardContent>
             </Card>
           )}

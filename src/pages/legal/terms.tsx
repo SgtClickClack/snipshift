@@ -34,6 +34,19 @@ export default function TermsPage() {
                 </p>
               </section>
 
+              <section className="mb-8" id="msa">
+                <h2 className="text-2xl font-semibold text-steel-900 mb-4">1.1 Master Service Agreement (Shift Acceptance)</h2>
+                <p className="text-steel-700 mb-4">
+                  <strong>Action-as-Signature:</strong> When you accept a shift on the Platform (whether by accepting an invitation, an offer, or by having your application approved by a venue), you agree to be bound by this Master Service Agreement (MSA) for that specific shift. Your acceptance constitutes a binding agreement between you and the venue for the terms disclosed in the shift posting (pay rate, time, location, cancellation policy, and other requirements).
+                </p>
+                <p className="text-steel-700 mb-4">
+                  HospoGo records each shift acceptance with a timestamped digital fingerprint (contract hash) for audit and dispute resolution. Both the venue and the professional can view the contracted status and fingerprint in their dashboard.
+                </p>
+                <p className="text-steel-700 mb-4">
+                  By accepting a shift, you acknowledge that you have read and agree to these Terms of Service, including the payment terms, cancellation policy, and no-show consequences set forth herein.
+                </p>
+              </section>
+
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold text-steel-900 mb-4">2. Marketplace Model</h2>
                 <p className="text-steel-700 mb-4">

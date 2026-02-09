@@ -35,6 +35,7 @@ import { normalizeRole } from '../utils/normalizeRole.js';
 import * as shiftMessagesRepo from '../repositories/shift-messages.repository.js';
 import * as shiftGenerationService from '../services/shift-generation.service.js';
 import * as smartFillService from '../services/smart-fill.service.js';
+import * as contractService from '../services/contract.service.js';
 import { uploadProofImage } from '../middleware/upload.js';
 import { PAYMENT_CONFIG } from '../config/business.config.js';
 import admin from 'firebase-admin';
@@ -1962,6 +1963,9 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
     // Transaction succeeded - shift is now assigned and payment is authorized
     console.log(`[SHIFT_ACCEPT] Successfully accepted shift ${id} with PaymentIntent ${paymentIntentId}`);
 
+    // Action-as-signature: Log contract (User X accepted the terms of the MSA for Shift Y)
+    await contractService.createShiftAcceptanceContract(id, shift.employerId, userId, 'professional');
+
     // Get professional information (professional already loaded above for Stripe validation)
     const professionalName = professional?.name || 'Professional';
 
@@ -2344,6 +2348,8 @@ router.post('/bulk-accept', authenticateUser, asyncHandler(async (req: Authentic
 
         // Transaction succeeded for this shift
         results.accepted.push(shiftId);
+        // Action-as-signature: Log contract (User X accepted the terms of the MSA for Shift Y)
+        await contractService.createShiftAcceptanceContract(shiftId, shift.employerId, userId, 'professional');
       } catch (error: any) {
         console.error(`[BULK_ACCEPT] Error processing shift ${shiftId}:`, error);
         
@@ -3339,6 +3345,9 @@ router.put('/offers/:id/accept', authenticateUser, asyncHandler(async (req: Auth
     const updatedShift = await shiftsRepo.getShiftById(offer.shiftId);
     const updatedOffer = await shiftOffersRepo.getShiftOfferById(offerId);
 
+    // Action-as-signature: Log contract (User X accepted the terms of the MSA for Shift Y)
+    await contractService.createShiftAcceptanceContract(offer.shiftId, shift.employerId, userId, 'professional');
+
     // Get professional information
     const professional = await usersRepo.getUserById(userId);
     const professionalName = professional?.name || 'Professional';
@@ -3509,6 +3518,9 @@ router.post('/:id/apply', authenticateUser, asyncHandler(async (req: Authenticat
 
       // Fetch updated shift
       const updatedShift = await shiftsRepo.getShiftById(id);
+
+      // Action-as-signature: Log contract (User X accepted the terms of the MSA for Shift Y)
+      await contractService.createShiftAcceptanceContract(id, shift.employerId, userId, 'professional');
 
       // Get user details for notification
       const user = await usersRepo.getUserById(userId);
@@ -3720,6 +3732,14 @@ router.patch('/applications/:id', authenticateUser, asyncHandler(async (req: Aut
       // Fetch updated application and shift
       const updatedApplication = await shiftApplicationsRepo.getShiftApplicationById(id);
       const updatedShift = await shiftsRepo.getShiftById(application.shiftId);
+
+      // Action-as-signature: Venue accepted application; professional bound to MSA
+      await contractService.createShiftAcceptanceContract(
+        application.shiftId,
+        application.venueId,
+        application.workerId,
+        'venue'
+      );
 
       // Notify the new worker
       try {
@@ -5294,6 +5314,51 @@ router.patch('/:id/clock-out', authenticateUser, uploadProofImage, asyncHandler(
       status: 'pending_completion',
       proofImageUrl: proofImageUrl,
     }
+  });
+}));
+
+// Get contract for a shift (digital receipt) - authenticated, assignee or venue only
+router.get('/:id/contract', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const id = normalizeParam(req.params.id);
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  if (!isValidUUID(id)) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  const shift = await shiftsRepo.getShiftById(id);
+  if (!shift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Only assignee or venue owner can view contract
+  const isAssignee = shift.assigneeId === userId;
+  const isVenue = shift.employerId === userId;
+  if (!isAssignee && !isVenue) {
+    res.status(403).json({ message: 'Forbidden: You do not have access to this contract' });
+    return;
+  }
+
+  const contract = await contractService.getContractByShiftId(id);
+  if (!contract) {
+    res.status(404).json({ message: 'No contract found for this shift' });
+    return;
+  }
+
+  res.status(200).json({
+    id: contract.id,
+    shiftId: id,
+    contractHash: contract.contractHash,
+    createdAt: toISOStringSafe(contract.createdAt),
+    acceptanceLog: contract.acceptanceLog,
+    contracted: true,
   });
 }));
 

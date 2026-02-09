@@ -274,6 +274,10 @@ export async function acceptBackupShift(
     // Mark waitlist entry as converted
     await shiftWaitlistRepo.markAsConverted(shiftId, workerId);
 
+    // Action-as-signature: Replace contract (backup worker replaces original; new professional bound to MSA)
+    const { replaceContractProfessional } = await import('./contract.service.js');
+    await replaceContractProfessional(shiftId, shift.employerId, workerId);
+
     // Apply late-cancel penalties to original worker
     if (originalWorkerId) {
       try {

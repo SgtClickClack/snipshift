@@ -1,6 +1,46 @@
 # Development Tracking Part 02
 <!-- markdownlint-disable-file -->
 
+#### 2026-02-08: Automate Shift Acceptance Contracts
+
+**Core Components**
+- `api/_src/db/schema/contracts.ts` — Contracts table schema (shiftId, venueId, professionalId, contractHash, acceptanceLog)
+- `api/_src/services/contract.service.ts` — createShiftAcceptanceContract, replaceContractProfessional, getContractByShiftId
+- `api/_src/routes/shifts.ts` — Contract logging wired into all accept endpoints; GET /:id/contract for digital receipt
+- `src/pages/legal/terms.tsx` — MSA boilerplate (section 1.1 Action-as-Signature)
+- `src/pages/shift-details.tsx` — Contract receipt card (timestamp + digital fingerprint)
+
+**Key Features**
+- **Contract Ledger:** PostgreSQL `contracts` table stores shiftId, venueId, professionalId, timestamp, SHA-256 contract hash, acceptance log
+- **MSA Boilerplate:** Terms page section 1.1 explains action-as-signature; accepting a shift = binding agreement
+- **Action-as-Signature:** All accept paths log "User X accepted the terms of the MSA for Shift Y" before finalizing status change
+- **Acceptance paths covered:** POST /shifts/:id/accept, PUT /offers/:id/accept, POST /apply (autoAccept), PATCH /applications/:id (venue accept), smart-fill respondToInvitation, bulk-accept, accept-backup, legacy applications APPROVED
+- **Digital Receipt:** Shift details page shows "Contracted" card with timestamp and contract hash when user is assignee or venue; GET /api/shifts/:id/contract returns contract for authorized users
+
+**Integration Points**
+- Hash generated from shiftId|venueId|professionalId|timestamp|MSA_VERSION (SHA-256)
+- Backup worker flow uses replaceContractProfessional to update existing contract
+- API authenticates assignee/venue for contract endpoint
+
+**File Paths**
+- `api/_src/db/schema/contracts.ts`
+- `api/_src/db/migrations/0047_add_shift_acceptance_contracts.sql`
+- `api/_src/services/contract.service.ts`
+- `api/_src/routes/shifts.ts`, `api/_src/routes/applications.ts`
+- `api/_src/services/smart-fill.service.ts`, `api/_src/services/backup-request.service.ts`
+- `src/pages/legal/terms.tsx`, `src/pages/shift-details.tsx`
+- `src/lib/api/shared.ts` (fetchShiftContract)
+
+**Next Priority Task**
+- Run migration: `psql $DATABASE_URL -f api/_src/db/migrations/0047_add_shift_acceptance_contracts.sql`
+- Manual test: Accept shift → verify contract in DB → view shift details as assignee/venue → see Contracted card
+
+**Code Organization & Quality**
+- No new dependencies; Node crypto for hash
+- Build verified (frontend + API)
+
+---
+
 #### 2026-02-08: Fix Greyed-out PWA Install in Hamburger Menu
 
 **Core Components**

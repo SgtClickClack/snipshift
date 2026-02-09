@@ -330,6 +330,15 @@ router.post('/:id/decide', authenticateUser, asyncHandler(async (req: Authentica
       // Fetch updated application
       const updatedApplication = await applicationsRepo.getApplicationById(applicationId);
 
+      // Action-as-signature: Log contract when venue approves shift application
+      if (shiftId && application.userId) {
+        const shift = await shiftsRepo.getShiftById(shiftId);
+        if (shift) {
+          const { createShiftAcceptanceContract } = await import('../services/contract.service.js');
+          await createShiftAcceptanceContract(shiftId, shift.employerId, application.userId, 'venue');
+        }
+      }
+
       // Notify the professional
       if (application.userId) {
         try {

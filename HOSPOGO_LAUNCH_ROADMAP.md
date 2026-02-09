@@ -8,6 +8,23 @@
 
 ---
 
+### Update: 2026-02-08 - Automate Shift Acceptance Contracts
+
+**Status:** ✅ **COMPLETE**
+
+**Action Taken:**
+- **Contract Ledger:** Created PostgreSQL `contracts` table (shiftId, venueId, professionalId, contractHash, acceptanceLog) with migration `0047_add_shift_acceptance_contracts.sql`
+- **MSA Boilerplate:** Added section 1.1 "Master Service Agreement (Shift Acceptance)" to Terms page — action-as-signature: accepting a shift = binding agreement
+- **Action-as-Signature:** All accept paths now log contract before finalizing: POST /shifts/:id/accept, PUT /offers/:id/accept, POST /apply (autoAccept), PATCH /applications/:id, smart-fill, bulk-accept, accept-backup, legacy applications APPROVED
+- **Digital Receipt:** Shift details page shows "Contracted" card with timestamp + SHA-256 fingerprint when user is assignee or venue; GET /api/shifts/:id/contract returns contract for authorized users
+
+**Impact:**
+- Binding agreements generated automatically on every shift acceptance
+- Both parties can view contracted status and digital fingerprint in dashboard
+- Audit trail for dispute resolution
+
+---
+
 ### Update: 2026-02-07 - Auth Loop Fix: Restore Firebase Handlers (Self-Host)
 
 **Status:** ✅ **COMPLETE**

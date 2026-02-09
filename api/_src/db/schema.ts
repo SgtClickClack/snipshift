@@ -31,6 +31,7 @@ import { failedEmails } from './schema/failed-emails.js';
 import { shiftTemplates } from './schema/shift-templates.js';
 import { workerAvailability } from './schema/worker-availability.js';
 import { supportIntelligenceGaps } from './schema/support-intelligence-gaps.js';
+import { contracts } from './schema/contracts.js';
 
 // Define paymentStatusEnum locally for drizzle-kit compatibility (references same DB enum)
 // This avoids ESM import resolution issues with drizzle-kit
@@ -73,7 +74,8 @@ export {
   failedEmails,
   shiftTemplates,
   workerAvailability,
-  supportIntelligenceGaps
+  supportIntelligenceGaps,
+  contracts
 };
 
 /**

@@ -377,6 +377,26 @@ export const applyToJob = async (
   }
 };
 
+// ===== SHIFT CONTRACT (Digital Receipt) =====
+
+export interface ShiftContract {
+  id: string;
+  shiftId: string;
+  contractHash: string;
+  createdAt: string;
+  acceptanceLog: string | null;
+  contracted: boolean;
+}
+
+export async function fetchShiftContract(shiftId: string): Promise<ShiftContract | null> {
+  try {
+    const res = await apiRequest('GET', `/api/shifts/${shiftId}/contract`);
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 // ===== REVIEWS =====
 
 export async function submitShiftReview(

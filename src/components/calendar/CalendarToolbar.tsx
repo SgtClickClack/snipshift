@@ -493,10 +493,10 @@ export function CalendarToolbar({
               <span className="text-muted-foreground font-medium">Pending</span>
             </div>
             <div
-              className="flex items-center gap-1.5 cursor-help whitespace-nowrap shrink-0 px-2 py-1 rounded-lg bg-red-500/8 sm:bg-transparent sm:px-0 sm:py-0"
+              className="flex items-center gap-1.5 cursor-help whitespace-nowrap shrink-0 px-2 py-1 rounded-lg bg-red-400/8 sm:bg-transparent sm:px-0 sm:py-0"
               title="Vacant (Action Required) — Open slots need to be filled or invitations have been declined"
             >
-              <div className="w-3 h-3 rounded-md bg-red-500/20 border-l-[3px] border-l-red-500 shrink-0 animate-pulse-subtle"></div>
+              <div className="w-3 h-3 rounded-md bg-red-400/25 border-l-[3px] border-l-red-400 shrink-0 animate-pulse-subtle"></div>
               <span className="text-muted-foreground font-medium">Vacant</span>
             </div>
             <div
